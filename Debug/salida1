@@ -1,0 +1,544 @@
+argc=6
+argv[0]=Pila2t
+_getcwd=1
+The current working directory is P:\Programas\Pila2t\Debug
+LecturaArchivoDeDatos():MallaCilindrica.txt
+malla2(Etapa=1,iEtapa=1)
+Etapa: Se definen g
+Etapa: Se Transforma g 
+.0.1.2.3.4.OK
+malla2(Etapa=2,iEtapa=1)
+Calculos geometricos de la malla
+.0.1.2.3.4.OK
+malla2(Etapa=3,iEtapa=1)
+malla2(Etapa=4,iEtapa=1)
+------------------------------------------------------
+Calculo Escurrimiento y Temperaturas  (con err0=1e-012)
+malla2(Etapa=5,iEtapa=1)
+Interaciones hasta que: err<1e-012
+niteraciones=30000
+break: errG<1e-012, iiter=752
+niteraciones=30000
+break: errG<1e-012, iiter=27
+minPotencialVel=-0.000145, maxPotencialVel=0.000000, errPV=9.72e-013
+minTemp=44.584581	maxTemp=64.253470 (int)	errT=3.58e-013
+minTemp=44.584581	maxTemp=65.000000 (wBC)	errT=3.58e-013
+xC=[0.0133816 0.0381476 0.0629137 0.0876797 0.112446 ];
+TC=[64.2535 62.0482 58.4295 53.0642 44.5846 ];
+Fraccion Volumen con T>50 = 0.643417	T = 0
+Save:/Soluciones/Sal_04.07_18.33.13__Etapa=01_Size=5_t=0.dat
+i=32
+i=32
+leyendo2=/Soluciones/Sal_04.07_18.33.13__
+/Soluciones/Sal_04.07_18.33.13__Etapa=00_Parametros.dat
+#Version 0.2 3
+malla2(Etapa=4,iEtapa=1)
+------------------------------------------------------
+Calculo Escurrimiento y Temperaturas  (con err0=1e-014)
+malla2(Etapa=5,iEtapa=1)
+Interaciones hasta que: err<1e-014
+niteraciones=30000
+break: errG<1e-014, iiter=741
+niteraciones=30000
+break: errG<1e-014, iiter=23
+minPotencialVel=-0.000146, maxPotencialVel=0.000000, errPV=9.82e-015
+minTemp=44.647218	maxTemp=64.258838 (int)	errT=6.27e-015
+minTemp=44.647218	maxTemp=65.000000 (wBC)	errT=6.27e-015
+xC=[0.0133816 0.0381476 0.0629137 0.0876797 0.112446 ];
+TC=[64.2588 62.0676 58.4667 53.118 44.6472 ];
+Fraccion Volumen con T>50 = 0.643417	T = 0
+Save:/Soluciones/Sal_04.07_18.33.13__Etapa=01_Size=5_t=0.dat
+i=32
+i=32
+leyendo2=/Soluciones/Sal_04.07_18.33.13__
+/Soluciones/Sal_04.07_18.33.13__Etapa=00_Parametros.dat
+#Version 0.2 3
+malla2(Etapa=6,iEtapa=1)
+Mallando2D-->3D 
+malla2(Etapa=7,iEtapa=1)
+Genero Poligonos2Algunos: 1
+.0.OK
+malla2(Etapa=8,iEtapa=1)
+malla2(Etapa=9,iEtapa=1)
+malla2(Etapa=10,iEtapa=1)
+malla2(Etapa=11,iEtapa=1)
+malla2(Etapa=12,iEtapa=1)
+Calculos Geometrico malla 3D
+malla2(Etapa=13,iEtapa=1)
+.0.1.2.3.4.OK
+Inicializo Temperaturas = Tambiente 
+malla2(Etapa=14,iEtapa=1)
+============================================================
+Calculo para TiempoCalculo= 3600 seg. = 60 min. = 1 hrs.
+------------------------------------------------------
+Etapa: Calculo T° en la Pila, con err0=1.000000e-010
+numero de celdas=25
+niteraciones=30000
+break: errG<1e-010
+iiter_final=82
+<CoeffEstacionarios>=0.0806518	<SumCoeffTemporales>=0.00845098
+minTemp=21.049845	maxTemp=45.464708 (int)	errT=9.30e-011
+minTemp=21.049845	maxTemp=64.258838 (wBC)	errT=9.30e-011
+Fraccion Volumen con T>50 = 0.032127	T = 3600
+Reitero...
+Save:/Soluciones/Sal_04.07_18.33.13__Etapa=02_Size=25_t=3600.dat
+i=32
+i=32
+leyendo2=/Soluciones/Sal_04.07_18.33.13__
+/Soluciones/Sal_04.07_18.33.13__Etapa=00_Parametros.dat
+#Version 0.2 3
+malla2(Etapa=14,iEtapa=1)
+------------------------------------------------------
+Etapa: Calculo T° en la Pila, con err0=1.000000e-014
+numero de celdas=25
+niteraciones=30000
+break: errG<1e-014
+iiter_final=35
+<CoeffEstacionarios>=0.0806518	<SumCoeffTemporales>=0.00845098
+minTemp=21.049845	maxTemp=45.464708 (int)	errT=9.86e-015
+minTemp=21.049845	maxTemp=64.258838 (wBC)	errT=9.86e-015
+Fraccion Volumen con T>50 = 0.032127	T = 3600
+Termine con el calculo para este Tiempo
+Save:/Soluciones/Sal_04.07_18.33.13__Etapa=02_Size=25_t=3600.dat
+i=32
+i=32
+leyendo2=/Soluciones/Sal_04.07_18.33.13__
+/Soluciones/Sal_04.07_18.33.13__Etapa=00_Parametros.dat
+#Version 0.2 3
+Paso al T= 7200 seg
+malla2(Etapa=14,iEtapa=1)
+============================================================
+Calculo para TiempoCalculo= 7200 seg. = 120 min. = 2 hrs.
+------------------------------------------------------
+Etapa: Calculo T° en la Pila, con err0=1.000000e-014
+numero de celdas=25
+niteraciones=30000
+break: errG<1e-014
+iiter_final=117
+<CoeffEstacionarios>=0.0806518	<SumCoeffTemporales>=0.00845098
+minTemp=23.203270	maxTemp=52.136185 (int)	errT=9.90e-015
+minTemp=23.203270	maxTemp=64.258838 (wBC)	errT=9.90e-015
+Fraccion Volumen con T>50 = 0.0566984	T = 7200
+Termine con el calculo para este Tiempo
+Save:/Soluciones/Sal_04.07_18.33.13__Etapa=02_Size=25_t=7200.dat
+i=32
+i=32
+leyendo2=/Soluciones/Sal_04.07_18.33.13__
+/Soluciones/Sal_04.07_18.33.13__Etapa=00_Parametros.dat
+#Version 0.2 3
+Paso al T= 10800 seg
+malla2(Etapa=14,iEtapa=1)
+============================================================
+Calculo para TiempoCalculo= 10800 seg. = 180 min. = 3 hrs.
+------------------------------------------------------
+Etapa: Calculo T° en la Pila, con err0=1.000000e-014
+numero de celdas=25
+niteraciones=30000
+break: errG<1e-014
+iiter_final=116
+<CoeffEstacionarios>=0.0806518	<SumCoeffTemporales>=0.00845098
+minTemp=25.983077	maxTemp=54.480462 (int)	errT=9.69e-015
+minTemp=25.983077	maxTemp=64.258838 (wBC)	errT=9.69e-015
+Fraccion Volumen con T>50 = 0.0866984	T = 10800
+Termine con el calculo para este Tiempo
+Save:/Soluciones/Sal_04.07_18.33.13__Etapa=02_Size=25_t=10800.dat
+i=32
+i=32
+leyendo2=/Soluciones/Sal_04.07_18.33.13__
+/Soluciones/Sal_04.07_18.33.13__Etapa=00_Parametros.dat
+#Version 0.2 3
+Paso al T= 14400 seg
+malla2(Etapa=14,iEtapa=1)
+============================================================
+Calculo para TiempoCalculo= 14400 seg. = 240 min. = 4 hrs.
+------------------------------------------------------
+Etapa: Calculo T° en la Pila, con err0=1.000000e-014
+numero de celdas=25
+niteraciones=30000
+break: errG<1e-014
+iiter_final=115
+<CoeffEstacionarios>=0.0806518	<SumCoeffTemporales>=0.00845098
+minTemp=28.909062	maxTemp=55.596954 (int)	errT=9.28e-015
+minTemp=28.909062	maxTemp=64.258838 (wBC)	errT=9.28e-015
+Fraccion Volumen con T>50 = 0.0866984	T = 14400
+Termine con el calculo para este Tiempo
+Save:/Soluciones/Sal_04.07_18.33.13__Etapa=02_Size=25_t=14400.dat
+i=32
+i=32
+leyendo2=/Soluciones/Sal_04.07_18.33.13__
+/Soluciones/Sal_04.07_18.33.13__Etapa=00_Parametros.dat
+#Version 0.2 3
+Paso al T= 18000 seg
+malla2(Etapa=14,iEtapa=1)
+============================================================
+Calculo para TiempoCalculo= 18000 seg. = 300 min. = 5 hrs.
+------------------------------------------------------
+Etapa: Calculo T° en la Pila, con err0=1.000000e-014
+numero de celdas=25
+niteraciones=30000
+break: errG<1e-014
+iiter_final=114
+<CoeffEstacionarios>=0.0806518	<SumCoeffTemporales>=0.00845098
+minTemp=31.671495	maxTemp=56.258475 (int)	errT=8.87e-015
+minTemp=31.671495	maxTemp=64.258838 (wBC)	errT=8.87e-015
+Fraccion Volumen con T>50 = 0.0866984	T = 18000
+Termine con el calculo para este Tiempo
+Save:/Soluciones/Sal_04.07_18.33.13__Etapa=02_Size=25_t=18000.dat
+i=32
+i=32
+leyendo2=/Soluciones/Sal_04.07_18.33.13__
+/Soluciones/Sal_04.07_18.33.13__Etapa=00_Parametros.dat
+#Version 0.2 3
+Paso al T= 21600 seg
+malla2(Etapa=14,iEtapa=1)
+============================================================
+Calculo para TiempoCalculo= 21600 seg. = 360 min. = 6 hrs.
+------------------------------------------------------
+Etapa: Calculo T° en la Pila, con err0=1.000000e-014
+numero de celdas=25
+niteraciones=30000
+break: errG<1e-014
+iiter_final=113
+<CoeffEstacionarios>=0.0806518	<SumCoeffTemporales>=0.00845098
+minTemp=34.120866	maxTemp=56.703317 (int)	errT=8.85e-015
+minTemp=34.120866	maxTemp=64.258838 (wBC)	errT=8.85e-015
+Fraccion Volumen con T>50 = 0.128508	T = 21600
+Termine con el calculo para este Tiempo
+Save:/Soluciones/Sal_04.07_18.33.13__Etapa=02_Size=25_t=21600.dat
+i=32
+i=32
+leyendo2=/Soluciones/Sal_04.07_18.33.13__
+/Soluciones/Sal_04.07_18.33.13__Etapa=00_Parametros.dat
+#Version 0.2 3
+Paso al T= 25200 seg
+malla2(Etapa=14,iEtapa=1)
+============================================================
+Calculo para TiempoCalculo= 25200 seg. = 420 min. = 7 hrs.
+------------------------------------------------------
+Etapa: Calculo T° en la Pila, con err0=1.000000e-014
+numero de celdas=25
+niteraciones=30000
+break: errG<1e-014
+iiter_final=112
+<CoeffEstacionarios>=0.0806518	<SumCoeffTemporales>=0.00845098
+minTemp=36.212339	maxTemp=57.024242 (int)	errT=8.48e-015
+minTemp=36.212339	maxTemp=64.258838 (wBC)	errT=8.48e-015
+Fraccion Volumen con T>50 = 0.128508	T = 25200
+Termine con el calculo para este Tiempo
+Save:/Soluciones/Sal_04.07_18.33.13__Etapa=02_Size=25_t=25200.dat
+i=32
+i=32
+leyendo2=/Soluciones/Sal_04.07_18.33.13__
+/Soluciones/Sal_04.07_18.33.13__Etapa=00_Parametros.dat
+#Version 0.2 3
+Paso al T= 28800 seg
+malla2(Etapa=14,iEtapa=1)
+============================================================
+Calculo para TiempoCalculo= 28800 seg. = 480 min. = 8 hrs.
+------------------------------------------------------
+Etapa: Calculo T° en la Pila, con err0=1.000000e-014
+numero de celdas=25
+niteraciones=30000
+break: errG<1e-014
+iiter_final=111
+<CoeffEstacionarios>=0.0806518	<SumCoeffTemporales>=0.00845098
+minTemp=37.957399	maxTemp=57.265383 (int)	errT=8.40e-015
+minTemp=37.957399	maxTemp=64.258838 (wBC)	errT=8.40e-015
+Fraccion Volumen con T>50 = 0.137016	T = 28800
+Termine con el calculo para este Tiempo
+Save:/Soluciones/Sal_04.07_18.33.13__Etapa=02_Size=25_t=28800.dat
+i=32
+i=32
+leyendo2=/Soluciones/Sal_04.07_18.33.13__
+/Soluciones/Sal_04.07_18.33.13__Etapa=00_Parametros.dat
+#Version 0.2 3
+Paso al T= 32400 seg
+malla2(Etapa=14,iEtapa=1)
+============================================================
+Calculo para TiempoCalculo= 32400 seg. = 540 min. = 9 hrs.
+------------------------------------------------------
+Etapa: Calculo T° en la Pila, con err0=1.000000e-014
+numero de celdas=25
+niteraciones=30000
+break: errG<1e-014
+iiter_final=110
+<CoeffEstacionarios>=0.0806518	<SumCoeffTemporales>=0.00845098
+minTemp=39.392674	maxTemp=57.451091 (int)	errT=8.42e-015
+minTemp=39.392674	maxTemp=64.258838 (wBC)	errT=8.42e-015
+Fraccion Volumen con T>50 = 0.16127	T = 32400
+Termine con el calculo para este Tiempo
+Save:/Soluciones/Sal_04.07_18.33.13__Etapa=02_Size=25_t=32400.dat
+i=32
+i=32
+leyendo2=/Soluciones/Sal_04.07_18.33.13__
+/Soluciones/Sal_04.07_18.33.13__Etapa=00_Parametros.dat
+#Version 0.2 3
+Paso al T= 36000 seg
+malla2(Etapa=14,iEtapa=1)
+============================================================
+Calculo para TiempoCalculo= 36000 seg. = 600 min. = 10 hrs.
+------------------------------------------------------
+Etapa: Calculo T° en la Pila, con err0=1.000000e-014
+numero de celdas=25
+niteraciones=30000
+break: errG<1e-014
+iiter_final=109
+<CoeffEstacionarios>=0.0806518	<SumCoeffTemporales>=0.00845098
+minTemp=40.562608	maxTemp=57.596318 (int)	errT=8.62e-015
+minTemp=40.562608	maxTemp=64.258838 (wBC)	errT=8.62e-015
+Fraccion Volumen con T>50 = 0.20127	T = 36000
+Termine con el calculo para este Tiempo
+Save:/Soluciones/Sal_04.07_18.33.13__Etapa=02_Size=25_t=36000.dat
+i=32
+i=32
+leyendo2=/Soluciones/Sal_04.07_18.33.13__
+/Soluciones/Sal_04.07_18.33.13__Etapa=00_Parametros.dat
+#Version 0.2 3
+Paso al T= 39600 seg
+malla2(Etapa=14,iEtapa=1)
+============================================================
+Calculo para TiempoCalculo= 39600 seg. = 660 min. = 11 hrs.
+------------------------------------------------------
+Etapa: Calculo T° en la Pila, con err0=1.000000e-014
+numero de celdas=25
+niteraciones=30000
+break: errG<1e-014
+iiter_final=108
+<CoeffEstacionarios>=0.0806518	<SumCoeffTemporales>=0.00845098
+minTemp=41.510898	maxTemp=57.710988 (int)	errT=8.77e-015
+minTemp=41.510898	maxTemp=64.258838 (wBC)	errT=8.77e-015
+Fraccion Volumen con T>50 = 0.20127	T = 39600
+Termine con el calculo para este Tiempo
+Save:/Soluciones/Sal_04.07_18.33.13__Etapa=02_Size=25_t=39600.dat
+i=32
+i=32
+leyendo2=/Soluciones/Sal_04.07_18.33.13__
+/Soluciones/Sal_04.07_18.33.13__Etapa=00_Parametros.dat
+#Version 0.2 3
+Paso al T= 43200 seg
+malla2(Etapa=14,iEtapa=1)
+============================================================
+Calculo para TiempoCalculo= 43200 seg. = 720 min. = 12 hrs.
+------------------------------------------------------
+Etapa: Calculo T° en la Pila, con err0=1.000000e-014
+numero de celdas=25
+niteraciones=30000
+break: errG<1e-014
+iiter_final=107
+<CoeffEstacionarios>=0.0806518	<SumCoeffTemporales>=0.00845098
+minTemp=42.276814	maxTemp=57.802084 (int)	errT=8.84e-015
+minTemp=42.276814	maxTemp=64.258838 (wBC)	errT=8.84e-015
+Fraccion Volumen con T>50 = 0.257016	T = 43200
+Termine con el calculo para este Tiempo
+Save:/Soluciones/Sal_04.07_18.33.13__Etapa=02_Size=25_t=43200.dat
+i=32
+i=32
+leyendo2=/Soluciones/Sal_04.07_18.33.13__
+/Soluciones/Sal_04.07_18.33.13__Etapa=00_Parametros.dat
+#Version 0.2 3
+Paso al T= 46800 seg
+malla2(Etapa=14,iEtapa=1)
+============================================================
+Calculo para TiempoCalculo= 46800 seg. = 780 min. = 13 hrs.
+------------------------------------------------------
+Etapa: Calculo T° en la Pila, con err0=1.000000e-014
+numero de celdas=25
+niteraciones=30000
+break: errG<1e-014
+iiter_final=106
+<CoeffEstacionarios>=0.0806518	<SumCoeffTemporales>=0.00845098
+minTemp=42.894050	maxTemp=57.874732 (int)	errT=9.12e-015
+minTemp=42.894050	maxTemp=64.258838 (wBC)	errT=9.12e-015
+Fraccion Volumen con T>50 = 0.257016	T = 46800
+Termine con el calculo para este Tiempo
+Save:/Soluciones/Sal_04.07_18.33.13__Etapa=02_Size=25_t=46800.dat
+i=32
+i=32
+leyendo2=/Soluciones/Sal_04.07_18.33.13__
+/Soluciones/Sal_04.07_18.33.13__Etapa=00_Parametros.dat
+#Version 0.2 3
+Paso al T= 50400 seg
+malla2(Etapa=14,iEtapa=1)
+============================================================
+Calculo para TiempoCalculo= 50400 seg. = 840 min. = 14 hrs.
+------------------------------------------------------
+Etapa: Calculo T° en la Pila, con err0=1.000000e-014
+numero de celdas=25
+niteraciones=30000
+break: errG<1e-014
+iiter_final=105
+<CoeffEstacionarios>=0.0806518	<SumCoeffTemporales>=0.00845098
+minTemp=43.390766	maxTemp=57.932811 (int)	errT=9.33e-015
+minTemp=43.390766	maxTemp=64.258838 (wBC)	errT=9.33e-015
+Fraccion Volumen con T>50 = 0.328508	T = 50400
+Termine con el calculo para este Tiempo
+Save:/Soluciones/Sal_04.07_18.33.13__Etapa=02_Size=25_t=50400.dat
+i=32
+i=32
+leyendo2=/Soluciones/Sal_04.07_18.33.13__
+/Soluciones/Sal_04.07_18.33.13__Etapa=00_Parametros.dat
+#Version 0.2 3
+Paso al T= 54000 seg
+malla2(Etapa=14,iEtapa=1)
+============================================================
+Calculo para TiempoCalculo= 54000 seg. = 900 min. = 15 hrs.
+------------------------------------------------------
+Etapa: Calculo T° en la Pila, con err0=1.000000e-014
+numero de celdas=25
+niteraciones=30000
+break: errG<1e-014
+iiter_final=104
+<CoeffEstacionarios>=0.0806518	<SumCoeffTemporales>=0.00845098
+minTemp=43.790141	maxTemp=57.979313 (int)	errT=9.60e-015
+minTemp=43.790141	maxTemp=64.258838 (wBC)	errT=9.60e-015
+Fraccion Volumen con T>50 = 0.328508	T = 54000
+Termine con el calculo para este Tiempo
+Save:/Soluciones/Sal_04.07_18.33.13__Etapa=02_Size=25_t=54000.dat
+i=32
+i=32
+leyendo2=/Soluciones/Sal_04.07_18.33.13__
+/Soluciones/Sal_04.07_18.33.13__Etapa=00_Parametros.dat
+#Version 0.2 3
+Paso al T= 57600 seg
+malla2(Etapa=14,iEtapa=1)
+============================================================
+Calculo para TiempoCalculo= 57600 seg. = 960 min. = 16 hrs.
+------------------------------------------------------
+Etapa: Calculo T° en la Pila, con err0=1.000000e-014
+numero de celdas=25
+niteraciones=30000
+break: errG<1e-014
+iiter_final=103
+<CoeffEstacionarios>=0.0806518	<SumCoeffTemporales>=0.00845098
+minTemp=44.111069	maxTemp=58.016582 (int)	errT=9.78e-015
+minTemp=44.111069	maxTemp=64.258838 (wBC)	errT=9.78e-015
+Fraccion Volumen con T>50 = 0.328508	T = 57600
+Termine con el calculo para este Tiempo
+Save:/Soluciones/Sal_04.07_18.33.13__Etapa=02_Size=25_t=57600.dat
+i=32
+i=32
+leyendo2=/Soluciones/Sal_04.07_18.33.13__
+/Soluciones/Sal_04.07_18.33.13__Etapa=00_Parametros.dat
+#Version 0.2 3
+Paso al T= 61200 seg
+malla2(Etapa=14,iEtapa=1)
+============================================================
+Calculo para TiempoCalculo= 61200 seg. = 1020 min. = 17 hrs.
+------------------------------------------------------
+Etapa: Calculo T° en la Pila, con err0=1.000000e-014
+numero de celdas=25
+niteraciones=30000
+break: errG<1e-014
+iiter_final=103
+<CoeffEstacionarios>=0.0806518	<SumCoeffTemporales>=0.00845098
+minTemp=44.368868	maxTemp=58.046471 (int)	errT=7.87e-015
+minTemp=44.368868	maxTemp=64.258838 (wBC)	errT=7.87e-015
+Fraccion Volumen con T>50 = 0.36127	T = 61200
+Termine con el calculo para este Tiempo
+Save:/Soluciones/Sal_04.07_18.33.13__Etapa=02_Size=25_t=61200.dat
+i=32
+i=32
+leyendo2=/Soluciones/Sal_04.07_18.33.13__
+/Soluciones/Sal_04.07_18.33.13__Etapa=00_Parametros.dat
+#Version 0.2 3
+Paso al T= 64800 seg
+malla2(Etapa=14,iEtapa=1)
+============================================================
+Calculo para TiempoCalculo= 64800 seg. = 1080 min. = 18 hrs.
+------------------------------------------------------
+Etapa: Calculo T° en la Pila, con err0=1.000000e-014
+numero de celdas=25
+niteraciones=30000
+break: errG<1e-014
+iiter_final=102
+<CoeffEstacionarios>=0.0806518	<SumCoeffTemporales>=0.00845098
+minTemp=44.575910	maxTemp=58.070449 (int)	errT=8.16e-015
+minTemp=44.575910	maxTemp=64.258838 (wBC)	errT=8.16e-015
+Fraccion Volumen con T>50 = 0.36127	T = 64800
+Termine con el calculo para este Tiempo
+Save:/Soluciones/Sal_04.07_18.33.13__Etapa=02_Size=25_t=64800.dat
+i=32
+i=32
+leyendo2=/Soluciones/Sal_04.07_18.33.13__
+/Soluciones/Sal_04.07_18.33.13__Etapa=00_Parametros.dat
+#Version 0.2 3
+Paso al T= 68400 seg
+malla2(Etapa=14,iEtapa=1)
+============================================================
+Calculo para TiempoCalculo= 68400 seg. = 1140 min. = 19 hrs.
+------------------------------------------------------
+Etapa: Calculo T° en la Pila, con err0=1.000000e-014
+numero de celdas=25
+niteraciones=30000
+break: errG<1e-014
+iiter_final=101
+<CoeffEstacionarios>=0.0806518	<SumCoeffTemporales>=0.00845098
+minTemp=44.742165	maxTemp=58.089691 (int)	errT=8.37e-015
+minTemp=44.647218	maxTemp=64.258838 (wBC)	errT=8.37e-015
+Fraccion Volumen con T>50 = 0.40127	T = 68400
+Termine con el calculo para este Tiempo
+Save:/Soluciones/Sal_04.07_18.33.13__Etapa=02_Size=25_t=68400.dat
+i=32
+i=32
+leyendo2=/Soluciones/Sal_04.07_18.33.13__
+/Soluciones/Sal_04.07_18.33.13__Etapa=00_Parametros.dat
+#Version 0.2 3
+Paso al T= 72000 seg
+malla2(Etapa=14,iEtapa=1)
+============================================================
+Calculo para TiempoCalculo= 72000 seg. = 1200 min. = 20 hrs.
+------------------------------------------------------
+Etapa: Calculo T° en la Pila, con err0=1.000000e-014
+numero de celdas=25
+niteraciones=30000
+break: errG<1e-014
+iiter_final=100
+<CoeffEstacionarios>=0.0806518	<SumCoeffTemporales>=0.00845098
+minTemp=44.875656	maxTemp=58.105135 (int)	errT=8.61e-015
+minTemp=44.647218	maxTemp=64.258838 (wBC)	errT=8.61e-015
+Fraccion Volumen con T>50 = 0.40127	T = 72000
+Termine con el calculo para este Tiempo
+Save:/Soluciones/Sal_04.07_18.33.13__Etapa=02_Size=25_t=72000.dat
+i=32
+i=32
+leyendo2=/Soluciones/Sal_04.07_18.33.13__
+/Soluciones/Sal_04.07_18.33.13__Etapa=00_Parametros.dat
+#Version 0.2 3
+Terminé evolucion: Comienzo caso Estacionario...
+malla2(Etapa=14,iEtapa=1)
+============================================================
+Calculo Estacionario:
+------------------------------------------------------
+Etapa: Calculo T° en la Pila, con err0=1.000000e-010
+numero de celdas=25
+niteraciones=30000
+break: errG<1e-010
+iiter_final=294
+minTemp=45.419219	maxTemp=58.167986 (int)	errT=9.87e-011
+minTemp=44.647218	maxTemp=64.258838 (wBC)	errT=9.87e-011
+Fraccion Volumen con T>50 = 0.528508
+Reitero...
+Save:/Soluciones/Sal_04.07_18.33.13__Etapa=02_Size=25.dat
+i=32
+i=32
+leyendo2=/Soluciones/Sal_04.07_18.33.13__
+/Soluciones/Sal_04.07_18.33.13__Etapa=00_Parametros.dat
+#Version 0.2 3
+malla2(Etapa=14,iEtapa=1)
+------------------------------------------------------
+Etapa: Calculo T° en la Pila, con err0=1.000000e-014
+numero de celdas=25
+niteraciones=30000
+break: errG<1e-014
+iiter_final=171
+minTemp=45.419219	maxTemp=58.167986 (int)	errT=9.95e-015
+minTemp=44.647218	maxTemp=64.258838 (wBC)	errT=9.95e-015
+Fraccion Volumen con T>50 = 0.528508
+Save:/Soluciones/Sal_04.07_18.33.13__Etapa=02_Size=25.dat
+i=32
+i=32
+leyendo2=/Soluciones/Sal_04.07_18.33.13__
+/Soluciones/Sal_04.07_18.33.13__Etapa=00_Parametros.dat
+#Version 0.2 3
+malla2(Etapa=15,iEtapa=1)
+Fin
