@@ -1,0 +1,59 @@
+# Parametros geometricos
+Dominio_Xmax=0.5; 
+Dominio_Hmax=2.0;
+Dominio_Hsup=0.01;
+Dominio_Rint=0.01;
+Dominio_Rmed=0.25;
+
+#Parametros del calculo
+
+CalculoContinuo=0  //0:Grafico e interactivo, 1:no hay graficos (rapido)
+TipoCalculo=1      //1: Estacionario, 2: Evolucion 
+dt=3600            //dt para el calculo de evolucion [seg]
+Tmax=288000         //Tmax para el calculo de evolucion [seg]
+
+
+# Parametros de mallado
+malla=1
+nR=9
+nR2=5
+nTh=5
+NDivZ=5
+
+#Parametros físicos
+
+rhof		 =1000  ;//#densidad fluido agua
+rhos=1700  ;//#densidad solido
+cf=4186; //Capacidad calorica del fluido
+
+phi=0.36   ;//#porosidad
+
+Tambiente=20   ;//% Temperatura ambiente
+Tinyeccion=65  ;//% Temperatura de inyeccion en borde superior
+hc_superior=5.7;  // Constante de conveccion (sin revestimiento)
+hc_inferior=8.5;
+hc_lateral=7.0;
+
+KTermofilm=0.334	;//% W/(m*K)
+eTermofilm=140e-6    	;//% 140 mi
+
+VinyeccionLtsHr=20   ;//% 20 litros/m^2/hora
+
+
+kf=0.58  ;//#conductividad fluido agua
+ks=3.7     ;//#conductividad solido
+
+
+Kevaporacion=0.044e-2; // Constante de transferencia de masa por evaporacion [] 1%
+#Kevaporacion=0.6e-2; // Constante de transferencia de masa por evaporacion [] 5%
+#Kevaporacion=3e-2; // Constante de transferencia de masa por evaporacion [] >5%
+HumedadAmbiental=0.4; // Humedad relativa/100
+
+CalorLatenteFluido=2.257e6; // Calor Latente agua: %J/kg , https://es.wikipedia.org/wiki/Calor_latente
+
+DistanciaAlBorde=1; //Distancia al Talud [m]
+
+###############
+# Parametros resolucion
+Solucion_error=1e-14
+
