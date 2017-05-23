@@ -12,6 +12,7 @@
 #include <GLUT/glut.h>
 #include <OpenGL/OpenGL.h>
 #include "GLUI/glui.h"
+#include <dispatch/dispatch.h>
 #endif
 #elif defined _WIN32 || defined _WIN64
 #include "GL/freeglut.h"
@@ -2259,7 +2260,16 @@ void grid3D::drawVelGL_TriPrisma(vector<double> U,vector<double> V,vector<double
 	primerdrawVelGL=0;
 	ipasadas++;
 	if (!MODO_Pausa) {
-#pragma omp parallel for num_threads(7)
+
+
+#ifdef __APPLE__
+		dispatch_queue_t c_queue = dispatch_queue_create("myConcurrentQueue",
+				DISPATCH_QUEUE_CONCURRENT);
+		dispatch_apply(nParticulas, c_queue, ^(size_t i) {
+#else
+			#pragma omp parallel for num_threads(19)
+			for (i=0;i<nParticulas;i++) {
+#endif
 		for (i=0;i<nParticulas;i++) {
 			int pj,pk,pjmin;
 			float pd2min,pd2,px,py,pz,pdx,pdy,pdz;
