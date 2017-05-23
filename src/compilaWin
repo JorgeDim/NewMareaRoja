@@ -1,5 +1,0 @@
-..\..\..\SetPath.bat
-g++ -O6 -o ../Debug/a.exe -fopenmp FuncionesOpenGL.cpp Main.cpp glui-jsm.cpp  grid3D.cpp -lglui -lcomdlg32 -lfreeglut -lglu32 -lopengl32 -w
-pushd ../Debug
-a.exe
-popd
