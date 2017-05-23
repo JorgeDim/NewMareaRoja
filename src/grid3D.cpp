@@ -4,21 +4,22 @@
 #include "FuncionesOpenGL.h"
 #include "Class_Vector.h"
 #include "Macros.h"
-#include <omp.h>
 
+#define __APPLE__
 #ifdef __APPLE__
-#include "TargetConditionals.h"
-#ifdef TARGET_OS_MAC
-#include <GLUT/glut.h>
-#include <OpenGL/OpenGL.h>
-#include "GLUI/glui.h"
-#include <dispatch/dispatch.h>
-#endif
+	#include "TargetConditionals.h"
+	#ifdef TARGET_OS_MAC
+		#include <GLUT/glut.h>
+		#include <OpenGL/OpenGL.h>
+		#include "GLUI/glui.h"
+		#include <dispatch/dispatch.h>
+	#endif
 #elif defined _WIN32 || defined _WIN64
-#include "GL/freeglut.h"
-#define GLUI_FREEGLUT 1
-//#include <GL\glut.h>
-#include "GL/glui.h"
+	#include "GL/freeglut.h"
+	#define GLUI_FREEGLUT 1
+	//#include <GL\glut.h>
+	#include "GL/glui.h"
+	#include <omp.h>
 #endif
 
 //#include "GL/glut.h"
@@ -2265,52 +2266,55 @@ void grid3D::drawVelGL_TriPrisma(vector<double> U,vector<double> V,vector<double
 #ifdef __APPLE__
 		dispatch_queue_t c_queue = dispatch_queue_create("myConcurrentQueue",
 				DISPATCH_QUEUE_CONCURRENT);
-		dispatch_apply(nParticulas, c_queue, ^(size_t i) {
+		dispatch_apply(nParticulas, c_queue, ^(size_t i)
 #else
-			#pragma omp parallel for num_threads(19)
-			for (i=0;i<nParticulas;i++) {
+#pragma omp parallel for num_threads(19)
+				for (i=0;i<nParticulas;i++)
 #endif
-		for (i=0;i<nParticulas;i++) {
-			int pj,pk,pjmin;
-			float pd2min,pd2,px,py,pz,pdx,pdy,pdz;
-			px=Particulas[0][0][i];
-			py=Particulas[0][1][i];
-			pz=Particulas[0][2][i];
-			pd2min=1e10;
-			for (pj=0;pj<nTriPrisma3D;pj++) {
-				pd2=sqr(px-TriPrisma3D[pj].centro.x)+sqr(py-TriPrisma3D[pj].centro.y)+sqr(pz-TriPrisma3D[pj].centro.z);
-				if (pd2<pd2min) {
-					pd2min=pd2;
-					pjmin=pj;
-				}
-			}
+				{
+					int pj,pk,pjmin;
+					float pd2min,pd2,px,py,pz,pdx,pdy,pdz;
+					px=Particulas[0][0][i];
+					py=Particulas[0][1][i];
+					pz=Particulas[0][2][i];
+					pd2min=1e10;
+					for (pj=0;pj<nTriPrisma3D;pj++) {
+						pd2=sqr(px-TriPrisma3D[pj].centro.x)+sqr(py-TriPrisma3D[pj].centro.y)+sqr(pz-TriPrisma3D[pj].centro.z);
+						if (pd2<pd2min) {
+							pd2min=pd2;
+							pjmin=pj;
+						}
+					}
 
-			ParticulasBloq[i]=pjmin;
-			if ( pd2min>0.01 ) {
-				PosINI(i);
-			}
-			else {
-				//cout<<"factorV="<<factorV<<endl;
-				double UUU=sqrt(sqr(U[pjmin])+sqr(V[pjmin])+sqr(W[pjmin]));
-				pdx=U[pjmin]*dt/npasadas*factorV/UUU*factorVh;
-				pdy=V[pjmin]*dt/npasadas*factorV/UUU*factorVh;
-				pdz=W[pjmin]*dt/npasadas*factorV/UUU*factorVh*100/6.0;
-				if (i==-1) {
-					cout << "i="<<i<<"  UUU="<<UUU<<" pdx="<<pdx<<" dt="<<dt<<" npasadas="<<npasadas
-							<<" factorV="<<factorV<<" factorVh"<<factorVh<<endl;
-				}
+					ParticulasBloq[i]=pjmin;
+					if ( pd2min>0.01 ) {
+						PosINI(i);
+					}
+					else {
+						//cout<<"factorV="<<factorV<<endl;
+						double UUU=sqrt(sqr(U[pjmin])+sqr(V[pjmin])+sqr(W[pjmin]));
+						pdx=U[pjmin]*dt/npasadas*factorV/UUU*factorVh;
+						pdy=V[pjmin]*dt/npasadas*factorV/UUU*factorVh;
+						pdz=W[pjmin]*dt/npasadas*factorV/UUU*factorVh*100/6.0;
+						if (i==-1) {
+							cout << "i="<<i<<"  UUU="<<UUU<<" pdx="<<pdx<<" dt="<<dt<<" npasadas="<<npasadas
+									<<" factorV="<<factorV<<" factorVh"<<factorVh<<endl;
+						}
 
-				if (ipasadas>npasadas) {
-					for (pk=maxpasadas-1;pk>=0;pk--)
-						for (pj=0;pj<3;pj++)
-							Particulas[pk+1][pj][i]=Particulas[pk][pj][i];
-				}
+						if (ipasadas>npasadas) {
+							for (pk=maxpasadas-1;pk>=0;pk--)
+								for (pj=0;pj<3;pj++)
+									Particulas[pk+1][pj][i]=Particulas[pk][pj][i];
+						}
 
-				px=Particulas[0][0][i]+=pdx;
-				py=Particulas[0][1][i]+=pdy;
-				pz=Particulas[0][2][i]+=pdz;
-			}
-		}
+						px=Particulas[0][0][i]+=pdx;
+						py=Particulas[0][1][i]+=pdy;
+						pz=Particulas[0][2][i]+=pdz;
+					}
+				}
+#ifdef __APPLE__
+		);
+#endif
 	}
 
 	for (i=0;i<nParticulas;i++) {

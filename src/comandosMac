@@ -1,1 +1,3 @@
 /usr/local/bin/gcc  -framework OpenGL -framework GLUT  -framework GLUI -lobjc -fopenmp  Main.cpp -framework Accelerate grid3D.cpp FuncionesOpenGL.cpp glui-jsm.cpp -w -l stdc++
+clang -o ../Debug/a.out -O3 -framework OpenGL -framework GLUT  -framework GLUI -lobjc  Main.cpp -framework accelerate grid3D.cpp FuncionesOpenGL.cpp glui-jsm.cpp -w -l stdc++
+(cd ../Debug;./a.out)
