@@ -5,7 +5,6 @@
 #include "Class_Vector.h"
 #include "Macros.h"
 
-#define __APPLE__
 #ifdef __APPLE__
 	#include "TargetConditionals.h"
 	#ifdef TARGET_OS_MAC

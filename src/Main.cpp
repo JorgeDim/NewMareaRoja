@@ -560,9 +560,9 @@ PAUSA;
 		   fclose(pFile);
 
 			if (glui != NULL) {
-				PanelFlimite->enable();
-				Checkbox_particulas->enable();
-				PanelParticulas->enable();
+				if (PanelFlimite != NULL) PanelFlimite->enable();
+				if (Checkbox_particulas != NULL)Checkbox_particulas->enable();
+				if (PanelParticulas != NULL)PanelParticulas->enable();
 			}
 
 PAUSA;
@@ -676,7 +676,7 @@ PAUSA
 
 
 		if (glui != NULL) {
-			PanelFlimite->disable();
+			if (PanelFlimite != NULL) PanelFlimite->disable();
 			MODO_CampoVelocidades=0;
 			glui->sync_live();
 			Checkbox_particulas->disable();
@@ -872,7 +872,7 @@ PAUSA
 			sprintf(text,"%sCalculo T en Pila Estacionario (err0=%.2e)\n",text,err0);if (glui != NULL) glui_edittext->set_text(text);
 
 		}
-		if (glui != NULL) PanelFlimite->enable();
+		if (PanelFlimite != NULL)  PanelFlimite->enable();
 		double err2,minTemp,maxTemp;
 
 		printf("numero de celdas=%d",gtotal->nH3D);cout<<endl;
@@ -1647,10 +1647,10 @@ void   formulario_glui()
 	tsp=glui->add_spinner_to_panel( mipanel, " =D:" ,GLUI_SPINNER_FLOAT, &DD );
 	tsp->set_alignment(GLUI_ALIGN_LEFT);	tsp->w=10;
 	cout<<"Despues set_w"<<endl;
-
-
+	GLUI_Panel *ptmp2;
+#if 0
 	PanelFlimite = glui->add_panel("",GLUI_PANEL_EMBOSSED);
-	GLUI_Panel *ptmp2 = glui->add_panel_to_panel(PanelFlimite,"",GLUI_PANEL_NONE);
+	ptmp2 = glui->add_panel_to_panel(PanelFlimite,"",GLUI_PANEL_NONE);
 //	ptmp->set_alignment(GLUI_ALIGN_LEFT);
 	glui->add_checkbox_to_panel(ptmp2,"TLimite",&TLimite_if);
 	glui->add_column_to_panel(ptmp2,false);
@@ -1660,14 +1660,16 @@ void   formulario_glui()
 	glui_porcentaje=glui->add_statictext_to_panel(PanelFlimite,"");
 
 	PanelFlimite->disable();
+#endif
 
 
-
+#if 0
 	ptmp2 = glui->add_panel("",GLUI_PANEL_NONE);
 	glui->add_button_to_panel(ptmp2,"Save", 1002 ,control_cb );
 	glui->add_column_to_panel(ptmp2,false);
 	glui->add_column_to_panel(ptmp2,false);
 	glui->add_button_to_panel(ptmp2,"Read", 1003 ,control_cb );
+#endif
 
 	gluiMueve		=glui->add_checkbox("[M] Mueve centro",&MueveCentro);
 	//	gluiNumera		=glui->add_checkbox("'N' Numera Vertices(on/off)",NULL, 'N'+100 ,control_cb );
@@ -1687,11 +1689,11 @@ void   formulario_glui()
 
 	TesteDeVariablesGlobales();
 
-
+#if 0
 	glui->add_statictext( "" );
 	glui->add_button("Etapa Siguiente [Space]", 1001 ,control_cb );
 	glui->add_statictext( "" );
-
+#endif
 
 	PanelParticulas = glui->add_panel("",GLUI_PANEL_EMBOSSED);
 	Checkbox_particulas=glui->add_checkbox_to_panel(PanelParticulas,"Particulas ?",&MODO_CampoVelocidades, 1101 ,control_cb );
@@ -1700,8 +1702,8 @@ void   formulario_glui()
 
 
 	Spinner_particulas =tsp=glui->add_spinner_to_panel(PanelParticulas,"N Particulas",GLUI_SPINNER_INT, &nParticulas,2223,control_cb);
+	tsp->set_int_limits(1,20000);
 
-	tsp->set_int_limits(1,6000);
 //	tsp=glui->add_spinner("Factor[0,1]",GLUI_SPINNER_FLOAT, &FactorCercania );
 //	tsp->set_int_limits(0,1);
 	tsp=glui->add_spinner_to_panel(PanelParticulas,"Lento=",GLUI_SPINNER_INT, &npasadas );

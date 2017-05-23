@@ -1679,7 +1679,7 @@ void SaveOrRead(char *ifile_name,int iSaveReadMode) {
 		time_t _tm1 =time(NULL );
 
 		cout<< "lectura en "<<_tm1-_tm0<<" seg"<<endl;
-		if (glui != NULL) {
+		if (PanelFlimite != NULL) {
 			control_cb(1105);
 			PanelFlimite->execute_callback();
 			PanelFlimite->enable();
