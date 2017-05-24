@@ -32,11 +32,14 @@
 using namespace std;
 //#endif
 
-#include "comunes.h"
 
 extern int nParticulas;
 extern double ThetaMax,ThetaMin,dTheta_med;
 extern  int primerdrawVelGL;
+extern int const maxpasadas;
+
+
+#include "comunes.h"
 ////////////////////////////////////WEB
 
 void				GuardarInstantanea();

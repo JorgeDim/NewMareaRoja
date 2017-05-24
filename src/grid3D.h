@@ -4,7 +4,6 @@
 #include "Class_Vector.h"
 #include<vector>
 
-
 int const maxpasadas=20;
 extern float factorV, factorVh;
 extern int MODO_NumeraH,MODO_NumeraFF;

@@ -35,6 +35,22 @@ extern float GlobalCentros;
 
 
 
+GLfloat *GLfloat_buffer ;
+int nParticulas=200;
+int GL_immediate_mode=1;
+double ThetaMax,ThetaMin,dTheta_med;
+static vector<double> Particulas[maxpasadas+1][3];
+static vector<float> ParticulasZ;
+static vector<int> ParticulasBloq;
+int primerdrawVelGL=1;
+
+
+int npasadas=1;
+int multiplode3=0,deltade3;
+float Hz;
+int jprevio;
+extern GLUI_Spinner *Spinner_particulas;
+
 
 double xx0,yy0,zz0,xx1,yy1,zz1,xx2,yy2,zz2;
 int xxi;
@@ -2056,21 +2072,6 @@ void grid3D::GeneraCaras(int inicia)
 	}
 }
 
-
-int nParticulas=200;
-double ThetaMax,ThetaMin,dTheta_med;
-static vector<double> Particulas[maxpasadas+1][3];
-static vector<float> ParticulasZ;
-static vector<int> ParticulasBloq;
-int primerdrawVelGL=1;
-
-
-int npasadas=1;
-int multiplode3=0,deltade3;
-float Hz;
-int jprevio;
-extern GLUI_Spinner *Spinner_particulas;
-
 void grid3D::PosINI3(double PosX,double PosY,double PosZ)
 {
 	int i,j,jj,k,nr=5,nz=3,ir,iz;
@@ -2179,6 +2180,9 @@ void grid3D::drawVelGL(vector<double> U,vector<double> V,vector<double> W)
 		for (i=oldsize;i<nParticulas;i++) {
 			PosINI(i);
 		}
+
+//		GLfloat_buffer = (GLfloat*) malloc(sizeof(GLfloat)*(6*maxpasadas*nParticulas));
+		GLfloat_buffer = new float[6*maxpasadas*nParticulas];
 	}
 
 	primerdrawVelGL=0;
@@ -2247,8 +2251,6 @@ void DibujaParticula (int i,R3 & origen)
 	glEnable ( GL_COLOR_MATERIAL );
 	FuncionesOpenGL::ColorF3(ParticulasZ[i],1);
 	for (k=0;k<maxpasadas;k++) {
-		glBegin(GL_LINES);
-		//	glColor3f(1.0f,0.0,0.0);
 		float x1,x2,y1,y2,z1,z2,xm,ym,zm;
 		x1=Particulas[k][0][i];
 		y1=Particulas[k][1][i];
@@ -2265,9 +2267,20 @@ void DibujaParticula (int i,R3 & origen)
 		z1=z1+0.3*(zm-z1);
 #endif
 
-		glVertex3d(x1,y1,z1);
-		glVertex3d(x2,y2,z2);
-		glEnd();
+		if (GL_immediate_mode) {
+			glBegin(GL_LINES);
+			glVertex3d(x1,y1,z1);
+			glVertex3d(x2,y2,z2);
+			glEnd();
+		} else {
+			GLfloat_buffer[6*(i*maxpasadas+k)  ]=x1;
+			GLfloat_buffer[6*(i*maxpasadas+k)+1]=y1;
+			GLfloat_buffer[6*(i*maxpasadas+k)+2]=z1;
+			GLfloat_buffer[6*(i*maxpasadas+k)+3]=x2;
+			GLfloat_buffer[6*(i*maxpasadas+k)+4]=y2;
+			GLfloat_buffer[6*(i*maxpasadas+k)+5]=z2;
+
+		}
 	}
 	if (MODO_Origen) {
 		int iz =ParticulasBloq[i];
@@ -2309,6 +2322,10 @@ void grid3D::drawVelGL_TriPrisma(vector<double> U,vector<double> V,vector<double
 		for (i=oldsize;i<nParticulas;i++) {
 			PosINI(i);
 		}
+
+
+		//		GLfloat_buffer = (GLfloat*) malloc(sizeof(GLfloat)*(6*maxpasadas*nParticulas));
+				GLfloat_buffer = new float[6*maxpasadas*nParticulas];
 	}
 
 	primerdrawVelGL=0;
