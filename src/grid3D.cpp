@@ -6,19 +6,19 @@
 #include "Macros.h"
 
 #ifdef __APPLE__
-#include "TargetConditionals.h"
-#ifdef TARGET_OS_MAC
-#include <GLUT/glut.h>
-#include <OpenGL/OpenGL.h>
-#include "GLUI/glui.h"
-#include <dispatch/dispatch.h>
-#endif
+	#include "TargetConditionals.h"
+	#ifdef TARGET_OS_MAC
+		#include <GLUT/glut.h>
+		#include <OpenGL/OpenGL.h>
+		#include "GLUI/glui.h"
+		#include <dispatch/dispatch.h>
+	#endif
 #elif defined _WIN32 || defined _WIN64
-#include "GL/freeglut.h"
-#define GLUI_FREEGLUT 1
-//#include <GL\glut.h>
-#include "GL/glui.h"
-#include <omp.h>
+	#include "GL/freeglut.h"
+	#define GLUI_FREEGLUT 1
+	//#include <GL\glut.h>
+	#include "GL/glui.h"
+	#include <omp.h>
 #endif
 
 //#include "GL/glut.h"
@@ -2057,7 +2057,7 @@ void grid3D::GeneraCaras(int inicia)
 }
 
 
-int nParticulas=200;
+int nParticulas=2000;
 double ThetaMax,ThetaMin,dTheta_med;
 static vector<double> Particulas[maxpasadas+1][3];
 static vector<float> ParticulasZ;
