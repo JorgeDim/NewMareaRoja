@@ -520,7 +520,7 @@ void Calculo_EtapaS(int inicializa)
 		gtotal->CalculaNormalVertex();
 		cout<<"FIN:gtotal->CalculaNormalVertex() en ";toc();
 
-PAUSA;
+PAUSA2;
 
 		//Lectura de campo de Velocidades
 
@@ -1150,6 +1150,10 @@ void control_cb( int control )
 //		MODO_CampoVelocidades=!MODO_CampoVelocidades;
 	}
 
+	if (control==8001) { //Reset FPS
+		nframes2=nframes;
+		clock2=clock0;
+	}
 	if (control==11030) {  //Previo a 1103
 		int i,j,nt,tmp;
 		nt=gtotal->Cara.size();
@@ -1354,7 +1358,7 @@ void control_cb( int control )
 		}
 
 	}
-	if (control==10002) {
+		if (control==10002) {
 		glui3->hide();
 	}
 
@@ -1723,6 +1727,7 @@ void   formulario_glui()
 //	glui->add_statictext( "");
 	glui_FPS=glui->add_statictext( "FPS" );
 	glui_FPS->set_alignment(GLUI_ALIGN_CENTER);
+	glui->add_button("Reset", 8001 ,control_cb );
 //	glui_MSG=glui->add_statictext( "" );
 //	glui_MSG->set_alignment(GLUI_ALIGN_LEFT);
 

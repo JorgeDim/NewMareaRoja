@@ -137,7 +137,7 @@ char  texto[200] = "*.msh3D";
 ///
 clock_t clock0,clockF,clock2,clock2F;
 float FPS,FPS2;
-int nframes=0;
+int nframes=0, nframes2=0;
 
 
 ///MODOS

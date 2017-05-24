@@ -209,7 +209,6 @@ void DrawGraphics()
 {
 	if (DBG) cout<<"DrawGraphics()"<<endl;
 	static int contador=0;
-	static int nframes2=0;
 	char linea[100];
 	int i,j;
 
