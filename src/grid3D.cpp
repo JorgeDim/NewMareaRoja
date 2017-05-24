@@ -6,19 +6,19 @@
 #include "Macros.h"
 
 #ifdef __APPLE__
-	#include "TargetConditionals.h"
-	#ifdef TARGET_OS_MAC
-		#include <GLUT/glut.h>
-		#include <OpenGL/OpenGL.h>
-		#include "GLUI/glui.h"
-		#include <dispatch/dispatch.h>
-	#endif
+#include "TargetConditionals.h"
+#ifdef TARGET_OS_MAC
+#include <GLUT/glut.h>
+#include <OpenGL/OpenGL.h>
+#include "GLUI/glui.h"
+#include <dispatch/dispatch.h>
+#endif
 #elif defined _WIN32 || defined _WIN64
-	#include "GL/freeglut.h"
-	#define GLUI_FREEGLUT 1
-	//#include <GL\glut.h>
-	#include "GL/glui.h"
-	#include <omp.h>
+#include "GL/freeglut.h"
+#define GLUI_FREEGLUT 1
+//#include <GL\glut.h>
+#include "GL/glui.h"
+#include <omp.h>
 #endif
 
 //#include "GL/glut.h"
@@ -350,23 +350,23 @@ void TriPrisma::DrawCentro() {
 
 }
 
-	void TriPrisma::save(ofstream &myfile) {
+void TriPrisma::save(ofstream &myfile) {
 	int i;
 	if (binario) {
 		myfile.write((char*)&no,sizeof(no));
-//		cout<<"sizeof(iv)="<<sizeof(iv)<<endl;
+		//		cout<<"sizeof(iv)="<<sizeof(iv)<<endl;
 		myfile.write((char*)iv,sizeof(iv));
-//		cout<<"2sizeof(icara)="<<sizeof(icara)<<endl;
+		//		cout<<"2sizeof(icara)="<<sizeof(icara)<<endl;
 		myfile.write((char*)icara,sizeof(icara));
 		centro.save(myfile);
 
 		int psize=Poligono.size();
-//		cout<<"3sizeof(icara)="<<sizeof(icara)<<endl;
+		//		cout<<"3sizeof(icara)="<<sizeof(icara)<<endl;
 		myfile.write((char*)&psize,sizeof(psize));
 		for (i=0;i<   Poligono.size();i++)  Poligono[i].save(myfile);
 
 		psize=vecino.size();
-//		cout<<"4sizeof(icara)="<<sizeof(icara)<<endl;
+		//		cout<<"4sizeof(icara)="<<sizeof(icara)<<endl;
 		myfile.write((char*)&psize,sizeof(psize));
 		for (i=0;i<     vecino.size();i++) 	myfile.write((char*)vecino[i],sizeof(vecino[i]));
 
@@ -374,10 +374,10 @@ void TriPrisma::DrawCentro() {
 		myfile.write((char*)&psize,sizeof(psize));
 		for (i=0;i<     tipo_vecino.size();i++) 	myfile.write((char*)tipo_vecino[i],sizeof(tipo_vecino[i]));
 
-//		cout<<"5sizeof(icara)="<<sizeof(icara)<<endl;
+		//		cout<<"5sizeof(icara)="<<sizeof(icara)<<endl;
 		psize=dibujado.size();
 		myfile.write((char*)&psize,sizeof(psize));
-//		cout<<"6sizeof(icara)="<<sizeof(icara)<<endl;
+		//		cout<<"6sizeof(icara)="<<sizeof(icara)<<endl;
 		for (i=0;i<     dibujado.size();i++) 	myfile.write((char*)dibujado[i],sizeof(dibujado[i]));
 
 	} else {
@@ -1361,14 +1361,14 @@ int grid3D::AddCara3(int ib,int i0,int i1,int i2)
 //Agrega Cara Triangular
 {
 	int i;
-//	if (nCaras<10) {
-//		cout<<"C AddCara3(int ib="<<ib<<",int i0="<<i0<<",int i1="<<i1<<",int i2="<<i2<<")"<<endl;
-//	}
+	//	if (nCaras<10) {
+	//		cout<<"C AddCara3(int ib="<<ib<<",int i0="<<i0<<",int i1="<<i1<<",int i2="<<i2<<")"<<endl;
+	//	}
 	i=BuscaCara3( i0, i1, i2);
 	if (i<nCaras) { //Cara existente
-//		if (nCaras<10) {
-//			cout<<"C CaraExistente: i="<<i<<endl;
-//		}
+		//		if (nCaras<10) {
+		//			cout<<"C CaraExistente: i="<<i<<endl;
+		//		}
 
 		Cara[i].ih[Cara[i].nVolumenes]=ib;
 		Cara[i].nVolumenes++;
@@ -1552,18 +1552,18 @@ void grid3D::CentroCarasBloques()
 		}
 		Cara[i].centro.x=xg/Cara[i].nvCara; Cara[i].centro.y=yg/Cara[i].nvCara; Cara[i].centro.z=zg/Cara[i].nvCara;
 		Ax = (v3D[Cara[i].iv[1]].y - v3D[Cara[i].iv[0]].y) * (v3D[Cara[i].iv[2]].z - v3D[Cara[i].iv[0]].z)
-            				-(v3D[Cara[i].iv[1]].z - v3D[Cara[i].iv[0]].z) * (v3D[Cara[i].iv[2]].y - v3D[Cara[i].iv[0]].y);
+            						-(v3D[Cara[i].iv[1]].z - v3D[Cara[i].iv[0]].z) * (v3D[Cara[i].iv[2]].y - v3D[Cara[i].iv[0]].y);
 		Ay = (v3D[Cara[i].iv[1]].z - v3D[Cara[i].iv[0]].z) * (v3D[Cara[i].iv[2]].x - v3D[Cara[i].iv[0]].x)
-							-(v3D[Cara[i].iv[1]].x - v3D[Cara[i].iv[0]].x) * (v3D[Cara[i].iv[2]].z - v3D[Cara[i].iv[0]].z);
+									-(v3D[Cara[i].iv[1]].x - v3D[Cara[i].iv[0]].x) * (v3D[Cara[i].iv[2]].z - v3D[Cara[i].iv[0]].z);
 		Az = (v3D[Cara[i].iv[1]].x - v3D[Cara[i].iv[0]].x) * (v3D[Cara[i].iv[2]].y - v3D[Cara[i].iv[0]].y)
-							-(v3D[Cara[i].iv[1]].y - v3D[Cara[i].iv[0]].y) * (v3D[Cara[i].iv[2]].x - v3D[Cara[i].iv[0]].x);
+									-(v3D[Cara[i].iv[1]].y - v3D[Cara[i].iv[0]].y) * (v3D[Cara[i].iv[2]].x - v3D[Cara[i].iv[0]].x);
 		if (Cara[i].nvCara>3) {
 			Ax+= (v3D[Cara[i].iv[2]].y - v3D[Cara[i].iv[0]].y) * (v3D[Cara[i].iv[3]].z - v3D[Cara[i].iv[0]].z)
-									-(v3D[Cara[i].iv[2]].z - v3D[Cara[i].iv[0]].z) * (v3D[Cara[i].iv[3]].y - v3D[Cara[i].iv[0]].y);
+											-(v3D[Cara[i].iv[2]].z - v3D[Cara[i].iv[0]].z) * (v3D[Cara[i].iv[3]].y - v3D[Cara[i].iv[0]].y);
 			Ay+= (v3D[Cara[i].iv[2]].z - v3D[Cara[i].iv[0]].z) * (v3D[Cara[i].iv[3]].x - v3D[Cara[i].iv[0]].x)
-									-(v3D[Cara[i].iv[2]].x - v3D[Cara[i].iv[0]].x) * (v3D[Cara[i].iv[3]].z - v3D[Cara[i].iv[0]].z);
+											-(v3D[Cara[i].iv[2]].x - v3D[Cara[i].iv[0]].x) * (v3D[Cara[i].iv[3]].z - v3D[Cara[i].iv[0]].z);
 			Az+= (v3D[Cara[i].iv[2]].x - v3D[Cara[i].iv[0]].x) * (v3D[Cara[i].iv[3]].y - v3D[Cara[i].iv[0]].y)
-									-(v3D[Cara[i].iv[2]].y - v3D[Cara[i].iv[0]].y) * (v3D[Cara[i].iv[3]].x - v3D[Cara[i].iv[0]].x);
+											-(v3D[Cara[i].iv[2]].y - v3D[Cara[i].iv[0]].y) * (v3D[Cara[i].iv[3]].x - v3D[Cara[i].iv[0]].x);
 		}
 		Cara[i].normalCara.x=Ax;
 		Cara[i].normalCara.y=Ay;
@@ -2236,6 +2236,60 @@ void grid3D::drawVelGL(vector<double> U,vector<double> V,vector<double> W)
 
 }
 
+void DibujaParticula (int i,R3 & origen)
+{
+	int k;
+
+	//glEnable ( GL_COLOR_MATERIAL );
+	//glClear(GL_COLOR_BUFFER_BIT);
+
+	//glDisable(GL_DEPTH_TEST);
+	glEnable ( GL_COLOR_MATERIAL );
+	FuncionesOpenGL::ColorF3(ParticulasZ[i],1);
+	for (k=0;k<maxpasadas;k++) {
+		glBegin(GL_LINES);
+		//	glColor3f(1.0f,0.0,0.0);
+		float x1,x2,y1,y2,z1,z2,xm,ym,zm;
+		x1=Particulas[k][0][i];
+		y1=Particulas[k][1][i];
+		z1=Particulas[k][2][i];
+		x2=Particulas[k+1][0][i];
+		y2=Particulas[k+1][1][i];
+		z2=Particulas[k+1][2][i];
+#if 0
+		xm=(x1+x2)/2;
+		ym=(y1+y2)/2;
+		zm=(z1+z2)/2;
+		x1=x1+0.3*(xm-x1);
+		y1=y1+0.3*(ym-y1);
+		z1=z1+0.3*(zm-z1);
+#endif
+
+		glVertex3d(x1,y1,z1);
+		glVertex3d(x2,y2,z2);
+		glEnd();
+	}
+	if (MODO_Origen) {
+		int iz =ParticulasBloq[i];
+		iz=iz-iz/3*3;
+		FuncionesOpenGL::ColorF3(0.5*iz,1);
+		glBegin(GL_LINES);
+		glVertex3d(Particulas[0][0][i],Particulas[0][1][i], Particulas[0][2][i]);
+		glVertex3d(origen.x,origen.y,origen.z);
+		glEnd();
+	}
+
+
+//	glDisable ( GL_COLOR_MATERIAL );
+	//glEnable(GL_DEPTH_TEST);
+	FuncionesOpenGL::ColorF3(ParticulasZ[i],0);
+	glPushMatrix();
+	glTranslated(Particulas[0][0][i],Particulas[0][1][i], Particulas[0][2][i]);
+	//		FuncionesOpenGL::material(100);
+	FuncionesOpenGL::esfera(0.003*Dominio_Xmax,3);
+	glPopMatrix();
+}
+
 void grid3D::drawVelGL_TriPrisma(vector<double> U,vector<double> V,vector<double> W)
 {
 	//	cout<<"grid3D::drawVelGL"<<"primerdrawVelGL="<<primerdrawVelGL<<"nParticulas="<<nParticulas<<endl;
@@ -2316,55 +2370,12 @@ void grid3D::drawVelGL_TriPrisma(vector<double> U,vector<double> V,vector<double
 #endif
 	}
 
+//	#pragma omp parallel for num_threads(1)
 	for (i=0;i<nParticulas;i++) {
-		//glEnable ( GL_COLOR_MATERIAL );
-		//glClear(GL_COLOR_BUFFER_BIT);
-
-		//glDisable(GL_DEPTH_TEST);
-		glEnable ( GL_COLOR_MATERIAL );
-		FuncionesOpenGL::ColorF3(ParticulasZ[i],1);
-		for (k=0;k<maxpasadas;k++) {
-			glBegin(GL_LINES);
-			//	glColor3f(1.0f,0.0,0.0);
-			float x1,x2,y1,y2,z1,z2,xm,ym,zm;
-			x1=Particulas[k][0][i];
-			y1=Particulas[k][1][i];
-			z1=Particulas[k][2][i];
-			x2=Particulas[k+1][0][i];
-			y2=Particulas[k+1][1][i];
-			z2=Particulas[k+1][2][i];
-			xm=(x1+x2)/2;
-			ym=(y1+y2)/2;
-			zm=(z1+z2)/2;
-			x1=x1+0.3*(xm-x1);
-			y1=y1+0.3*(ym-y1);
-			z1=z1+0.3*(zm-z1);
-
-			glVertex3d(x1,y1,z1);
-			glVertex3d(x2,y2,z2);
-			glEnd();
-		}
-		if (MODO_Origen) {
-			int iz =ParticulasBloq[i];
-			iz=iz-iz/3*3;
-			FuncionesOpenGL::ColorF3(0.5*iz,1);
-			glBegin(GL_LINES);
-			glVertex3d(Particulas[0][0][i],Particulas[0][1][i], Particulas[0][2][i]);
-			R3 centro=TriPrisma3D[ParticulasBloq[i]].centro;
-			glVertex3d(centro.x,centro.y,centro.z);
-			glEnd();
-		}
-
-
-		glDisable ( GL_COLOR_MATERIAL );
-		//glEnable(GL_DEPTH_TEST);
-		FuncionesOpenGL::ColorF3(ParticulasZ[i],0);
-		glPushMatrix();
-		glTranslated(Particulas[0][0][i],Particulas[0][1][i], Particulas[0][2][i]);
-		//		FuncionesOpenGL::material(100);
-		FuncionesOpenGL::esfera(0.003*Dominio_Xmax,3);
-		glPopMatrix();
+		DibujaParticula (i,TriPrisma3D[ParticulasBloq[i]].centro);
 	}
+
+	glDisable ( GL_COLOR_MATERIAL );
 	if (ipasadas>npasadas) ipasadas=0;
 
 
@@ -2573,7 +2584,7 @@ void Cara3D::drawGL()
 		glTranslatef(-centro.x,-centro.y,-centro.z);
 	}
 	if (ModoDibujaFrontera && nVolumenes ==1) {
-//		FuncionesOpenGL::material(iBC+10);
+		//		FuncionesOpenGL::material(iBC+10);
 		FuncionesOpenGL::material(1);
 		draw_caraGL();
 	}
@@ -2757,11 +2768,11 @@ void grid3D::drawGL()
 			}
 			for (i=0;i<nTriPrisma3D;i++) {
 
-//				glTranslatef(TriPrisma3D[i].centro.x,TriPrisma3D[i].centro.y,TriPrisma3D[i].centro.z);
+				//				glTranslatef(TriPrisma3D[i].centro.x,TriPrisma3D[i].centro.y,TriPrisma3D[i].centro.z);
 				FuncionesOpenGL::ColorF3(0.5*(i%3), 0);
-//				FuncionesOpenGL::esfera(0.001,3);
+				//				FuncionesOpenGL::esfera(0.001,3);
 				TriPrisma3D[i].DrawCentro();
-//				glTranslatef(-TriPrisma3D[i].centro.x,-TriPrisma3D[i].centro.y,-TriPrisma3D[i].centro.z);
+				//				glTranslatef(-TriPrisma3D[i].centro.x,-TriPrisma3D[i].centro.y,-TriPrisma3D[i].centro.z);
 			}
 		}
 		if (DBG) cout<<"grid3D::drawGL()1600"<<endl;

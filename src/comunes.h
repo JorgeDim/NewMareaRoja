@@ -253,36 +253,7 @@ void DrawGraphics()
 	glClear(GL_DEPTH_BUFFER_BIT);
 	if (DBG) cout<<"DrawGraphics()166"<<endl;
 
-	/*
-	//Test Ortogonal
-	cout<<"MatrizRotacionGlobal="<<endl;
-	cout<< MatrizRotacionGlobal[0]<<"\t"<<MatrizRotacionGlobal[1]<<"\t"
-			<<MatrizRotacionGlobal[2]<<"\t"<<MatrizRotacionGlobal[3]<<endl;
-	cout<< MatrizRotacionGlobal[4]<<"\t"<<MatrizRotacionGlobal[5]<<"\t"
-			<<MatrizRotacionGlobal[6]<<"\t"<<MatrizRotacionGlobal[7]<<endl;
-	cout<< MatrizRotacionGlobal[8]<<"\t"<<MatrizRotacionGlobal[9]<<"\t"
-			<<MatrizRotacionGlobal[10]<<"\t"<<MatrizRotacionGlobal[11]<<endl;
-	cout<< MatrizRotacionGlobal[12]<<"\t"<<MatrizRotacionGlobal[13]<<"\t"
-			<<MatrizRotacionGlobal[14]<<"\t"<<MatrizRotacionGlobal[15]<<endl;
 
-	cout<<"MatrizRotacionGlobalINV="<<endl;
-
-	cout<< MatrizRotacionGlobalINV[0]<<"\t"<<MatrizRotacionGlobalINV[1]<<"\t"
-			<<MatrizRotacionGlobalINV[2]<<"\t"<<MatrizRotacionGlobalINV[3]<<endl;
-	cout<< MatrizRotacionGlobalINV[4]<<"\t"<<MatrizRotacionGlobalINV[5]<<"\t"
-			<<MatrizRotacionGlobalINV[6]<<"\t"<<MatrizRotacionGlobalINV[7]<<endl;
-	cout<< MatrizRotacionGlobalINV[8]<<"\t"<<MatrizRotacionGlobalINV[9]<<"\t"
-			<<MatrizRotacionGlobalINV[10]<<"\t"<<MatrizRotacionGlobalINV[11]<<endl;
-	cout<< MatrizRotacionGlobalINV[12]<<"\t"<<MatrizRotacionGlobalINV[13]<<"\t"
-			<<MatrizRotacionGlobalINV[14]<<"\t"<<MatrizRotacionGlobalINV[15]<<endl;
-
-	 */
-
-
-
-//	glMatrixMode(GL_PROJECTION);
-//	glLoadIdentity();
-//	glOrtho(-10, 10,	-10, 10, -1000, 1000);
 
 
 
@@ -351,6 +322,7 @@ void DrawGraphics()
 	if (DBG) cout<<"DrawGraphics()244"<<endl;
 
 	if (MODO_CampoVelocidades) {
+		glDisable(GL_CLIP_PLANE0);
 //		FuncionesOpenGL::material(0);	gtotal->drawVelGL(U,V,W);
 		FuncionesOpenGL::material(0);	gtotal->drawVelGL_TriPrisma(U,V,W);
 	}
@@ -624,12 +596,12 @@ void inicializacionGL()
 	glMatrixMode(GL_MODELVIEW);
 
 	glLoadIdentity();
-	glRotatef(-60,1,0,0);
-	glRotatef(-135,0,0,1);
+//	glRotatef(-60,1,0,0);
+//	glRotatef(-135,0,0,1);
 	glGetFloatv(GL_MODELVIEW_MATRIX, (GLfloat*)MatrizRotacionGlobal);
 	glLoadIdentity();
-	glRotatef(135,0,0,1);
-	glRotatef(60,1,0,0);
+//	glRotatef(135,0,0,1);
+//	glRotatef(60,1,0,0);
 	glGetFloatv(GL_MODELVIEW_MATRIX, (GLfloat*)MatrizRotacionGlobalINV);
 	FuncionesOpenGL::modelview_calculado=false;
 	if (DBG) cout<<"inicializacionGL():END"<<endl;
@@ -814,6 +786,7 @@ bool gluInvertMatrix(const GLfloat  m[16], GLfloat  invOut[16])
     double inv[16], det;
     int i;
 
+    cout<<"I gluInvertMatrix:1"<<endl;
     inv[0] = m[5]  * m[10] * m[15] -
              m[5]  * m[11] * m[14] -
              m[9]  * m[6]  * m[15] +
@@ -856,6 +829,7 @@ bool gluInvertMatrix(const GLfloat  m[16], GLfloat  invOut[16])
              m[12] * m[2] * m[11] -
              m[12] * m[3] * m[10];
 
+    cout<<"I gluInvertMatrix:10"<<endl;
     inv[9] = -m[0]  * m[9] * m[15] +
               m[0]  * m[11] * m[13] +
               m[8]  * m[1] * m[15] -
@@ -898,6 +872,7 @@ bool gluInvertMatrix(const GLfloat  m[16], GLfloat  invOut[16])
                m[12] * m[1] * m[6] +
                m[12] * m[2] * m[5];
 
+    cout<<"I gluInvertMatrix:20"<<endl;
     inv[3] = -m[1] * m[6] * m[11] +
               m[1] * m[7] * m[10] +
               m[5] * m[2] * m[11] -
@@ -926,16 +901,23 @@ bool gluInvertMatrix(const GLfloat  m[16], GLfloat  invOut[16])
               m[8] * m[1] * m[6] -
               m[8] * m[2] * m[5];
 
+    cout<<"I gluInvertMatrix:30"<<endl;
     det = m[0] * inv[0] + m[1] * inv[4] + m[2] * inv[8] + m[3] * inv[12];
 
-    if (det == 0)
+    if (det == 0) {
+    	cout <<"Matriz No invertible"<<endl;
         return false;
+    }
 
+    cout<<"I gluInvertMatrix:40: det="<<det<<endl;
     det = 1.0 / det;
 
+
+    cout<<"I gluInvertMatrix:50"<<endl;
     for (i = 0; i < 16; i++)
         invOut[i] = inv[i] * det;
 
+    cout<<"I gluInvertMatrix:60"<<endl;
     return true;
 }
 
@@ -1175,7 +1157,9 @@ void CB_mouse(int button, int state, int x, int y)
 
 				cout<<"M vecUEsfera=["<<vecUEsfera[0]<<","<<vecUEsfera[1]<<","<<vecUEsfera[2]<<"]"<<endl;
 				gluInvertMatrix(MatrizRotacionGlobal,MatrizRotacionGlobalINV);
+				cout<<"+1"<<endl;
 				MatrizXvector4(MatrizRotacionGlobal,vecDXEsfera,vecDUEsfera);
+				cout<<"+2"<<endl;
 				vecUEsfera[0]+=vecDUEsfera[0]*Escala;
 				vecUEsfera[1]+=vecDUEsfera[1]*Escala;
 				vecUEsfera[2]+=vecDUEsfera[2]*Escala;

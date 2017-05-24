@@ -49,7 +49,7 @@ float GlobalFovy=30,GlobalOldFovy=30,GlobalCentros=0.05;
 
 //Plano del clipping
 //float Ax=0,By=-100,Cz=0,DD=-0.095;
-float Ax=0,By=0,Cz=10,DD=-0.01;
+float Ax=0,By=0,Cz=10,DD=-0.02;
 float TLimite=40;
 int TLimite_if=1;
 
@@ -168,7 +168,7 @@ int binario=0;
 float factorV=1,factorVh=0.05;
 float NumEscala=.05;
 GLfloat wAngleX=0,wAngleY=0,wAngleZ=0;
-float Escala=1;
+float Escala=5;
 GLfloat   MatrizRotacionGlobal0[16]   ={1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
 GLfloat   MatrizRotacionGlobal[16]   ={1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
 GLfloat   MatrizRotacionGlobalINV[16]={1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
