@@ -37,6 +37,8 @@ extern int nParticulas;
 extern double ThetaMax,ThetaMin,dTheta_med;
 extern  int primerdrawVelGL;
 extern int const maxpasadas;
+extern int GL_immediate_mode;
+extern int GL_threads;
 
 
 #include "comunes.h"
@@ -1891,6 +1893,14 @@ void TesteDeVariablesGlobales() {
 	tsp=glui->add_spinner("SizeCentros",GLUI_SPINNER_FLOAT, &GlobalCentros);
 	tsp->set_float_limits(0.001,1);
 	tsp->set_speed(1);
+
+	tsp=glui->add_spinner("GL_immediate_mode",GLUI_SPINNER_INT, &GL_immediate_mode);
+	tsp->set_int_limits(0,1);
+	tsp=glui->add_spinner("GL_threads",GLUI_SPINNER_INT, &GL_threads);
+	tsp->set_int_limits(1,20);
+
+
+
 
 
 }

@@ -37,6 +37,7 @@ extern float GlobalCentros;
 
 GLfloat *GLfloat_buffer ;
 int nParticulas=2000;
+int GL_threads=10;
 int GL_immediate_mode=0;
 double ThetaMax,ThetaMin,dTheta_med;
 static vector<double> Particulas[maxpasadas+1][3];
@@ -2084,6 +2085,9 @@ void grid3D::PosINI3(double PosX,double PosY,double PosZ)
 			Particulas[k][j].resize(nParticulas+nz*nr);
 		}
 	}
+
+	GLfloat_buffer = new float[6*maxpasadas*(nParticulas+nz*nr)];
+
 	for (ir=0;ir<nr;ir++) {
 		//TODO
 		int pj,pk,pjmin;
@@ -2324,8 +2328,7 @@ void grid3D::drawVelGL_TriPrisma(vector<double> U,vector<double> V,vector<double
 		}
 
 
-		//		GLfloat_buffer = (GLfloat*) malloc(sizeof(GLfloat)*(6*maxpasadas*nParticulas));
-				GLfloat_buffer = new float[6*maxpasadas*nParticulas];
+		GLfloat_buffer = new float[6*maxpasadas*nParticulas];
 	}
 
 	primerdrawVelGL=0;
@@ -2338,7 +2341,7 @@ void grid3D::drawVelGL_TriPrisma(vector<double> U,vector<double> V,vector<double
 				DISPATCH_QUEUE_CONCURRENT);
 		dispatch_apply(nParticulas, c_queue, ^(size_t i)
 #else
-#pragma omp parallel for num_threads(39)
+#pragma omp parallel for num_threads(GL_threads)
 				for (i=0;i<nParticulas;i++)
 #endif
 				{
@@ -2388,9 +2391,9 @@ void grid3D::drawVelGL_TriPrisma(vector<double> U,vector<double> V,vector<double
 #endif
 	}
 
-//	#pragma omp parallel for num_threads(1)
+	#pragma omp parallel for num_threads(10)
 	for (i=0;i<nParticulas;i++) {
-		//DibujaParticula (i,TriPrisma3D[ParticulasBloq[i]].centro);
+		DibujaParticula (i,TriPrisma3D[ParticulasBloq[i]].centro);
 	}
 
 
