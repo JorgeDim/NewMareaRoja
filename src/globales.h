@@ -5,22 +5,6 @@
 //#include "../../EjemploOpenGL/src/FuncionesOpenGL.h"
 #include "grid3D.h"
 
-#ifdef __APPLE__
-    #include "TargetConditionals.h"
-    #ifdef TARGET_OS_MAC
-        #include <GLUT/glut.h>
-        #include <OpenGL/OpenGL.h>
-		#include "GLUI/glui.h"
-
-    #endif
-#elif defined _WIN32 || defined _WIN64
-	#include "GL/freeglut.h"
-	//#include <GL\glut.h>
-	#define GLUI_FREEGLUT 1
-	//#include "GL/glut.h"
-	#include "GL/glui.h"
-
-#endif
 
 
 

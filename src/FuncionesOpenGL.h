@@ -3,18 +3,7 @@
 #define FUNCIONES_OPENGL_JSM 1
 #include <math.h>
 #include <string.h>
-#ifdef __APPLE__
-    #include "TargetConditionals.h"
-    #ifdef TARGET_OS_MAC
-        #include <GLUT/glut.h>
-        #include <OpenGL/OpenGL.h>
-    #endif
-#elif defined _WIN32 || defined _WIN64
-	#include "GL/freeglut.h"
-	//#include <GL\glut.h>
-	#define GLUI_FREEGLUT 1
-	//#include "GL/glut.h"
-#endif
+#include "GlutFreeGlut.h"
 
 extern GLuint baseF; 
 extern GLuint baseBIT; 
@@ -29,6 +18,7 @@ public:
 	static void Print(char s[],int bit=0);
 	static void material(int cual=0);
 	static void esfera(double R,int N);
+	static void esfera(double x0,double y0,double z0,double R,int N,int N2);
 	static void ejes();
 	static void ColorF(double minF,double maxF,double lF);
 	static void ColorF2(double minF,double maxF,double lF);

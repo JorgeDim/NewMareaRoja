@@ -5,30 +5,12 @@
 #include <cstring>
 #include <string>
 #include <vector>
-#ifdef __APPLE__
-    #include "TargetConditionals.h"
-    #ifdef TARGET_OS_MAC
-        #include <GLUT/glut.h>
-        #include <OpenGL/OpenGL.h>
-//        #define mkdir(x) system(sprintf("mkdir %s",((x))))
-    #endif
-#elif defined _WIN32 || defined _WIN64
-	#include "GL/freeglut.h"
-	//#include <GL\glut.h>
-	#define GLUI_FREEGLUT 1
-	//#include "GL/glut.h"
-	//#ifdef _WIN32
-	#include <windows.h>
-	#include <Commdlg.h>
-//   #define mkdir(x,y) _mkdir((x))
-//   #define rmdir(x) _rmdir((x))
-   #define getcwd _getcwd
-
-#endif
 
 #include <stdio.h>
-#include "globales.h"
 #include <iomanip>
+
+#include "GlutFreeGlut.h"
+#include "globales.h"
 using namespace std;
 //#endif
 
@@ -1895,7 +1877,7 @@ void TesteDeVariablesGlobales() {
 	tsp->set_speed(1);
 
 	tsp=glui->add_spinner("GL_immediate_mode",GLUI_SPINNER_INT, &GL_immediate_mode);
-	tsp->set_int_limits(0,1);
+	tsp->set_int_limits(0,4);
 	tsp=glui->add_spinner("GL_threads",GLUI_SPINNER_INT, &GL_threads);
 	tsp->set_int_limits(1,20);
 

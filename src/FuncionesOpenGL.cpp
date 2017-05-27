@@ -1,4 +1,4 @@
-#pragma once
+//#pragma once
 #define FUNCIONES_OPENGL_CPP_JSM 1
 
 #include "FuncionesOpenGL.h"
@@ -108,6 +108,59 @@ void FuncionesOpenGL::ObtieneMatrices()
 
 }
 
+void FuncionesOpenGL::esfera(double x0,double y0,double z0,double R,int N,int N2)
+{
+
+
+	int i,j;
+	double pi=4*atan((double)1);
+	double dt=pi/N,dt2,u,v;
+	double x1,y1,z1;
+	double x2,y2,z2;
+	double x3,y3,z3;
+	double x4,y4,z4;
+
+
+	for (j=0;j<N;j++) {
+		dt2=2*pi/N2;
+		for (i=0;i<N2;i++){
+			u=i*dt2;
+			v=j*dt;
+			x1=cos(u)*sin(v);
+			y1=sin(u)*sin(v);
+			z1=cos(v);
+
+			u+=dt2;
+			x2=cos(u)*sin(v);
+			y2=sin(u)*sin(v);
+			z2=cos(v);
+
+			v+=dt;
+			x3=cos(u)*sin(v);
+			y3=sin(u)*sin(v);
+			z3=cos(v);
+
+			u-=dt2;
+			x4=cos(u)*sin(v);
+			y4=sin(u)*sin(v);
+			z4=cos(v);
+
+
+			glBegin(GL_QUADS);
+			glNormal3d(Escala*x1,Escala*y1,Escala*z1);
+			glVertex3d(x0+R*x1,y0+R*y1,z0+R*z1);
+			glNormal3d(Escala*x2,Escala*y2,Escala*z2);
+			glVertex3d(x0+R*x2,y0+R*y2,z0+R*z2);
+			glNormal3d(Escala*x3,Escala*y3,Escala*z3);
+			glVertex3d(x0+R*x3,y0+R*y3,z0+R*z3);
+			glNormal3d(Escala*x4,Escala*y4,Escala*z2);
+			glVertex3d(x0+R*x4,y0+R*y4,z0+R*z4);
+			glEnd();
+		}
+	}
+
+
+}
 void FuncionesOpenGL::esfera(double R,int N)
 {
 

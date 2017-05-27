@@ -9,10 +9,10 @@
 		#include "GLUI/glui.h"
 
     #endif
-#elif defined _WIN32 || defined _WIN64
-	#include "GL/freeglut.h"
-	//#include <GL\glut.h>
-	#define GLUI_FREEGLUT 1
+#elif defined _WIN32 || defined _WIN64 || __CYGWIN__
+	//#include "GL/freeglut.h"
+	#include <GL\glut.h>
+	//#define GLUI_FREEGLUT 1
 	//#include "GL/glut.h"
 	#include "GL/glui.h"
 

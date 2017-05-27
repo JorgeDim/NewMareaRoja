@@ -1,27 +1,11 @@
-#pragma once
+//#pragma once
 #include <stdio.h>
 #include "grid3D.h"
-#include "FuncionesOpenGL.h"
 #include "Class_Vector.h"
 #include "Macros.h"
 
-#ifdef __APPLE__
-#include "TargetConditionals.h"
-#ifdef TARGET_OS_MAC
-#include <GLUT/glut.h>
-#include <OpenGL/OpenGL.h>
-#include "GLUI/glui.h"
-#include <dispatch/dispatch.h>
-#endif
-#elif defined _WIN32 || defined _WIN64
-#include "GL/freeglut.h"
-#define GLUI_FREEGLUT 1
-//#include <GL\glut.h>
-#include "GL/glui.h"
-#include <omp.h>
-#endif
-
-//#include "GL/glut.h"
+#include "GlutFreeGlut.h"
+#include "FuncionesOpenGL.h"
 
 extern char  text[200];
 
@@ -36,7 +20,7 @@ extern float GlobalCentros;
 
 
 GLfloat *GLfloat_buffer ;
-int nParticulas=2000;
+int nParticulas=8000;
 int GL_threads=10;
 int GL_immediate_mode=0;
 double ThetaMax,ThetaMin,dTheta_med;
@@ -2252,8 +2236,10 @@ void DibujaParticula (int i,R3 & origen)
 	//glClear(GL_COLOR_BUFFER_BIT);
 
 	//glDisable(GL_DEPTH_TEST);
-	glEnable ( GL_COLOR_MATERIAL );
-	FuncionesOpenGL::ColorF3(ParticulasZ[i],1);
+	if (GL_immediate_mode==1) {
+		glEnable ( GL_COLOR_MATERIAL );
+		FuncionesOpenGL::ColorF3(ParticulasZ[i],1);
+	}
 	for (k=0;k<maxpasadas;k++) {
 		float x1,x2,y1,y2,z1,z2,xm,ym,zm;
 		x1=Particulas[k][0][i];
@@ -2271,7 +2257,7 @@ void DibujaParticula (int i,R3 & origen)
 		z1=z1+0.3*(zm-z1);
 #endif
 
-		if (GL_immediate_mode) {
+		if (GL_immediate_mode==1) {
 			glBegin(GL_LINES);
 			glVertex3d(x1,y1,z1);
 			glVertex3d(x2,y2,z2);
@@ -2289,22 +2275,23 @@ void DibujaParticula (int i,R3 & origen)
 	if (MODO_Origen) {
 		int iz =ParticulasBloq[i];
 		iz=iz-iz/3*3;
-		FuncionesOpenGL::ColorF3(0.5*iz,1);
-		glBegin(GL_LINES);
-		glVertex3d(Particulas[0][0][i],Particulas[0][1][i], Particulas[0][2][i]);
-		glVertex3d(origen.x,origen.y,origen.z);
-		glEnd();
+		if (GL_immediate_mode==1) {
+			FuncionesOpenGL::ColorF3(0.5*iz,1);
+			glBegin(GL_LINES);
+			glVertex3d(Particulas[0][0][i],Particulas[0][1][i], Particulas[0][2][i]);
+			glVertex3d(origen.x,origen.y,origen.z);
+			glEnd();
+		}
 	}
 
 
-//	glDisable ( GL_COLOR_MATERIAL );
-	//glEnable(GL_DEPTH_TEST);
-	FuncionesOpenGL::ColorF3(ParticulasZ[i],0);
-	glPushMatrix();
-	glTranslated(Particulas[0][0][i],Particulas[0][1][i], Particulas[0][2][i]);
-	//		FuncionesOpenGL::material(100);
-	FuncionesOpenGL::esfera(0.003*Dominio_Xmax,3);
-	glPopMatrix();
+	if (GL_immediate_mode==1) {
+		glDisable ( GL_COLOR_MATERIAL );
+		//glEnable(GL_DEPTH_TEST);
+		FuncionesOpenGL::ColorF3(ParticulasZ[i],0);
+		//		FuncionesOpenGL::material(100);
+		FuncionesOpenGL::esfera(Particulas[0][0][i],Particulas[0][1][i], Particulas[0][2][i],0.003*Dominio_Xmax,3,6);
+	}
 }
 
 void grid3D::drawVelGL_TriPrisma(vector<double> U,vector<double> V,vector<double> W)
@@ -2398,9 +2385,12 @@ void grid3D::drawVelGL_TriPrisma(vector<double> U,vector<double> V,vector<double
 
 
 
-	if (!GL_immediate_mode) {
+	if (GL_immediate_mode==2) {
+
+		glEnable ( GL_COLOR_MATERIAL );
+		glColor3f(1,1,0);
 		glBegin(GL_LINES);
-		for (i=0;i<6*nParticulas*maxpasadas*0;i+=3) {
+		for (i=0;i<6*nParticulas*maxpasadas;i+=3) {
 			glVertex3f(GLfloat_buffer[i],GLfloat_buffer[i+1],GLfloat_buffer[i+2]);
 
 		}

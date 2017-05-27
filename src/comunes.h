@@ -1091,6 +1091,16 @@ void CB_mouse(int button, int state, int x, int y)
 		case GLUT_MIDDLE_BUTTON:
 
 			iPush=2;
+			break;
+
+		case 3:
+
+			Escala *=1.1;
+			break;
+		case 4:
+
+			Escala /=1.1;
+			break;
 
 
 		}
