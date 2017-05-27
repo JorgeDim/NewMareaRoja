@@ -2290,7 +2290,10 @@ void DibujaParticula (int i,R3 & origen)
 		//glEnable(GL_DEPTH_TEST);
 		FuncionesOpenGL::ColorF3(ParticulasZ[i],0);
 		//		FuncionesOpenGL::material(100);
-		FuncionesOpenGL::esfera(Particulas[0][0][i],Particulas[0][1][i], Particulas[0][2][i],0.003*Dominio_Xmax,3,6);
+		//FuncionesOpenGL::esfera(Particulas[0][0][i],Particulas[0][1][i], Particulas[0][2][i],0.003*Dominio_Xmax,2,7);
+		FuncionesOpenGL::cono(Particulas[0][0][i],Particulas[0][1][i], Particulas[0][2][i],
+				Particulas[1][0][i],Particulas[1][1][i], Particulas[1][2][i]
+																		  ,0.003*Dominio_Xmax,7);
 	}
 }
 

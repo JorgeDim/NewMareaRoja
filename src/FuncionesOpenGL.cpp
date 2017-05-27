@@ -3,6 +3,12 @@
 
 #include "FuncionesOpenGL.h"
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <iostream>
+#include <fstream>
+#include <string.h>
+#include <iomanip>
 
  int FuncionesOpenGL::viewport_calculado=false;
  int FuncionesOpenGL::modelview_calculado=false;
@@ -13,7 +19,18 @@
  GLdouble FuncionesOpenGL::projection[16]={1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
  extern  float FactorAmbient,FactorDifusse,FactorSpecular,FactorEmission;
 
+ class R3{ //Puntos,vectores y Doblepuntos de \R^3
+ public:
+ 	double x,y,z,L;//L se usa para trazos que unen dos puntos en los poligonos
 
+ //-----
+ 	void save(std::ofstream &myfile);
+ 	void read(std::ifstream &myfile);
+ 	void Traslada(double dx,double dy,double dz);
+ 	void EscalaZ(double lambda);
+ 	void NormaUnitario();
+
+ };
 
 void FuncionesOpenGL::Print(char s[],int bit)
 {
@@ -108,6 +125,47 @@ void FuncionesOpenGL::ObtieneMatrices()
 
 }
 
+
+void FuncionesOpenGL::cono(double x0,double y0,double z0,double x1,double y1,double z1,double R,int N)
+{
+	int i,j;
+	double pi=4*atan((double)1);
+	double dt=2*pi/N,u,v;
+	double x2,y2,z2;
+	double x3,y3,z3;
+	double x4,y4,z4;
+
+	R3 TT,NN,BB;
+	TT.x=x1-x0;
+	TT.y=y1-y0;
+	TT.z=z1-z0;
+	TT.NormaUnitario();
+	NN.x=-TT.y;NN.y=TT.x;NN.z=0;NN.NormaUnitario();
+	BB.x=TT.y*NN.z-TT.z*NN.y;
+	BB.y=TT.z*NN.x-TT.x*NN.z;
+	BB.z=TT.x*NN.y-TT.y*NN.x;
+	for (j=0;j<N;j++) {
+		v=j*dt;
+		x2=(NN.x*cos(v)+BB.x*sin(v))*0.5;
+		y2=(NN.y*cos(v)+BB.y*sin(v))*0.5;
+		z2=(NN.z*cos(v)+BB.z*sin(v))*0.5;
+		v+=dt;
+		x3=(NN.x*cos(v)+BB.x*sin(v))*0.5;
+		y3=(NN.y*cos(v)+BB.y*sin(v))*0.5;
+		z3=(NN.z*cos(v)+BB.z*sin(v))*0.5;
+
+
+		glBegin(GL_TRIANGLES);
+		glNormal3d(-TT.x,-TT.y,-TT.z);
+		glVertex3d(x0,y0,z0);
+		glNormal3d(Escala*x2,Escala*y2,Escala*z2);
+		glVertex3d(x0+R*(TT.x+x2),y0+R*(TT.y+y2),z0+R*(TT.z+z2));
+		glNormal3d(Escala*x3,Escala*y3,Escala*z3);
+		glVertex3d(x0+R*(TT.x+x3),y0+R*(TT.y+y3),z0+R*(TT.z+z3));
+		glEnd();
+	}
+
+}
 void FuncionesOpenGL::esfera(double x0,double y0,double z0,double R,int N,int N2)
 {
 
@@ -153,7 +211,7 @@ void FuncionesOpenGL::esfera(double x0,double y0,double z0,double R,int N,int N2
 			glVertex3d(x0+R*x2,y0+R*y2,z0+R*z2);
 			glNormal3d(Escala*x3,Escala*y3,Escala*z3);
 			glVertex3d(x0+R*x3,y0+R*y3,z0+R*z3);
-			glNormal3d(Escala*x4,Escala*y4,Escala*z2);
+			glNormal3d(Escala*x4,Escala*y4,Escala*z4);
 			glVertex3d(x0+R*x4,y0+R*y4,z0+R*z4);
 			glEnd();
 		}

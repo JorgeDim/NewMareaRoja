@@ -18,6 +18,8 @@ public:
 	static void Print(char s[],int bit=0);
 	static void material(int cual=0);
 	static void esfera(double R,int N);
+	static void cono(double x0,double y0,double z0,double x1,double y1,double z1,double R,int N);
+
 	static void esfera(double x0,double y0,double z0,double R,int N,int N2);
 	static void ejes();
 	static void ColorF(double minF,double maxF,double lF);
