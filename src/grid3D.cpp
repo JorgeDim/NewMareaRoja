@@ -2293,7 +2293,7 @@ void DibujaParticula (int i,R3 & origen)
 		//FuncionesOpenGL::esfera(Particulas[0][0][i],Particulas[0][1][i], Particulas[0][2][i],0.003*Dominio_Xmax,2,7);
 		FuncionesOpenGL::cono(Particulas[0][0][i],Particulas[0][1][i], Particulas[0][2][i],
 				Particulas[1][0][i],Particulas[1][1][i], Particulas[1][2][i]
-																		  ,0.003*Dominio_Xmax,7);
+																		  ,0.005*Dominio_Xmax,7);
 	}
 }
 
@@ -2381,9 +2381,17 @@ void grid3D::drawVelGL_TriPrisma(vector<double> U,vector<double> V,vector<double
 #endif
 	}
 
-	#pragma omp parallel for num_threads(10)
-	for (i=0;i<nParticulas;i++) {
-		DibujaParticula (i,TriPrisma3D[ParticulasBloq[i]].centro);
+	if(GL_immediate_mode !=1) {
+#pragma omp parallel for num_threads(10)
+
+		for (i=0;i<nParticulas;i++) {
+			DibujaParticula (i,TriPrisma3D[ParticulasBloq[i]].centro);
+		}
+	} else {
+
+		for (i=0;i<nParticulas;i++) {
+			DibujaParticula (i,TriPrisma3D[ParticulasBloq[i]].centro);
+		}
 	}
 
 

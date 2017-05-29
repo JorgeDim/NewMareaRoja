@@ -146,17 +146,18 @@ void FuncionesOpenGL::cono(double x0,double y0,double z0,double x1,double y1,dou
 	BB.z=TT.x*NN.y-TT.y*NN.x;
 	for (j=0;j<N;j++) {
 		v=j*dt;
-		x2=(NN.x*cos(v)+BB.x*sin(v))*0.5;
-		y2=(NN.y*cos(v)+BB.y*sin(v))*0.5;
-		z2=(NN.z*cos(v)+BB.z*sin(v))*0.5;
+		x2=(NN.x*cos(v)+BB.x*sin(v))*0.3;
+		y2=(NN.y*cos(v)+BB.y*sin(v))*0.3;
+		z2=(NN.z*cos(v)+BB.z*sin(v))*0.3;
 		v+=dt;
-		x3=(NN.x*cos(v)+BB.x*sin(v))*0.5;
-		y3=(NN.y*cos(v)+BB.y*sin(v))*0.5;
-		z3=(NN.z*cos(v)+BB.z*sin(v))*0.5;
+		x3=(NN.x*cos(v)+BB.x*sin(v))*0.3;
+		y3=(NN.y*cos(v)+BB.y*sin(v))*0.3;
+		z3=(NN.z*cos(v)+BB.z*sin(v))*0.3;
 
 
 		glBegin(GL_TRIANGLES);
-		glNormal3d(-TT.x,-TT.y,-TT.z);
+//		glNormal3d(-TT.x,-TT.y,-TT.z);
+		glNormal3d(Escala*(x2+x3),Escala*(y2+y3),Escala*(z2+z3));
 		glVertex3d(x0,y0,z0);
 		glNormal3d(Escala*x2,Escala*y2,Escala*z2);
 		glVertex3d(x0+R*(TT.x+x2),y0+R*(TT.y+y2),z0+R*(TT.z+z2));
