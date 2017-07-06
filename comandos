@@ -1,1 +1,3 @@
 awk '!/^#/&&!/^H/&&!/^:/{print }' Z1>Z1b
+ git commit -a -m "julio"
+ git push origin master
