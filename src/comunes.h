@@ -2477,10 +2477,16 @@ void CB_keyboard(unsigned char key, int x, int y)
 			break;
 		}
 		break;
-	case 'i':
-	case 'I':
-		gluiInterior->set_int_val(!ModoDibujaInterior);ModoDibujaInterior=gluiInterior->get_int_val();
-		break;
+		case 'h':
+		case 'H':
+			DibujaSupInf++; if (DibujaSupInf>2) DibujaSupInf=0;  //0: Dibujatodo, 1:borra tapa superior, 2:borra tapa inferior
+			break;
+
+
+		case 'i':
+		case 'I':
+			gluiInterior->set_int_val(!ModoDibujaInterior);ModoDibujaInterior=gluiInterior->get_int_val();
+			break;
 
 	case 'M':
 	case 'm':
