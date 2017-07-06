@@ -16,13 +16,16 @@ extern int Etapa;
 
 extern ofstream myfileSalida;
 extern float GlobalCentros;
+extern void tic();
+extern void toc();
+extern int Add_Voronoi;
 
 
 
 GLfloat *GLfloat_buffer ;
-int nParticulas=8000;
+int nParticulas=1000;
 int GL_threads=10;
-int GL_immediate_mode=0;
+int GL_immediate_mode=1;
 double ThetaMax,ThetaMin,dTheta_med;
 static vector<double> Particulas[maxpasadas+1][3];
 static vector<float> ParticulasZ;
@@ -175,6 +178,7 @@ double ppunto(R3 a,R3 b) {
 }
 
 double ppuntodiff(R3 N,R3 b,R3 c) {
+	// N \cdot (b-c)
 	return(N.x*(b.x-c.x)+N.y*(b.y-c.y)+N.z*(b.z-c.z));
 }
 
@@ -1358,7 +1362,7 @@ int grid3D::AddCara4(int ib,int i0,int i1,int i2,int i3)
 
 
 }
-int grid3D::AddCara3(int ib,int i0,int i1,int i2)
+int grid3D::AddCara3(int ib,int i0,int i1,int i2,int iBC)
 //Agrega Cara Triangular
 {
 	int i;
@@ -1389,13 +1393,54 @@ int grid3D::AddCara3(int ib,int i0,int i1,int i2)
 	Cara[nCaras].iv[2]=i2;
 	Cara[nCaras].iv[3]=-1; //Este nodo no se usa
 	Cara[nCaras].ih[0]=ib;
+	Cara[nCaras].iBC=iBC;
 	nCaras++;
 	return (nCaras-1);
 
 
 }
 
-void grid3D::GeneraPoligonoInicial(R3 a, R3 b, PoligonoPlano &P)
+
+void grid3D::Poligono_InicialCara(R3 a, R3 b, PoligonoPlano &P,int iC) {
+
+	double d1x,d1y,d1z,dab;
+	double d2x,d2y,d2z,dd;
+	double d3x,d3y,d3z;
+	double lambda=xmax+ymax+zmax-(xmin+ymin+zmin);
+	d1x=(b.x-a.x); d1y=(b.y-a.y); d1z=(b.z-a.z);
+	dab=sqrt(sqr(d1x)+sqr(d1y)+sqr(d1z));
+	if (fabs(d1x)>dab/4) {
+		d2x=-d1y; d2y=d1x; d2z=0;
+	} else if (fabs(d1y)>dab/4) {
+		d2x=-d1y; d2y=d1x; d2z=0;
+	} if (fabs(d1z)>dab/4) {
+		d2x=-d1z; d2y=0; d2z=d1x;
+	}
+	d3x=(d1y*d2z-d1z*d2y); d3y=(d1z*d2x-d1x*d2z); d3z=(d1x*d2y-d1y*d2x);
+
+	dd=sqrt(sqr(d2x)+sqr(d2y)+sqr(d2z)); d2x /=dd; d2y /=dd; d2z /=dd;
+	dd=sqrt(sqr(d3x)+sqr(d3y)+sqr(d3z)); d3x /=dd; d3y /=dd; d3z /=dd;
+
+	P.Dab=dab;
+	P.normal.x=d1x/dab;
+	P.normal.y=d1y/dab;
+	P.normal.z=d1z/dab;
+	P.centro.x=(a.x+b.x)/2;
+	P.centro.y=(a.y+b.y)/2;
+	P.centro.z=(a.z+b.z)/2;
+	P.punto.clear();
+	P.punto.resize(Cara[iC].nvCara);
+	for (int j=0;j<P.punto.size();j++) {
+		P.punto[j].x = v3D[Cara[iC].iv[j]].x;
+		P.punto[j].y = v3D[Cara[iC].iv[j]].y;
+		P.punto[j].z = v3D[Cara[iC].iv[j]].z;
+	}
+
+
+}
+
+
+void grid3D::Poligono_Inicial(R3 a, R3 b, PoligonoPlano &P)
 {
 	double d1x,d1y,d1z,dab;
 	double d2x,d2y,d2z,dd;
@@ -1731,7 +1776,7 @@ void grid3D::generaPoligonos2Algunos(vector<int> &CualesRehacer)
 					VB.z = VA.z+lambda*NB.z;
 				}
 			}
-			GeneraPoligonoInicial(VA,VB, h3D[i].Poligono[j]);
+			Poligono_Inicial(VA,VB, h3D[i].Poligono[j]);
 			if ( DBG2==10 && i==iprint) {
 				cout<<"GeneraPoligonoInicial(VA,VB, h3D[i].Poligono[j]): A="<<h3D[i].Poligono[j].AreaPoligono<<endl;
 			}
@@ -1810,7 +1855,7 @@ void grid3D::generaPoligonos2Algunos(vector<int> &CualesRehacer)
 		}
 	}
 }
-void grid3D::generaPoligonos2()
+void grid3D::Poligonos_Generar_Version3()
 {
 	int i,j,k,l,icj,ibb,jj;
 	double xg,yg,zg,x0,y0,z0,x1,y1,z1,d1x,d1y,d1z,d2x,d2y,d2z,d3x,d3y,d3z,dij,lambda;
@@ -1818,111 +1863,474 @@ void grid3D::generaPoligonos2()
 	QuienGeneraPoligonos=2;
 
 	//Primer nivel de vecinos
-	for(i=0;i<nH3D;i++) {
-		h3D[i].vecino.resize(6);
-		h3D[i].tipo_vecino.resize(6);
-		for (j=0;j<6;j++) {
-			icj=h3D[i].icara[j];
-			if (Cara[icj].nVolumenes>1) {
-				h3D[i].tipo_vecino[j]=ES_BLOQUE;
-				ibb=Cara[icj].ih[0]; if (ibb==i) ibb=Cara[icj].ih[1];
-				h3D[i].vecino[j]=ibb;
-			} else {
-				h3D[i].tipo_vecino[j]=ES_CARA;;
-				h3D[i].vecino[j]=icj;
-			}
-		}	
-	}
-	//segundo nivel de vecinos (los vecinos de mis BLOQUES vecinos)
-	int ip=0;
-	for(i=0;i<nH3D;i++) {
-		int nvecinos_level1=h3D[i].vecino.size();
-		for (j=0 ; j<nvecinos_level1 ;j++) {
-			if (h3D[i].tipo_vecino[j]==ES_CARA) continue; //Las Caras No tienen vecinos (Auno no existen ES_CARA_L2)
-			ibb=h3D[i].vecino[j];
-			for (k=0 ; k<h3D[ibb].vecino.size() ;k++) {
-				int tv=h3D[ibb].tipo_vecino[k];
-				if (tv==ES_CARA || tv==ES_CARA_L2) {
-					int iC=h3D[ibb].vecino[k];
-					if (Cara[ iC ].iBC ==1||Cara[ iC ].iBC >=10 || 0*ip>5) continue;
-					tv=ES_CARA_L2;
-					ip++;
-				}
-				//Si este vecino de [j] es el nodo [i], no agregar...
-				if (h3D[ibb].tipo_vecino[k]==ES_BLOQUE && h3D[ibb].vecino[k]==i) continue;
-				//Veamos si este vecino [k] de [j] ya estaba en la lista....
-				for (l=0  ; l<h3D[i].vecino.size() ;l++) {
-					//					if (h3D[i].tipo_vecino[l]==ES_CARA) continue;
-					if (h3D[i].vecino[l]==h3D[ibb].vecino[k]) break;//Ya estaba
-				}
-				if (l>=h3D[i].vecino.size()) {//es un nuevo vecino
-					h3D[i].vecino.push_back(0);
-					h3D[i].tipo_vecino.push_back(0);
-					h3D[i].vecino[l]=h3D[ibb].vecino[k];
-					h3D[i].tipo_vecino[l]=tv;
-				}
-
-			}
-		}	
-	}
-	for(i=0;i<nH3D;i++) {
-		R3 VA,VB,NB;
-		VA=h3D[i].centro;
-		for (j=0 ; j< h3D[i].vecino.size() ; j++) {
-			if (h3D[i].tipo_vecino[j]==ES_CARA) { //Retrocar coordenadas de los bordes Nivel 1 (no para ES_CARA_L2)
-				VB=Cara[ h3D[i].vecino[j] ].centro;
-				NB=Cara[ h3D[i].vecino[j] ].normalCara;
-				if (Cara[ h3D[i].vecino[j] ].iBC ==1||Cara[ h3D[i].vecino[j] ].iBC >=10) {
-					double lambda=2*ppuntodiff(NB,VB,VA);
-					Cara[ h3D[i].vecino[j] ].centro.x = VA.x+lambda*NB.x;
-					Cara[ h3D[i].vecino[j] ].centro.y = VA.y+lambda*NB.y;
-					Cara[ h3D[i].vecino[j] ].centro.z = VA.z+lambda*NB.z;
-					VB=Cara[ h3D[i].vecino[j] ].centro;
+	cout<<"P Primer nivel de vecinos:"<<endl;
+	nVolFinito=nH3D+nTriPrisma3D;
+	VolFinito.resize(nVolFinito);
+	for(i=0;i<nVolFinito;i++) {
+		if (i<nH3D) {
+			VolFinito[i].centro=h3D[i].centro;
+			VolFinito[i].vecino.resize(6);
+			VolFinito[i].tipo_vecino.resize(6);
+			VolFinito[i].vecino_centro.resize(6);
+			VolFinito[i].vecino_normal.resize(6);
+			for (j=0;j<6;j++) {
+				icj=h3D[i].icara[j];
+				if (Cara[icj].nVolumenes>1) {
+					VolFinito[i].tipo_vecino[j]=ES_BLOQUE;
+					ibb=Cara[icj].ih[0]; if (ibb==i) ibb=Cara[icj].ih[1];
+					VolFinito[i].vecino[j]=ibb;
+					VolFinito[i].vecino_centro[j]=h3D[ibb].centro;
+					VolFinito[i].vecino_normal[j]=(h3D[ibb].centro-h3D[i].centro);
+					VolFinito[i].vecino_normal[j].NormaUnitario();
 				} else {
-					continue;
-					double lambda=ppuntodiff(NB,VB,VA);
-					Cara[ h3D[i].vecino[j] ].centro.x = VA.x+lambda*NB.x;
-					Cara[ h3D[i].vecino[j] ].centro.y = VA.y+lambda*NB.y;
-					Cara[ h3D[i].vecino[j] ].centro.z = VA.z+lambda*NB.z;
-					VB=Cara[ h3D[i].vecino[j] ].centro;
+					VolFinito[i].tipo_vecino[j]=ES_CARA;;
+					VolFinito[i].vecino[j]=icj;
+					VolFinito[i].vecino_centro[j]=Cara[icj].centro;
+					VolFinito[i].vecino_normal[j]=Cara[icj].normalCara;
+				}
+			}
+		} else {
+			int jTP=i-nH3D;
+			VolFinito[i].centro=TriPrisma3D[jTP].centro;
+			VolFinito[i].vecino.resize(5);
+			VolFinito[i].tipo_vecino.resize(5);
+			VolFinito[i].vecino_centro.resize(5);
+			VolFinito[i].vecino_normal.resize(5);
+			VolFinito[i].vecino_normal.resize(5);
+			for (j=0;j<5;j++) {
+				icj=TriPrisma3D[i].icara[j];
+				if (Cara[icj].nVolumenes>1) {
+					VolFinito[i].tipo_vecino[j]=ES_BLOQUE;
+					ibb=Cara[icj].ih[0]; if (ibb==i) ibb=Cara[icj].ih[1];
+					VolFinito[i].vecino[j]=ibb;
+					VolFinito[i].vecino_centro[j]=TriPrisma3D[ibb].centro;
+					VolFinito[i].vecino_normal[j]=(TriPrisma3D[ibb].centro-TriPrisma3D[jTP].centro);
+					VolFinito[i].vecino_normal[j].NormaUnitario();
+				} else {
+					VolFinito[i].tipo_vecino[j]=ES_CARA;;
+					VolFinito[i].vecino[j]=icj;
+					VolFinito[i].vecino_centro[j]=Cara[icj].centro;
+					VolFinito[i].vecino_normal[j]=Cara[icj].normalCara;
+				}
+			}
+
+
+		}
+	}
+#if 0
+	//segundo nivel de vecinos (los vecinos de mis vecinos)
+	int itera;
+	for (itera=0;itera<1;itera++) {
+		cout<<"P itera="<<itera<<endl;
+		int ip=0;
+
+		int navance=0;
+		for(i=0;i<nVolFinito;i++) {
+			int nvecinos_level1=VolFinito[i].vecino.size();
+
+			if (i>=navance*nVolFinito/20) {
+				printf(".%d",navance);fflush(stdout);
+
+//				cout<<"P itera="<<itera;
+//				cout<<"P i="<<i<<" nVolFinito="<<nVolFinito;
+//				cout<<"P nvecinos_level1="<<nvecinos_level1<<endl;
+
+				myfileSalida<<"."<<navance;
+				navance++;
+			}
+			for (j=0 ; j<nvecinos_level1 ;j++) {
+				if (VolFinito[i].tipo_vecino[j]==ES_CARA || VolFinito[i].tipo_vecino[j]==ES_CARA_L2 ) continue; //Las Caras No tienen vecinos (Auno no existen ES_CARA_L2)
+				ibb=VolFinito[i].vecino[j];
+				for (k=0 ; k<VolFinito[ibb].vecino.size() ;k++) {
+					int tv=VolFinito[ibb].tipo_vecino[k];
+					if (tv==ES_CARA || tv==ES_CARA_L2) {
+						int iC=VolFinito[ibb].vecino[k];
+						if (Cara[ iC ].iBC ==1||Cara[ iC ].iBC >=10 || 0*ip>5) continue;
+						tv=ES_CARA_L2;
+						ip++;
+					}
+					//Si este vecino de [j] es el nodo [i], no agregar...
+					if (VolFinito[ibb].tipo_vecino[k]==ES_BLOQUE && VolFinito[ibb].vecino[k]==i) continue;
+					//Veamos si este vecino [k] de [j] ya estaba en la lista....
+					for (l=0  ; l<VolFinito[i].vecino.size() ;l++) {
+						//					if (h3D[i].tipo_vecino[l]==ES_CARA) continue;
+						if (VolFinito[i].vecino[l]==VolFinito[ibb].vecino[k]) break;//Ya estaba
+					}
+					if (l>=VolFinito[i].vecino.size()) {//es un nuevo vecino
+						VolFinito[i].vecino.push_back(VolFinito[ibb].vecino[k]);
+						VolFinito[i].tipo_vecino.push_back(tv);
+						VolFinito[i].vecino_centro.push_back(VolFinito[ibb].vecino_centro[k]);
+						VolFinito[i].vecino_normal.push_back(VolFinito[ibb].vecino_centro[k]-VolFinito[i].centro);
+						VolFinito[i].vecino_normal[l].NormaUnitario();
+					}
+
+				}
+			}
+		}
+	}
+	cout<<"P itera="<<itera<<endl;
+#endif
+	if (0) {
+		// Agrego los niveles inferiores
+		cout<<"P Agrego los niveles inferiores:"<<endl;
+		tic();
+		int navance=0;
+		for(i=0;i<nVolFinito;i++) {
+
+
+			if (i>=navance*nVolFinito/20) {
+				printf(".%d",navance);fflush(stdout);
+
+
+				myfileSalida<<"."<<navance;
+				navance++;
+			}
+			ibb=i/3*3 ;
+			if (ibb<i-1) {
+				l=VolFinito[i].vecino.size();
+				{
+					VolFinito[i].vecino.push_back(ibb);
+					VolFinito[i].tipo_vecino.push_back(ES_BLOQUE);
+					VolFinito[i].vecino_centro.push_back(VolFinito[ibb].centro);
+					VolFinito[i].vecino_normal.push_back(VolFinito[ibb].centro-VolFinito[i].centro);
+					VolFinito[i].vecino_normal[l].NormaUnitario();
+				}
+
+			}
+		}
+
+		cout<<".OK"<<endl;toc();
+
+
+	}
+	if(1) {
+		// nivel de vecinos (el soporte de mis vertices)
+		cout<<"P soporte de mis vertices:"<<endl;tic();
+		int navance=0;
+		for(i=0;i<nVolFinito;i++) {
+
+			if (i>=navance*nVolFinito/20) {
+				printf(".%d",navance);fflush(stdout);
+				myfileSalida<<"."<<navance;
+				navance++;
+			}
+			int nvertices;
+			if (i<nH3D) nvertices=8;
+			else nvertices=6;
+			for (j=0 ; j<nvertices ;j++) {
+				int vertice;
+				if (i<nH3D)
+					vertice=h3D[i].iv[j];
+				else
+					vertice=TriPrisma3D[i-nH3D].iv[j];
+				for (int ell=0;ell<v3D[vertice].soporte.size();ell++) {
+					ibb=v3D[vertice].soporte[ell];
+					if (ibb==i)continue;
+					//Veamos si este vecino [k] de [j] ya estaba en la lista....
+					for (l=0  ; l<VolFinito[i].vecino.size() ;l++) {
+						if (VolFinito[i].tipo_vecino[l]==ES_CARA) continue;
+						if (VolFinito[i].vecino[l]==ibb) break;//Ya estaba
+					}
+					if (l>=VolFinito[i].vecino.size()) {//es un nuevo vecino
+						VolFinito[i].vecino.push_back(ibb);
+						VolFinito[i].tipo_vecino.push_back(ES_BLOQUE);
+						VolFinito[i].vecino_centro.push_back(VolFinito[ibb].centro);
+						VolFinito[i].vecino_normal.push_back(VolFinito[ibb].centro-VolFinito[i].centro);
+						VolFinito[i].vecino_normal[l].NormaUnitario();
+					}
+				}
+			}
+		}
+		cout<<".OK"<<endl;toc();
+	}
+
+
+	if (1) {
+		// Agrego los 3 niveles de mis vecinos
+		cout<<"P Agrego los 3 niveles de mis vecinos:"<<endl;tic();
+		int navance=0;
+		for(i=0;i<nVolFinito;i++) {
+			if (i>=navance*nVolFinito/20) {
+				printf(".%d",navance);fflush(stdout);
+				myfileSalida<<"."<<navance;
+				navance++;
+			}
+			int nvecinos_level1=VolFinito[i].vecino.size();
+			for (j=0 ; j<nvecinos_level1 ;j++) {
+				if (VolFinito[i].tipo_vecino[j]==ES_CARA || VolFinito[i].tipo_vecino[j]==ES_CARA_L2 ) continue; //Las Caras No tienen vecinos (Auno no existen ES_CARA_L2)
+				int ibb0=VolFinito[i].vecino[j];
+				for (k=0;k<3;k++) {
+					ibb=ibb0/3*3+k;
+					//Veamos si este vecino [k] de [j] ya estaba en la lista....
+					if (ibb==ibb0) continue;
+					if (ibb==i) continue;
+					for (l=0  ; l<VolFinito[i].vecino.size() ;l++) {
+						if (VolFinito[i].tipo_vecino[l]==ES_BLOQUE && VolFinito[i].vecino[l]==ibb) break;//Ya estaba
+					}
+					if (l>=VolFinito[i].vecino.size()) {//es un nuevo vecino
+						VolFinito[i].vecino.push_back(ibb);
+						VolFinito[i].tipo_vecino.push_back(ES_BLOQUE);
+						VolFinito[i].vecino_centro.push_back(VolFinito[ibb].centro);
+						VolFinito[i].vecino_normal.push_back(VolFinito[ibb].centro-VolFinito[i].centro);
+						VolFinito[i].vecino_normal[l].NormaUnitario();
+					}
+				}
+			}
+		}
+		cout<<".OK"<<endl;toc();
+	}
+
+	//Agrego Caras de mis vecinos
+	int imprimir2=0;
+
+	cout<<"P Agrego Caras de mis vecinos:"<<endl;
+	if(1){
+		int navance=0;
+		for(i=0;i<nVolFinito;i++) {
+			int nvecinos_level1=VolFinito[i].vecino.size();
+
+			if (i>=navance*nVolFinito/20) {
+				printf(".%d",navance);fflush(stdout);myfileSalida<<"."<<navance;navance++;
+			}
+			imprimir=0;
+			if (i==7310 ) imprimir=1;
+
+			if (imprimir) {
+				cout<<", VolFinito="<<i<<endl;
+			}
+
+			for (j=0 ; j<nvecinos_level1 ;j++) {
+				if (VolFinito[i].tipo_vecino[j]==ES_CARA || VolFinito[i].tipo_vecino[j]==ES_CARA_L2 ) continue; //Las Caras No tienen vecinos (Auno no existen ES_CARA_L2)
+				ibb=VolFinito[i].vecino[j];
+				imprimir2=1;
+				for (k=0 ; k<VolFinito[ibb].vecino.size() ;k++) {
+					if (VolFinito[ibb].tipo_vecino[k]==ES_CARA ) {
+						for (l=0  ; l<VolFinito[i].vecino.size() ;l++) {
+							if (VolFinito[i].tipo_vecino[l]==ES_BLOQUE) continue;//Solo busco las caras preexistentes
+							if (VolFinito[i].vecino[l]==VolFinito[ibb].vecino[k]) break;//Ya estaba
+						}
+						if (l>=VolFinito[i].vecino.size()) { //es un nuevo vecino
+
+							if (imprimir  && imprimir2) {
+								if (imprimir2) {
+									cout<<", vecino:"<<ibb;
+								}
+								cout<<endl;;
+								imprimir2=0;
+							}
+							// Solo la agrego si no corta a los nodos originales
+							int loagrego=1;
+							R3 VA,VB,NB;
+							VA=VolFinito[ibb].vecino_centro[k];
+							NB=VolFinito[ibb].vecino_normal[k];
+							{
+
+								if (imprimir) {
+									cout<<", Cara="<<VolFinito[ibb].vecino[k];
+//									cout<<", VA=["<<VA.x<<","<<VA.y<<","<<VA.z<<"]";
+									cout<<", NB=["<<NB.x<<","<<NB.y<<","<<NB.z<<"]";
+								}
+
+								int nvertices;
+								if (i<nH3D) nvertices=8; else nvertices=6;
+								int nvertices_en_Plano=0;
+								for (jj=0 ; jj<nvertices ;jj++) {
+									int vertice;
+									if (i<nH3D) vertice=h3D[i].iv[jj];else vertice=TriPrisma3D[i-nH3D].iv[jj];
+									VB.x=v3D[vertice].x;
+									VB.y=v3D[vertice].y;
+									VB.z=v3D[vertice].z;
+									if (imprimir && 0) {
+										cout<<", VB=["<<VB.x<<","<<VB.y<<","<<VB.z<<"]";
+										cout<<", ppuntodiff(NB,VB,VA)="<<ppuntodiff(NB,VB,VA);
+									}
+									if (ppuntodiff(NB,VB,VA)>1e-5) {
+										if (imprimir) {
+											cout<<", El plano corta al vertice. No lo considero"<<endl;
+										}
+										loagrego=0;break; //El plano corta al vertice. No lo considero
+									}
+									if (ibb/3==i/3 && fabs(NB.z)>fabs(NB.x) &&fabs(NB.z)>fabs(NB.y) ) continue;
+
+									if (ppuntodiff(NB,VB,VA)>-1e-10) {
+										nvertices_en_Plano++;
+										if (nvertices_en_Plano>2) {
+											if (imprimir) {
+												cout<<", El plano corta a "<<nvertices_en_Plano<<" vertices. No lo considero"<<endl;
+											}
+											loagrego=0;break; //El plano corta al vertice. No lo considero
+										}
+									}
+
+								}
+							}
+							if (loagrego) {
+								if (imprimir) {
+									cout<<", Agrego este vecino"<<endl;
+								}
+								VolFinito[i].vecino.push_back(VolFinito[ibb].vecino[k]);
+								if (ibb/3==i/3 && fabs(NB.z)>fabs(NB.x) &&fabs(NB.z)>fabs(NB.y) )
+									VolFinito[i].tipo_vecino.push_back(ES_CARA);
+								else
+									VolFinito[i].tipo_vecino.push_back(ES_CARA_L2);
+								VolFinito[i].vecino_centro.push_back(VolFinito[ibb].vecino_centro[k]);
+								VolFinito[i].vecino_normal.push_back(VolFinito[ibb].vecino_normal[k]);
+							}
+						}
+					}
 
 				}
 			}
 		}
 	}
 
-	int navance=0;
-	for(i=0;i<nH3D;i++) {
-		if (i>=navance*nH3D/20) {
-			printf(".%d",navance);fflush(stdout);
-			myfileSalida<<"."<<navance;
-			navance++;
-		}
-		h3D[i].Poligono.resize( h3D[i].vecino.size() );
-		R3 VA,VB;
-		VA=h3D[i].centro;
-		for (j=0 ; j< h3D[i].vecino.size() ; j++) {
-			if (h3D[i].tipo_vecino[j]==ES_BLOQUE) {
-				VB=h3D[ h3D[i].vecino[j] ].centro;
-			} else {
-				VB=Cara[ h3D[i].vecino[j] ].centro;
+	cout<<".OK"<<endl;
+//
+	cout<<"P Retocar coordenadas de los bordes Nivel 1"<<endl;
+	for(i=0;i<nVolFinito;i++) {
+		R3 VA,VB,NB;
+		VA=VolFinito[i].centro;
+		VolFinito[i].vecino_centro_caraoriginal.resize(VolFinito[i].vecino_centro.size());
+		for (j=0 ; j< VolFinito[i].vecino.size() ; j++) {
+			if (VolFinito[i].tipo_vecino[j]==ES_CARA  || VolFinito[i].tipo_vecino[j]==ES_CARA_L2) { //Retocar coordenadas de los bordes Nivel 1 (no para ES_CARA_L2)
+				VB=VolFinito[i].vecino_centro[j];
+				VolFinito[i].vecino_centro_caraoriginal[j]=VB;
+				NB=VolFinito[i].vecino_normal[j];
+				//if (Cara[ VolFinito[i].vecino[j] ].iBC ==1||Cara[ VolFinito[i].vecino[j] ].iBC >=10)
+				{
+					double lambda=2*ppuntodiff(NB,VB,VA);
+					VolFinito[i].vecino_centro[j].x = VA.x+lambda*NB.x;
+					VolFinito[i].vecino_centro[j].y = VA.y+lambda*NB.y;
+					VolFinito[i].vecino_centro[j].z = VA.z+lambda*NB.z;
+				}
 			}
-			GeneraPoligonoInicial(VA,VB, h3D[i].Poligono[j]);
-			for (jj=0 ; jj< h3D[i].vecino.size() ; jj++) {
-				if (jj==j) continue;
-				if (h3D[i].tipo_vecino[jj]==ES_BLOQUE) {
-					VB=h3D[ h3D[i].vecino[jj] ].centro;
+		}
+	}
+
+	cout<<"P Genera Poligonos"<<endl;
+	int  navance=0;
+	for(i=0;i<nVolFinito;i++) {
+		if (i>=navance*nVolFinito/20) {
+			printf(".%d",navance);fflush(stdout); myfileSalida<<"."<<navance; navance++;
+		}
+		VolFinito[i].Poligono.resize( VolFinito[i].vecino.size() );
+		R3 VA,VB,VBj,NAB;
+		VA=VolFinito[i].centro;
+
+
+		imprimir=0;
+		if (i==7310 ) imprimir=1;
+
+
+		if (imprimir) {
+			cout<<"P VolFinito="<<i<<endl;
+		}
+
+		for (int ipasada=0;ipasada<3;ipasada++) {
+			for (j=0 ; j< VolFinito[i].vecino.size() ; j++) {
+				VB=VolFinito[i].vecino_centro[j];
+				NAB=VolFinito[i].vecino_normal[j];
+				if (ipasada==0) {
+					if (VolFinito[i].tipo_vecino[j]!=ES_CARA_L2) continue; //Solo Caras
+					int iC=VolFinito[i].vecino[j];
+					Poligono_InicialCara(VA,VB, VolFinito[i].Poligono[j],iC);
+				} else {
+//					if (VolFinito[i].tipo_vecino[j] ==ES_CARA_L2) continue; //Solo Bloques en segunda pasada Y caras L1
+					Poligono_Inicial(VA,VB, VolFinito[i].Poligono[j]);
 				}
-				if (h3D[i].tipo_vecino[jj]==ES_CARA|| h3D[i].tipo_vecino[jj]==ES_CARA_L2) {
-					VB=Cara[ h3D[i].vecino[jj] ].centro;
+
+				if (imprimir) {
+					cout<<"P ipasada="<<ipasada<<"j="<<j<<" vecino="<<VolFinito[i].vecino[j] <<"\t tipo_vecino="<<VolFinito[i].tipo_vecino[j]
+                        <<" N=["<<VolFinito[i].Poligono[j].normal.x<<","<<VolFinito[i].Poligono[j].normal.y<<","<<VolFinito[i].Poligono[j].normal.z<<"]";
+					cout<<endl;
 				}
-				RecortaPoligono(VA,VB, h3D[i].Poligono[j]);
-				if (h3D[i].Poligono[j].punto.size() == 0) {
-					h3D[i].Poligono.erase(h3D[i].Poligono.begin()+j);
-					h3D[i].vecino.erase(h3D[i].vecino.begin()+j);
-					h3D[i].tipo_vecino.erase(h3D[i].tipo_vecino.begin()+j);
-					j--;
-					break;
+				int muere=0;
+				for (jj=0 ; jj< VolFinito[i].vecino.size() ; jj++) {
+					int es_paralelo=0;
+
+					if (jj==j) continue;
+
+					VBj=VolFinito[i].vecino_centro[jj];
+
+
+					if (imprimir &&  VolFinito[i].vecino[j]==36098 ) {
+						cout<<"  jj="<<jj<<" Vecino[jj]="<< VolFinito[i].vecino[jj] << "\tppunto(NAB,VolFinito[i].vecino_normal[jj])="<<ppunto(NAB,VolFinito[i].vecino_normal[jj])<<endl;
+						cout<<"  P N1=["<<VolFinito[i].vecino_normal[j].x<<","<<VolFinito[i].vecino_normal[j].y<<","<<VolFinito[i].vecino_normal[j].z<<"]"<<endl;
+						cout<<"  P N2=["<<VolFinito[i].vecino_normal[jj].x<<","<<VolFinito[i].vecino_normal[jj].y<<","<<VolFinito[i].vecino_normal[jj].z<<"]"<<endl;
+						cout<<"  P VB=["<<VB.x<<","<<VB.y<<","<<VB.z<<"]"<<endl;
+						cout<<"  P VBj=["<<VBj.x<<","<<VBj.y<<","<<VBj.z<<"]\tppuntodiff(NAB, VB, VBj)="<<ppuntodiff(NAB, VB, VBj)<<endl;
+					}
+
+					//if (jj>j) {
+
+						if(ppunto(NAB,VolFinito[i].vecino_normal[jj])>.99999999 && ppuntodiff(NAB, VB, VBj)>-1e-10) { //Caso paralelos
+							if (ipasada==0)
+								continue;
+							else
+							es_paralelo=1;
+						}
+					//}
+
+					if (es_paralelo && jj>j) {
+						if (imprimir) {
+							cout<<"  P Vecino "<< VolFinito[i].vecino[jj]<<" se muere por paralelo, tipo="<< VolFinito[i].tipo_vecino[jj]<<endl;
+							cout<<"    jj="<<jj<<" Vecino[jj]="<< VolFinito[i].vecino[jj] << "\tppunto(NAB,VolFinito[i].vecino_normal[jj])="<<ppunto(NAB,VolFinito[i].vecino_normal[jj])<<endl;
+							cout<<"    P N1=["<<VolFinito[i].vecino_normal[j].x<<","<<VolFinito[i].vecino_normal[j].y<<","<<VolFinito[i].vecino_normal[j].z<<"]"<<endl;
+							cout<<"    P N2=["<<VolFinito[i].vecino_normal[jj].x<<","<<VolFinito[i].vecino_normal[jj].y<<","<<VolFinito[i].vecino_normal[jj].z<<"]"<<endl;
+							cout<<"    P VA=["<<VA.x<<","<<VA.y<<","<<VA.z<<"]"<<endl;
+							cout<<"    P VB=["<<VB.x<<","<<VB.y<<","<<VB.z<<"]"<<endl;
+							cout<<"    P VBj=["<<VBj.x<<","<<VBj.y<<","<<VBj.z<<"]\tppuntodiff(NAB, VB, VBj)="<<ppuntodiff(NAB, VB, VBj)<<endl;
+							R3 Ntmp=VB-VA;//Ntmp.NormaUnitario();
+							cout<<"    P Ntmp=["<<Ntmp.x<<","<<Ntmp.y<<","<<Ntmp.z<<"]"<<endl;
+							R3 Ntmpj=VBj-VA;//Ntmpj.NormaUnitario();
+							cout<<"    P Ntmpj=["<<Ntmpj.x<<","<<Ntmpj.y<<","<<Ntmpj.z<<"]"<<endl;
+
+						}
+						VolFinito[i].Poligono.erase(VolFinito[i].Poligono.begin()+jj);
+						VolFinito[i].vecino.erase(VolFinito[i].vecino.begin()+jj);
+						VolFinito[i].tipo_vecino.erase(VolFinito[i].tipo_vecino.begin()+jj);
+						VolFinito[i].vecino_centro_caraoriginal.erase(VolFinito[i].vecino_centro_caraoriginal.begin()+jj);
+						VolFinito[i].vecino_centro.erase(VolFinito[i].vecino_centro.begin()+jj);
+						VolFinito[i].vecino_normal.erase(VolFinito[i].vecino_normal.begin()+jj);
+						jj--;
+						continue;
+					}
+
+					if (es_paralelo==0)
+						RecortaPoligono(VA,VBj, VolFinito[i].Poligono[j]);
+					if ( VolFinito[i].Poligono[j].punto.size() == 0  || (es_paralelo && jj<j)) {
+						if (imprimir ) {
+							if (es_paralelo==0)
+							cout<<"P Vol se muere por area 0: Vecino "<< VolFinito[i].vecino[jj]<<", tipo="<< VolFinito[i].tipo_vecino[jj]<<endl;
+							else
+								cout<<"P Vol j se muere por serparalelo a: Vecino "<< VolFinito[i].vecino[jj]<<", tipo="<< VolFinito[i].tipo_vecino[jj]<<endl;
+
+								cout<<"    jj="<<jj<<" Vecino[jj]="<< VolFinito[i].vecino[jj] << "\tppunto(NAB,VolFinito[i].vecino_normal[jj])="<<ppunto(NAB,VolFinito[i].vecino_normal[jj])<<endl;
+								cout<<"    P N1=["<<VolFinito[i].vecino_normal[j].x<<","<<VolFinito[i].vecino_normal[j].y<<","<<VolFinito[i].vecino_normal[j].z<<"]"<<endl;
+								cout<<"    P N2=["<<VolFinito[i].vecino_normal[jj].x<<","<<VolFinito[i].vecino_normal[jj].y<<","<<VolFinito[i].vecino_normal[jj].z<<"]"<<endl;
+								cout<<"    P VB=["<<VB.x<<","<<VB.y<<","<<VB.z<<"]"<<endl;
+								cout<<"    P VBj=["<<VBj.x<<","<<VBj.y<<","<<VBj.z<<"]\tppuntodiff(NAB, VB, VBj)="<<ppuntodiff(NAB, VB, VBj)<<endl;
+
+
+							muere=1;
+						}
+						VolFinito[i].Poligono.erase(VolFinito[i].Poligono.begin()+j);
+						VolFinito[i].vecino.erase(VolFinito[i].vecino.begin()+j);
+						VolFinito[i].tipo_vecino.erase(VolFinito[i].tipo_vecino.begin()+j);
+						VolFinito[i].vecino_centro_caraoriginal.erase(VolFinito[i].vecino_centro_caraoriginal.begin()+j);
+						VolFinito[i].vecino_centro.erase(VolFinito[i].vecino_centro.begin()+j);
+						VolFinito[i].vecino_normal.erase(VolFinito[i].vecino_normal.begin()+j);
+						j--;
+
+
+
+						break;
+					}
+				}
+
+
+				if (imprimir && muere==0) {
+					cout<<"P Vol sigue"<<endl;
 				}
 			}
 		}
@@ -1931,10 +2339,11 @@ void grid3D::generaPoligonos2()
 	myfileSalida<<".OK"<<endl;
 
 	//calculos de areas y longitudes de trazos
-	for (i=0;i<nH3D;i++) {
-		for (k=0; k<h3D[i].Poligono.size(); k++) {
+	for (i=0;i<nVolFinito;i++) {
+		VolFinito[i].dibujado.resize(VolFinito[i].Poligono.size());
+		for (k=0; k<VolFinito[i].Poligono.size(); k++) {
 			vector<R3> *Pto;
-			Pto= &(h3D[i].Poligono[k].punto);
+			Pto= &(VolFinito[i].Poligono[k].punto);
 			double Area,Ax,Ay,Az;
 			Area=0;
 			for (j=1; j<Pto->size(); j++) {	
@@ -1952,16 +2361,40 @@ void grid3D::generaPoligonos2()
 				Ay=((*Pto)[j-1].z-(*Pto)[0].z)*((*Pto)[j].x-(*Pto)[0].x)-((*Pto)[j-1].x-(*Pto)[0].x)*((*Pto)[j].z-(*Pto)[0].z);
 				Area+=sqrt(sqr(Ax)+sqr(Ay)+sqr(Az))/2;
 			}
-			h3D[i].Poligono[k].AreaPoligono=Area;
+			VolFinito[i].Poligono[k].AreaPoligono=Area;
 			if (Area <1e-10) {
-				h3D[i].Poligono.erase(h3D[i].Poligono.begin()+k);
-				h3D[i].vecino.erase(h3D[i].vecino.begin()+k);
-				h3D[i].tipo_vecino.erase(h3D[i].tipo_vecino.begin()+k);
+				VolFinito[i].Poligono.erase   (VolFinito[i].Poligono.begin()+k);
+				VolFinito[i].vecino.erase     (VolFinito[i].vecino.begin()+k);
+				VolFinito[i].tipo_vecino.erase(VolFinito[i].tipo_vecino.begin()+k);
+				VolFinito[i].vecino_centro_caraoriginal.erase(VolFinito[i].vecino_centro_caraoriginal.begin()+k);
+				VolFinito[i].vecino_centro.erase(VolFinito[i].vecino_centro.begin()+k);
+				VolFinito[i].vecino_normal.erase(VolFinito[i].vecino_normal.begin()+k);
 				k--;
 			}
 		}
 	}
 }
+
+
+void grid3D::DZmin(double DzMinimo) {
+	cout <<"P grid3D::DZmin(double DzMinimo="<<DzMinimo<<")"<<endl;
+	int i,j,niz=4;
+	for (i=0;i<v3D.size()/niz;i+=niz) {
+		cout <<"P i="<<i<<endl;
+		for(j=1;j<niz;j++) {
+
+			if (i==820 ) {
+				cout <<i+j<<"\t"<< v3D[i+j].z <<"\t"<<v3D[i+j].z-v3D[i+j-1].z <<endl;
+			}
+			if (v3D[i+j].z-v3D[i+j-1].z<DzMinimo) v3D[i+j].z=v3D[i+j-1].z+DzMinimo;
+			if (i==820 ) {
+				cout <<i+j<<"\t"<< v3D[i+j].z <<"\t"<<v3D[i+j].z-v3D[i+j-1].z <<endl;
+			}
+		}
+	}
+}
+
+
 
 
 void grid3D::GeneraCarasTriPri()
@@ -1994,8 +2427,8 @@ void grid3D::GeneraCarasTriPri()
 		//		cout<<"vertices:"<<TriP3D->iv[0]<<" "<<TriP3D->iv[1]<<" "<<TriP3D->iv[2]
 		//																			  <<" "<<TriP3D->iv[3]<<" "<<TriP3D->iv[4]<<" "<<TriP3D->iv[5]<<endl;
 
-		TriP3D->icara[0]=AddCara3(i,TriP3D->iv[0],TriP3D->iv[1],TriP3D->iv[2]);
-		TriP3D->icara[1]=AddCara3(i,TriP3D->iv[3],TriP3D->iv[4],TriP3D->iv[5]);
+		TriP3D->icara[0]=AddCara3(i,TriP3D->iv[0],TriP3D->iv[2],TriP3D->iv[1],IBC_INF);
+		TriP3D->icara[1]=AddCara3(i,TriP3D->iv[3],TriP3D->iv[4],TriP3D->iv[5],IBC_SUP);
 		TriP3D->icara[2]=AddCara4(i,TriP3D->iv[0],TriP3D->iv[3],TriP3D->iv[5],TriP3D->iv[2]);
 		TriP3D->icara[3]=AddCara4(i,TriP3D->iv[0],TriP3D->iv[1],TriP3D->iv[4],TriP3D->iv[3]);
 		TriP3D->icara[4]=AddCara4(i,TriP3D->iv[1],TriP3D->iv[2],TriP3D->iv[5],TriP3D->iv[4]);
@@ -2057,6 +2490,69 @@ void grid3D::GeneraCaras(int inicia)
 	}
 }
 
+void grid3D::SeleccionaVolFinito(double px,double py,double pz)
+{
+	int i,j,jj,k,nr=5,nz=3,ir,iz,pj,pjmin;
+	float pd2min,pd2;
+
+	pd2min=1e10;
+	for (pj=0;pj<nTriPrisma3D;pj++) {
+		pd2=sqr(px-TriPrisma3D[pj].centro.x)+sqr(py-TriPrisma3D[pj].centro.y)+sqr(pz-TriPrisma3D[pj].centro.z);
+		if (pd2<pd2min) {
+			pd2min=pd2;
+			pjmin=pj;
+		}
+	}
+	if(Add_Voronoi) {
+		for (i=0;i<VolFinitoSelected.size();i++) {
+			if (VolFinitoSelected[i]==pjmin) {
+
+				imprimir=1;
+				VolFinitoSelected.erase(VolFinitoSelected.begin()+i);
+				return;
+			}
+		}
+		imprimir=1;
+		VolFinitoSelected.push_back(pjmin);
+		cout<<"T Agregado VolFinitoSelected.size()="<<VolFinitoSelected.size()<<" i="<<pjmin<<endl;
+	} else {
+		for (i=0;i<Selected_Triprisma.size();i++) {
+			if (Selected_Triprisma[i]==pjmin) {
+
+				imprimir=1;
+				Selected_Triprisma.erase(Selected_Triprisma.begin()+i);
+				return;
+			}
+		}
+		Selected_Triprisma.push_back(pjmin);
+		imprimir=1;
+		cout<<"T Agregado Selected_Triprisma.size()="<<Selected_Triprisma.size()<<" i="<<pjmin<<endl;
+	}
+
+
+}
+
+
+void grid3D::SeleccionaYMuestraCara(double px,double py,double pz)
+{
+	int i,j,jj,k,nr=5,nz=3,ir,iz,pj,pjmin;
+	float pd2min,pd2;
+
+	pd2min=1e10;
+	for (pj=0;pj<nCaras;pj++) {
+		pd2=sqr(px-Cara[pj].centro.x)+sqr(py-Cara[pj].centro.y)+sqr(pz-Cara[pj].centro.z);
+		if (pd2<pd2min) {
+			pd2min=pd2;
+			pjmin=pj;
+		}
+	}
+	cout<<"C Cara: "<<pjmin<<":"<<endl;
+	cout<<"C Normal=["<<Cara[pjmin].normalCara.x<<","<<Cara[pjmin].normalCara.y<<","<<Cara[pjmin].normalCara.z<<endl;
+
+
+}
+
+
 void grid3D::PosINI3(double PosX,double PosY,double PosZ)
 {
 	int i,j,jj,k,nr=5,nz=3,ir,iz;
@@ -2098,8 +2594,8 @@ void grid3D::PosINI3(double PosX,double PosY,double PosZ)
 		for (iz=0;iz<nz;iz++) {
 			i=nParticulas++;
 
-			Particulas[0][0][i]= TriPrisma3D[pjmin].centro.x;
-			Particulas[0][1][i]= TriPrisma3D[pjmin].centro.y;
+			Particulas[0][0][i]= TriPrisma3D[pjmin].centro.x*0+px;
+			Particulas[0][1][i]= TriPrisma3D[pjmin].centro.y*0+py;
 			Particulas[0][2][i]= TriPrisma3D[pjmin].centro.z;
 			ParticulasZ[i]= 0.5*iz;
 			ParticulasBloq[i]=pjmin;
@@ -2114,6 +2610,7 @@ void grid3D::PosINI3(double PosX,double PosY,double PosZ)
 
 	Spinner_particulas->sync_live(1,1);
 }
+
 
 void grid3D::PosINI(int i)
 {
@@ -2297,7 +2794,7 @@ void DibujaParticula (int i,R3 & origen)
 	}
 }
 
-void grid3D::drawVelGL_TriPrisma(vector<double> U,vector<double> V,vector<double> W)
+void grid3D::drawParticulas_TriPrisma(vector<double> U,vector<double> V,vector<double> W)
 {
 	//	cout<<"grid3D::drawVelGL"<<"primerdrawVelGL="<<primerdrawVelGL<<"nParticulas="<<nParticulas<<endl;
 	static double dt=0.1*sqr(Dominio_Xmax);
@@ -2351,7 +2848,7 @@ void grid3D::drawVelGL_TriPrisma(vector<double> U,vector<double> V,vector<double
 					}
 
 					ParticulasBloq[i]=pjmin;
-					if ( pd2min>0.01 ) {
+					if ( pd2min>0.001 ) {
 						PosINI(i);
 					}
 					else {
@@ -2439,6 +2936,166 @@ void grid3D::drawVelGL2(vector<double> UU,vector<double> VV,vector<double> WW)
 }
 
 
+void grid3D::Voronoi_Draw_i(int i) {
+	int j,k,ii,iimax;
+	static int xxip=0;
+	double xg,yg,zg,nnn;
+	double xg2,yg2,zg2;
+	double xcentro,ycentro,zcentro;
+	GLdouble winX1,winY1,winZ,winX2,winY2,winX3,winY3,nx,ny,nz;
+
+	if (imprimir) cout<<", Voronoi_Draw_i(i="<<i<<")"<<endl;
+
+	for (k=0; k<VolFinito[i].Poligono.size(); k++) {
+		//if (imprimir) cout<<", k="<<k<<" de "<<VolFinito[i].Poligono.size()<<endl;
+		xg=VolFinito[i].Poligono[k].centro.x;
+		yg=VolFinito[i].Poligono[k].centro.y;
+		zg=VolFinito[i].Poligono[k].centro.z;
+
+
+		xg2=xg*FactorCercania+(1-FactorCercania)*VolFinito[i].centro.x;
+		yg2=yg*FactorCercania+(1-FactorCercania)*VolFinito[i].centro.y;
+		zg2=zg*FactorCercania+(1-FactorCercania)*VolFinito[i].centro.z;
+		//cout<<"xg="<<xg<<"\tyg="<<yg<<"\tzg="<<zg<<endl;
+
+		if (MODO_NumeraH){
+
+			FuncionesOpenGL::material(100);
+
+			char *p;
+			char ss[100];
+			glPushMatrix();
+
+			glTranslatef(xg2,yg2,zg2);
+
+			glMultMatrixf((GLfloat *)MatrizRotacionGlobalINV);
+			glScalef(NumEscala,NumEscala,NumEscala);
+			float y0=1.0/Escala,dy=1.7/Escala;
+			glRasterPos3f(-1.0/Escala, y0-=dy ,0);
+
+			if (VolFinito[i].tipo_vecino[k]==ES_CARA || VolFinito[i].tipo_vecino[k]==ES_CARA_L2)
+				sprintf(ss,"h%d-p%d-C%d",i,k,VolFinito[i].vecino[k]);
+			else
+				sprintf(ss,"h%d-p%d-b%d",i,k,VolFinito[i].vecino[k]);
+			for(p = ss; *p; p++) {
+				glutBitmapCharacter(GLUT_BITMAP_9_BY_15, *p);
+			}
+
+			glPopMatrix();
+		}
+
+		//				if (VolFinito[i].dibujado[k] == 1) continue;
+		vector<R3> *Pto;
+		Pto= &(VolFinito[i].Poligono[k].punto);
+		nx=VolFinito[i].Poligono[k].normal.x; ny=VolFinito[i].Poligono[k].normal.y;nz=VolFinito[i].Poligono[k].normal.z;
+		if (Pto->size() >2) {
+			FuncionesOpenGL::World2Win( (*Pto)[0].x , (*Pto)[0].y , (*Pto)[0].z,&winX1,&winY1,&winZ);
+			FuncionesOpenGL::World2Win( (*Pto)[Pto->size()/2].x , (*Pto)[Pto->size()/2].y ,  (*Pto)[Pto->size()/2].z,&winX2,&winY2,&winZ);
+			FuncionesOpenGL::World2Win( (*Pto)[Pto->size()-1].x , (*Pto)[Pto->size()-1].y ,
+					(*Pto)[Pto->size()-1].z,&winX3,&winY3,&winZ);
+			if ((winX2-winX1)*(winY3-winY1)-(winY2-winY1)*(winX3-winX1) <0 ){
+				nx = -nx; ny = -ny; nz = -nz; ;
+			}
+		}
+		if (Dibuja3puntos && xxi==i) {
+			FuncionesOpenGL::material(2);	}
+		else  {FuncionesOpenGL::material(3);}
+		xcentro=0;ycentro=0;zcentro=0;
+		for (j=0; j<Pto->size(); j++) {
+			xcentro+=(*Pto)[  j].x;
+			ycentro+=(*Pto)[  j].y;
+			zcentro+=(*Pto)[  j].z;
+			if (j>1) {
+				glBegin(GL_TRIANGLES );
+				glNormal3d(nx , ny , nz );
+				glVertex3d( (*Pto)[  0].x, (*Pto)[  0].y, (*Pto)[0].z);
+				glVertex3d( (*Pto)[j-1].x, (*Pto)[j-1].y, (*Pto)[j-1].z);
+				glVertex3d( (*Pto)[  j].x, (*Pto)[  j].y, (*Pto)[j].z);
+				glEnd();
+			}
+
+		}
+		xcentro/=Pto->size();
+		ycentro/=Pto->size();
+		zcentro/=Pto->size();
+		if(ModoDibujaNormales) {
+			glPushAttrib( GL_LIGHTING_BIT );
+			glDisable( GL_LIGHTING );
+
+			glBegin(GL_LINES);
+			glColor3f(1,0,0);
+			glVertex3d(xg,yg,zg);
+			nnn=sqrt(sqr(nx)+sqr(ny)+sqr(nz));
+			glVertex3d(xg+nx/nnn/10,yg+ny/nnn/10,zg+nz/nnn/10);
+			glEnd();
+			glPopAttrib();
+		}
+
+		//if (imprimir) cout<<", 2:k="<<k<<endl;
+		//Dibuja linea entre centros
+		{
+			glPushAttrib( GL_LIGHTING_BIT );
+			glDisable( GL_LIGHTING );
+
+			glBegin(GL_LINES);
+			if (VolFinito[i].tipo_vecino[k]==ES_CARA || VolFinito[i].tipo_vecino[k]==ES_CARA_L2 ) {
+				glColor3f(0,1,0);
+				glVertex3d(xcentro,ycentro,zcentro);
+				glVertex3d(VolFinito[i].vecino_centro_caraoriginal[k].x,VolFinito[i].vecino_centro_caraoriginal[k].y,VolFinito[i].vecino_centro_caraoriginal[k].z);
+			}
+			glColor3f(0,0,1);
+			glVertex3d(xcentro,ycentro,zcentro);
+			glVertex3d(xg,yg,zg);
+			glColor3f(1,0,0);
+			glVertex3d(xg,yg,zg);
+			nnn=sqrt(sqr(nx)+sqr(ny)+sqr(nz));
+			glVertex3d(VolFinito[i].vecino_centro[k].x,VolFinito[i].vecino_centro[k].y,VolFinito[i].vecino_centro[k].z);
+			glEnd();
+			glPopAttrib();
+		}
+
+
+		//if (imprimir) cout<<", 3:k="<<k<<endl;
+		VolFinito[i].dibujado[k]=1;
+		if (VolFinito[i].tipo_vecino[k]==ES_BLOQUE) {
+			for (j=0; j<VolFinito[ VolFinito[i].tipo_vecino[k] ].dibujado.size(); j++) {
+				if (   VolFinito[ VolFinito[i].vecino[k] ].tipo_vecino[j] ==ES_BLOQUE
+						&& VolFinito[ VolFinito[i].vecino[k] ].vecino[j] == i) {
+
+					VolFinito[ VolFinito[i].vecino[k] ].dibujado[j]=1;
+					break;
+				}
+
+			}
+		}
+
+
+		//if (imprimir) cout<<", 4:k="<<k<<endl;
+	}
+
+}
+
+
+void grid3D::TriPrisma_Draw_i(int i) {
+	int j,k,ii,iimax;
+
+	if (imprimir)	cout<<", TriPrisma_Draw_i(i="<<i<<")"<<endl;
+
+	int tmp=ModoDibujaInterior;
+	int tmp2=ModoDibujaFrontera;
+	ModoDibujaInterior=1;
+	ModoDibujaFrontera=1;
+	for (k=0; k<5; k++) {
+		Cara[TriPrisma3D[i].icara[k]].drawGL();
+
+
+	}
+	ModoDibujaInterior=tmp;
+	ModoDibujaFrontera=tmp2;
+
+}
+
+
 void grid3D::drawVoronoi()
 {
 	int i,j,k,ii,iimax;
@@ -2451,25 +3108,28 @@ void grid3D::drawVoronoi()
 
 	glEnable(GL_NORMALIZE);
 	if (QuienGeneraPoligonos==2) {
-		for (i=0;i<nH3D;i++) {
-			h3D[i].dibujado.assign( h3D[i].Poligono.size(),0);
+		for (i=0;i<nVolFinito;i++) {
+			VolFinito[i].dibujado.assign( VolFinito[i].Poligono.size(),0);
 		}		
 
-		iimax=nH3D;
+		iimax=nVolFinito;
 		if (ModoDibujaAlgunos) iimax=CualesBloquesDibuja.size();
 
 		for (ii=0;ii<iimax;ii++) {
 			i=ii;
 			if (ModoDibujaAlgunos) i=CualesBloquesDibuja[ii];
-			for (k=0; k<h3D[i].Poligono.size(); k++) {
-				xg=h3D[i].Poligono[k].centro.x;
-				yg=h3D[i].Poligono[k].centro.y;
-				zg=h3D[i].Poligono[k].centro.z;
 
 
-				xg2=xg*FactorCercania+(1-FactorCercania)*h3D[i].centro.x;
-				yg2=yg*FactorCercania+(1-FactorCercania)*h3D[i].centro.y;
-				zg2=zg*FactorCercania+(1-FactorCercania)*h3D[i].centro.z;
+			{
+			for (k=0; k<VolFinito[i].Poligono.size(); k++) {
+				xg=VolFinito[i].Poligono[k].centro.x;
+				yg=VolFinito[i].Poligono[k].centro.y;
+				zg=VolFinito[i].Poligono[k].centro.z;
+
+
+				xg2=xg*FactorCercania+(1-FactorCercania)*VolFinito[i].centro.x;
+				yg2=yg*FactorCercania+(1-FactorCercania)*VolFinito[i].centro.y;
+				zg2=zg*FactorCercania+(1-FactorCercania)*VolFinito[i].centro.z;
 				//cout<<"xg="<<xg<<"\tyg="<<yg<<"\tzg="<<zg<<endl;
 
 				if (MODO_NumeraH){
@@ -2487,10 +3147,10 @@ void grid3D::drawVoronoi()
 					float y0=1.0/Escala,dy=1.7/Escala;
 					glRasterPos3f(-1.0/Escala, y0-=dy ,0);
 
-					if (h3D[i].tipo_vecino[k]==ES_CARA || h3D[i].tipo_vecino[k]==ES_CARA_L2)
-						sprintf(ss,"h%d-p%d-C%d",i,k,h3D[i].vecino[k]);
+					if (VolFinito[i].tipo_vecino[k]==ES_CARA || VolFinito[i].tipo_vecino[k]==ES_CARA_L2)
+						sprintf(ss,"h%d-p%d-C%d",i,k,VolFinito[i].vecino[k]);
 					else
-						sprintf(ss,"h%d-p%d-b%d",i,k,h3D[i].vecino[k]);
+						sprintf(ss,"h%d-p%d-b%d",i,k,VolFinito[i].vecino[k]);
 					for(p = ss; *p; p++) {
 						glutBitmapCharacter(GLUT_BITMAP_9_BY_15, *p);
 					}
@@ -2498,10 +3158,10 @@ void grid3D::drawVoronoi()
 					glPopMatrix();
 				}
 
-				//				if (h3D[i].dibujado[k] == 1) continue;
+				//				if (VolFinito[i].dibujado[k] == 1) continue;
 				vector<R3> *Pto;
-				Pto= &(h3D[i].Poligono[k].punto);
-				nx=h3D[i].Poligono[k].normal.x; ny=h3D[i].Poligono[k].normal.y;nz=h3D[i].Poligono[k].normal.z; 
+				Pto= &(VolFinito[i].Poligono[k].punto);
+				nx=VolFinito[i].Poligono[k].normal.x; ny=VolFinito[i].Poligono[k].normal.y;nz=VolFinito[i].Poligono[k].normal.z;
 				if (Pto->size() >2) {
 					FuncionesOpenGL::World2Win( (*Pto)[0].x , (*Pto)[0].y , (*Pto)[0].z,&winX1,&winY1,&winZ);
 					FuncionesOpenGL::World2Win( (*Pto)[Pto->size()/2].x , (*Pto)[Pto->size()/2].y ,  (*Pto)[Pto->size()/2].z,&winX2,&winY2,&winZ);
@@ -2536,13 +3196,13 @@ void grid3D::drawVoronoi()
 					glPopAttrib();
 				}
 
-				h3D[i].dibujado[k]=1;
-				if (h3D[i].tipo_vecino[k]==ES_BLOQUE) {
-					for (j=0; j<h3D[ h3D[i].tipo_vecino[k] ].dibujado.size(); j++) {
-						if (   h3D[ h3D[i].vecino[k] ].tipo_vecino[j] ==ES_BLOQUE 
-								&& h3D[ h3D[i].vecino[k] ].vecino[j] == i) {
+				VolFinito[i].dibujado[k]=1;
+				if (VolFinito[i].tipo_vecino[k]==ES_BLOQUE) {
+					for (j=0; j<VolFinito[ VolFinito[i].tipo_vecino[k] ].dibujado.size(); j++) {
+						if (   VolFinito[ VolFinito[i].vecino[k] ].tipo_vecino[j] ==ES_BLOQUE
+								&& VolFinito[ VolFinito[i].vecino[k] ].vecino[j] == i) {
 
-							h3D[ h3D[i].vecino[k] ].dibujado[j]=1;
+							VolFinito[ VolFinito[i].vecino[k] ].dibujado[j]=1;
 							break;
 						}
 
@@ -2551,7 +3211,7 @@ void grid3D::drawVoronoi()
 
 
 			}
-
+			}
 
 
 		}
@@ -2823,7 +3483,7 @@ void grid3D::drawGL()
 		}
 	else
 		for (i=0;i<nCaras;i++) {
-			if (Cara[i].centro.z<1000.000001) // TODO CAPA SUPERIOR
+			if (Cara[i].iBC != IBC_SUP) // TODO : Eliminar CAPA SUPERIOR
 				Cara[i].drawGL();
 		}
 
@@ -2853,6 +3513,14 @@ void grid3D::drawGL()
 
 
 	if (DBG) cout<<"grid3D::drawGL()1600"<<endl;
+
+	for (i=0;i<	VolFinitoSelected.size();i++) {
+		Voronoi_Draw_i(VolFinitoSelected[i]);
+	}
+	for (i=0;i<	Selected_Triprisma.size();i++) {
+		TriPrisma_Draw_i(Selected_Triprisma[i]);
+	}
+	imprimir=0;
 
 	if (MODO_NumeraH){
 
@@ -3245,6 +3913,24 @@ void R3::Traslada(double dx,double dy,double dz)
 	z += dz;
 }
 
+const R3& R3::operator = ( const R3& v)
+{
+	x=v.x;
+	y=v.y;
+	z=v.z;
+	L=v.L;
+    return *this;
+}
+R3 R3::operator -(const R3& v1)
+{
+    R3 v;
+    v.x=x-v1.x;
+    v.y=y-v1.y;
+    v.z=z-v1.z;
+    return v;
+}
+
+
 void PoligonoPlano::Traslada(double dx,double dy,double dz)
 {
 	int i;
@@ -3377,6 +4063,28 @@ void Hexa3D::CalculaVolumen()
 		}
 
 	}
+}
+
+
+
+
+void grid3D::Soporte_Vertices()
+{
+	int i,j;
+	for (i=0;i<v3D.size() ;i++) {
+		v3D[i].soporte.resize(0);
+	}
+	for (i=0;i<h3D.size() ;i++) {
+		for (j=0;j<8;j++) {
+		v3D[h3D[i].iv[j]].soporte.push_back(i);
+		}
+	}
+	for (i=0;i<TriPrisma3D.size() ;i++) {
+		for (j=0;j<6;j++) {
+		v3D[TriPrisma3D[i].iv[j]].soporte.push_back(i+h3D.size());
+		}
+	}
+
 }
 
 

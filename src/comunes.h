@@ -323,7 +323,7 @@ void DrawGraphics()
 	if (MODO_CampoVelocidades) {
 		glDisable(GL_CLIP_PLANE0);
 //		FuncionesOpenGL::material(0);	gtotal->drawVelGL(U,V,W);
-		FuncionesOpenGL::material(0);	gtotal->drawVelGL_TriPrisma(U,V,W);
+		FuncionesOpenGL::material(0);	gtotal->drawParticulas_TriPrisma(U,V,W);
 	}
 	if (DBG) cout<<"DrawGraphics()249"<<endl;
 	if (MODO_CampoVelocidades2) {
@@ -1134,9 +1134,40 @@ void CB_mouse(int button, int state, int x, int y)
 
 
 
+			} else if (Add_Voronoi||Add_VolumenINI||Flag_MuestraCara) {
+				iPush=0;
+				//Convertir coordenadas de la pantalla a OpenGL.....
 
-			} else if (MueveCentro)
-			{
+
+				//float x=xPos0,y=yPos0;
+				GLint viewport[4];
+				GLdouble modelview[16];
+				GLdouble projection[16];
+				GLfloat winX, winY, winZ;
+				GLdouble posX, posY, posZ;
+
+				FuncionesOpenGL::ObtieneMatrices();
+
+				winX = (float)x;
+				winY = (float)FuncionesOpenGL::viewport[3] - (float)y;
+				glReadPixels( x, int(winY), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &winZ );
+
+				FuncionesOpenGL::Win2World(winX, winY, winZ, &posX, &posY, &posZ);
+
+				printf("%f %f %f\n",posX,posY,posZ);
+
+				if (Add_Voronoi)
+					gtotal->SeleccionaVolFinito(posX,posY,posZ);
+				else if(Flag_MuestraCara)
+					gtotal->SeleccionaYMuestraCara(posX, posY, posZ);
+				else
+					gtotal->SeleccionaVolFinito(posX,posY,posZ);
+
+
+
+
+
+			} else if (MueveCentro) {
 				iPush=0;
 				//Convertir coordenadas de la pantalla a OpenGL.....
 
@@ -2162,6 +2193,163 @@ double CalculaTemperaturaPilaEnTmasDt(vector<double> &Temp,vector<double> &Poten
 }
 
 
+double ResuelveConveccionDifusion (vector<double> &Concentracion,vector<double> &PotencialV,vector<double> &U,
+		vector<double> &V,vector<double> &W,grid3D g,int niteraciones,double err0,vector<double> &TempPrevia)
+{
+	int iiter,i,j,iC;
+	double SumaCoeffDif_F2,SumaCoeffDif,Coeff_Difusion,err,errG,nF,SumaVolumen;
+	if (Concentracion.size() ==0) Concentracion.resize(g.nH3D);
+	//Resuelvo la ecuación varias veces
+	niteraciones=g.nH3D*50;
+	if (niteraciones<30000) niteraciones=30000;
+	cout <<"niteraciones="<<niteraciones<<endl;
+	myfileSalida <<"niteraciones="<<niteraciones<<endl;
+	double SumCoeffEstacionarios=0,SumCoeffTemporales=0;
+	int    NCoeffEstacionarios=0;
+	for (iiter=0 ; iiter<niteraciones ; iiter++) {
+		errG=0;
+		for (i=0 ; i<g.nH3D ; i++) {
+			//Escribo la ecuación para cada hexahedro [i]
+			SumaCoeffDif_F2=0;SumaCoeffDif=0;SumaVolumen=0;
+			double PotencialV_i=PotencialV[i],PotencialV_j;
+			for (j=0 ; j< g.h3D[i].vecino.size() ;j++) {
+				if(1==0) cout <<"CalculaLaplacianoCero2: iiter,i,j="<<iiter<<" "<<i<<" "<<j
+						<< "\tPotencialV_.size=" << PotencialV.size()
+						<<"\tg.h3D[i].vecino[j]="<<g.h3D[i].vecino[j]
+																   <<"\tg.h3D[i].tipo_vecino[j]="<<g.h3D[i].tipo_vecino[j]
+																														<<endl;
+				//recorro cada vecino==cara [i]--[j]
+
+				if (g.h3D[i].tipo_vecino[j] == ES_BLOQUE) {
+					PotencialV_j=PotencialV[ g.h3D[i].vecino[j] ];
+					if (PotencialV_j>PotencialV_i)
+						Coeff_Difusion = Datos_rhof * Datos_cf *(PotencialV_j-PotencialV_i) *
+						g.h3D[i].Poligono[j].AreaPoligono / g.h3D[i].Poligono[j].Dab;
+					else Coeff_Difusion=0;
+
+					Coeff_Difusion += Datos_km * g.h3D[i].Poligono[j].AreaPoligono / g.h3D[i].Poligono[j].Dab;
+
+					SumaCoeffDif_F2 += Coeff_Difusion * Concentracion[ g.h3D[i].vecino[j] ] ;
+					SumaCoeffDif    += Coeff_Difusion;
+				} else {
+					iC=g.h3D[i].vecino[j];
+					double htilde_local;
+					//if (g.Cara[iC].iBC==1) Se trata de Derivada normal igual a cero (nada que hacer)
+					switch (g.Cara[iC].iBC) {
+					case 2:
+					case 3:   //Condicion Dirichlet (como un bloque con T conocida == BC2)
+						PotencialV_j=g.Cara[iC].BC;
+						if (PotencialV_j>PotencialV_i)
+							Coeff_Difusion = Datos_rhof * Datos_cf *(PotencialV_j-PotencialV_i) *
+							g.h3D[i].Poligono[j].AreaPoligono / g.h3D[i].Poligono[j].Dab;
+						else Coeff_Difusion=0;
+
+						Coeff_Difusion += Datos_km * g.h3D[i].Poligono[j].AreaPoligono / g.h3D[i].Poligono[j].Dab;
+
+						if (1==0) cout<<"g.Cara[iC].BC2="<<g.Cara[iC].BC2
+								<<"\t.BC="<<g.Cara[iC].BC
+								<<"\tg.Cara[iC].iBC="<<g.Cara[iC].iBC
+								<<"\tiC="<<iC
+								<<"\tCoeff_Difusion="<<Coeff_Difusion
+								<<"\tPotencialV_i="<<PotencialV_i<<"PotencialV_j="<<PotencialV_j
+								<<endl;
+						SumaCoeffDif_F2 += Coeff_Difusion * g.Cara[iC].BC2;
+						SumaCoeffDif    += Coeff_Difusion;
+						break;
+
+					case 11:   // Cara convectiva abajo
+						htilde_local=MediaArmonica(Datos_km/(g.h3D[i].Poligono[j].Dab/2),Datos_hc_inferior);
+
+						Coeff_Difusion=htilde_local*g.h3D[i].Poligono[j].AreaPoligono;
+						SumaCoeffDif_F2 += Coeff_Difusion * Datos_Tambiente;
+						SumaCoeffDif    += Coeff_Difusion;
+						break;
+					case 12:   // Cara convectiva lateral
+						htilde_local
+						=MediaArmonica(Datos_km/(g.h3D[i].Poligono[j].Dab/2),Datos_km2/Datos_DistanciaAlBorde);
+						htilde_local=MediaArmonica(htilde_local,Datos_hc_lateral);
+						Coeff_Difusion=htilde_local*g.h3D[i].Poligono[j].AreaPoligono;
+						SumaCoeffDif_F2 += Coeff_Difusion * Datos_Tambiente;
+						SumaCoeffDif    += Coeff_Difusion;
+						break;
+					}
+
+				}
+			}
+
+			if (TipoCalculo==CalculoEvolucion) {
+				///////////////////Aporte del termino temporal.....
+				double CoeffT=Datos_rhom*Datos_cm*g.h3D[i].volumen/Datos_dt;
+
+				//Estadistica (cual es mas importante)
+				SumCoeffEstacionarios += SumaCoeffDif;
+				SumCoeffTemporales    += CoeffT;
+				NCoeffEstacionarios   ++;
+
+
+				SumaCoeffDif_F2 += CoeffT*TempPrevia[i];
+				SumaCoeffDif    += CoeffT;
+			}
+			nF = SumaCoeffDif_F2/SumaCoeffDif;
+			err=fabs(nF-Concentracion[i])/(fabs(nF)+1e-20);
+			if (err > errG) errG=err;
+			Concentracion[i]=nF;
+			//			if (F[i]==0) F[i]=0.5;
+		}
+		if (errG<err0) {
+			cout<<"break: errG<"<<err0<<endl;
+			myfileSalida<<"break: errG<"<<err0<<endl;
+			break;
+		}
+	}
+	cout<<"iiter_final="<<iiter<<endl;
+	myfileSalida<<"iiter_final="<<iiter<<endl;
+	if (TipoCalculo==CalculoEvolucion) {
+		//Estadistica (cual es mas importante)
+		cout << "<CoeffEstacionarios>="<<SumCoeffEstacionarios /NCoeffEstacionarios;
+		cout << "\t<SumCoeffTemporales>="<<SumCoeffTemporales / NCoeffEstacionarios <<endl;
+		myfileSalida << "<CoeffEstacionarios>="<<SumCoeffEstacionarios /NCoeffEstacionarios;
+		myfileSalida << "\t<SumCoeffTemporales>="<<SumCoeffTemporales / NCoeffEstacionarios <<endl;
+	}
+	for (i=0 ; i<g.nH3D ; i++) {
+		double A,AA,AB,AC,RA;
+		double BA,BB,BC,RB;
+		double CA,CB,CC,RC;
+		double nx,ny,nz,DET;
+		AA=0;AB=0;AC=0;RA=0;
+		BA=0;BB=0;BC=0;RB=0;
+		CA=0;CB=0;CC=0;RC=0;
+		for (j=0 ; j< g.h3D[i].vecino.size() ;j++) {
+			if (g.h3D[i].tipo_vecino[j] == ES_BLOQUE) {
+				Coeff_Difusion = ( Concentracion[ g.h3D[i].vecino[j] ] - Concentracion[i] ) / g.h3D[i].Poligono[j].Dab;
+			} else {
+				iC=g.h3D[i].vecino[j];
+				Coeff_Difusion=0;
+				if (g.Cara[iC].iBC ==2 ||g.Cara[iC].iBC ==3) {
+					Coeff_Difusion = ( g.Cara[iC].BC2 - Concentracion[i] ) / g.h3D[i].Poligono[j].Dab;
+
+				}
+			}
+			A=g.h3D[i].Poligono[j].AreaPoligono;
+			nx=g.h3D[i].Poligono[j].normal.x ;
+			ny=g.h3D[i].Poligono[j].normal.y ;
+			nz=g.h3D[i].Poligono[j].normal.z ;
+			AA += nx*nx*A; AB+= nx*ny*A; AC+= nx*nz*A; RA += -nx*Coeff_Difusion*A;
+			BA += ny*nx*A; BB+= ny*ny*A; BC+= ny*nz*A; RB += -ny*Coeff_Difusion*A;
+			CA += nz*nx*A; CB+= nz*ny*A; CC+= nz*nz*A; RC += -nz*Coeff_Difusion*A;
+		}
+		// AA AB AC --> RA
+		// BA BB BC --> RB
+		// CA CB CC --> RC
+		DET= AA*(BB*CC-BC*CB)+BA*(CB*AC-AB*CC)+CA*(AB*BC-BB*AC) ;
+		U[i]= ( RA*(BB*CC-BC*CB)+RB*(CB*AC-AB*CC)+RC*(AB*BC-BB*AC) )/DET;
+		V[i]=-( RA*(BA*CC-BC*CA)+RB*(CA*AC-AA*CC)+RC*(AA*BC-BA*AC) )/DET;
+		W[i]= ( RA*(BA*CB-BB*CA)+RB*(CA*AB-AA*CB)+RC*(AA*BB-BA*AB) )/DET;
+	}
+	return(errG);
+}
+
+
 void CB_keyboard(unsigned char key, int x, int y)
 {
 
@@ -2186,120 +2374,24 @@ void CB_keyboard(unsigned char key, int x, int y)
 	case '1': 
 		//Calculo_EtapaS(true);
 		break;
-	case 'W':
-	case 'w':
-		DrawMensajesDatosGui3();
-		glui3->show();
-		break;
-	case 'v':
-	case 'V':
-		gluiHelp->set_int_val(!MODO_MenuMENSAJES);
-		MODO_MenuMENSAJES=gluiHelp->get_int_val();
-		if (MODO_MenuMENSAJES)
-			DrawMensajesDatos();
-		break;
-	case 'n':
-	case 'N':
-		gluiNormales->set_int_val(!gluiNormales->int_val);
-		break;
-	case 'b':
-	case 'B':
-		gluiBordes->set_int_val(!ModoDibujaFrontera);ModoDibujaFrontera=gluiBordes->get_int_val();
-		break;
-	case 'i':
-	case 'I':
-		gluiInterior->set_int_val(!ModoDibujaInterior);ModoDibujaInterior=gluiInterior->get_int_val();
-		break;
-
-
-#if defined(GLUI_GLUI_H)
-	case 'Z':
-	case 'z':
-		if (glui_hide) 		
-			glui->show();
-		else 		
-			glui->hide();
-		glui_hide=!glui_hide;
-		ResizeGraphics(glutGet(GLUT_WINDOW_WIDTH),glutGet(GLUT_WINDOW_HEIGHT));
-		break;
-#endif
-	case 'T':
-	case 't':
-		glui_GrupoModoDelMouse->set_int_val(0);MODO_de_mover=glui_GrupoModoDelMouse->get_int_val();
-		break;
-	case 'R':
-	case 'r':
-
-		//		glLoadIdentity();
-		//		glOrtho(gLeft, gRight, gBottom, gTop, gFar, -gFar);
-		//		glGetFloatv( GL_MODELVIEW_MATRIX, (GLfloat*)MatrizRotacionGlobal );
-		//		TrasponeMatriz();
-
-		glui_GrupoModoDelMouse->set_int_val(1);MODO_de_mover=glui_GrupoModoDelMouse->get_int_val();
-		break;
-	case 'S':
-	case 's':
-		glui_GrupoModoDelMouse->set_int_val(2);MODO_de_mover=glui_GrupoModoDelMouse->get_int_val();
-		break;
-	case 'E':
-	case 'e':
-		glui_GrupoModoDelMouse->set_int_val(3);MODO_de_mover=glui_GrupoModoDelMouse->get_int_val();
-		break;
-	case '+':
-		if (NumON==1 ) {
-			NumEscala /=1.2;
-		} else {
-			char s[100];
-			npasadas*=2; 
-			if (npasadas>maxpasadas) 	npasadas=maxpasadas;
-			sprintf(s,"(+)=npasadas++=%d",npasadas);
-			AddMensaje(s);
-		}
-		break;
-	case '-':
-		if (NumON==1 ) {
-			NumEscala *=1.2;
-		} else {
-			char s[100];
-			npasadas/=2; 
-			if (npasadas<=0) 				npasadas=1;
-			sprintf(s,"(-)=npasadas--=%d",npasadas);
-			AddMensaje(s);
-		}
-		break;
-	case 'M':
-	case 'm':
-		//TODO
-		gluiMueve->set_int_val(!MueveCentro);MueveCentro=gluiMueve->get_int_val();
-		if (MueveCentro)    {
-			AddMensajeRight((char *)"M=Mueve Centro");
-			cout<<"E vecUEsfera="<<vecUEsfera[0]<<","<<vecUEsfera[1]<<"."<<vecUEsfera[2]<<","<<vecUEsfera[3]<<endl;
-
-			Add_Particulas=0;
-		}
-		else  {
-			AddMensajeRight("");AddMensajeRight("");
-		}
-		break;
 	case 'A': //Add particulas con el mouse
 	case 'a':
 		Add_Particulas=1-Add_Particulas;
 		if (Add_Particulas) {
 			AddMensajeRight((char *)"A=Add Particulas");
 			MueveCentro=0;
+			//Add_Particulas=0;
+			Add_VolumenINI=0;
+			Add_Voronoi=0;
+			Flag_MuestraCara=0;
 
 		} else {
 			AddMensajeRight("");AddMensajeRight("");
 		}
 		break;
-	case 'P':
-	case 'p':
-		gluiClipping->set_int_val(!ClippingON);ClippingON=gluiClipping->get_int_val();
-		/*
-		ClippingON=1-ClippingON;
-		 */
-		if (ClippingON)    AddMensaje("P= Cli(P)ping on..");
-		else                AddMensaje("P= Cli(P)ping off..");
+	case 'b':
+	case 'B':
+		gluiBordes->set_int_val(!ModoDibujaFrontera);ModoDibujaFrontera=gluiBordes->get_int_val();
 		break;
 	case 'C':
 	case 'c':
@@ -2319,6 +2411,10 @@ void CB_keyboard(unsigned char key, int x, int y)
 
 		break;
 
+	case 'E':
+	case 'e':
+		glui_GrupoModoDelMouse->set_int_val(3);MODO_de_mover=glui_GrupoModoDelMouse->get_int_val();
+		break;
 	case 'F':
 	case 'f':
 		fullscreen = !fullscreen;
@@ -2338,7 +2434,7 @@ void CB_keyboard(unsigned char key, int x, int y)
 	case 'g':
 		ModoGame++;if (ModoGame>3) ModoGame=0;
 		printf("ModoGame=%d\n",ModoGame);
-		switch (ModoGame) 
+		switch (ModoGame)
 		{
 		case 1:
 		case 2:
@@ -2380,6 +2476,153 @@ void CB_keyboard(unsigned char key, int x, int y)
 			DrawGraphics();
 			break;
 		}
+		break;
+	case 'i':
+	case 'I':
+		gluiInterior->set_int_val(!ModoDibujaInterior);ModoDibujaInterior=gluiInterior->get_int_val();
+		break;
+
+	case 'M':
+	case 'm':
+		//TODO
+		gluiMueve->set_int_val(!MueveCentro);MueveCentro=gluiMueve->get_int_val();
+		if (MueveCentro)    {
+			AddMensajeRight((char *)"M=Mueve Centro");
+//			cout<<"E vecUEsfera="<<vecUEsfera[0]<<","<<vecUEsfera[1]<<"."<<vecUEsfera[2]<<","<<vecUEsfera[3]<<endl;
+
+			//MueveCentro=0;
+			Add_Particulas=0;
+			Add_VolumenINI=0;
+			Add_Voronoi=0;
+			Flag_MuestraCara=0;
+		}
+		else  {
+			AddMensajeRight("");AddMensajeRight("");
+		}
+		break;
+	case ',':
+		Add_Voronoi=1-Add_Voronoi;
+		if (Add_Voronoi) {
+			AddMensajeRight((char *)",=Add Voronoi");
+			MueveCentro=0;
+			Add_Particulas=0;
+			Add_VolumenINI=0;
+			//Add_Voronoi=0;
+			Flag_MuestraCara=0;
+
+		} else {
+			AddMensajeRight("");AddMensajeRight("");
+		}
+		break;
+
+	case '.':
+		Add_VolumenINI=1-Add_VolumenINI;
+		if (Add_Voronoi) {
+			AddMensajeRight((char *)",=Add VolumenINI");
+			MueveCentro=0;
+			Add_Particulas=0;
+			//Add_VolumenINI=0;
+			Add_Voronoi=0;
+			Flag_MuestraCara=0;
+
+		} else {
+			AddMensajeRight("");AddMensajeRight("");
+		}
+		break;
+
+	case '-':
+		Flag_MuestraCara=1-Flag_MuestraCara;
+		if (Add_Voronoi) {
+			AddMensajeRight((char *)",=Add VolumenINI");
+			MueveCentro=0;
+			Add_Particulas=0;
+			Add_VolumenINI=0;
+			Add_Voronoi=0;
+			//Flag_MuestraCara=0;
+
+		} else {
+			AddMensajeRight("");AddMensajeRight("");
+		}
+		break;
+
+	case 'n':
+	case 'N':
+		gluiNormales->set_int_val(!gluiNormales->int_val);
+		break;
+	case 'P':
+	case 'p':
+		gluiClipping->set_int_val(!ClippingON);ClippingON=gluiClipping->get_int_val();
+		/*
+		ClippingON=1-ClippingON;
+		 */
+		if (ClippingON)    AddMensaje("P= Cli(P)ping on..");
+		else                AddMensaje("P= Cli(P)ping off..");
+		break;
+	case 'R':
+	case 'r':
+
+		//		glLoadIdentity();
+		//		glOrtho(gLeft, gRight, gBottom, gTop, gFar, -gFar);
+		//		glGetFloatv( GL_MODELVIEW_MATRIX, (GLfloat*)MatrizRotacionGlobal );
+		//		TrasponeMatriz();
+
+		glui_GrupoModoDelMouse->set_int_val(1);MODO_de_mover=glui_GrupoModoDelMouse->get_int_val();
+		break;
+	case 'S':
+	case 's':
+		glui_GrupoModoDelMouse->set_int_val(2);MODO_de_mover=glui_GrupoModoDelMouse->get_int_val();
+		break;
+	case 'T':
+	case 't':
+		glui_GrupoModoDelMouse->set_int_val(0);MODO_de_mover=glui_GrupoModoDelMouse->get_int_val();
+		break;
+	case 'v':
+	case 'V':
+		gluiHelp->set_int_val(!MODO_MenuMENSAJES);
+		MODO_MenuMENSAJES=gluiHelp->get_int_val();
+		if (MODO_MenuMENSAJES)
+			DrawMensajesDatos();
+		break;
+	case 'W':
+	case 'w':
+		DrawMensajesDatosGui3();
+		glui3->show();
+		break;
+		///////////////////////////////////////////////////
+
+	case 'Z':
+	case 'z':
+#if defined(GLUI_GLUI_H)
+		if (glui_hide) 		
+			glui->show();
+		else 		
+			glui->hide();
+		glui_hide=!glui_hide;
+		ResizeGraphics(glutGet(GLUT_WINDOW_WIDTH),glutGet(GLUT_WINDOW_HEIGHT));
+#endif
+		break;
+	case '+':
+		if (NumON==1 ) {
+			NumEscala /=1.2;
+		} else {
+			char s[100];
+			npasadas*=2; 
+			if (npasadas>maxpasadas) 	npasadas=maxpasadas;
+			sprintf(s,"(+)=npasadas++=%d",npasadas);
+			AddMensaje(s);
+		}
+		break;
+	case '|':
+		if (NumON==1 ) {
+			NumEscala *=1.2;
+		} else {
+			char s[100];
+			npasadas/=2; 
+			if (npasadas<=0) 				npasadas=1;
+			sprintf(s,"(-)=npasadas--=%d",npasadas);
+			AddMensaje(s);
+		}
+		break;
 	}
 	//cout<<"CB_keyboard():END"<<endl;
 }

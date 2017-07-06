@@ -23,6 +23,8 @@ public:
 	void Traslada(double dx,double dy,double dz);
 	void EscalaZ(double lambda);
 	void NormaUnitario();
+    const R3& operator= ( const R3& v);
+    R3 operator -(const R3& v1);
 
 };
 
@@ -51,12 +53,14 @@ public:
 	int no;
 	grid3D *papa;
 	R3 normalVetex;
+	vector<int> soporte;
 
 //----
 	void save(ofstream &myfile);
 	void read(ifstream &myfile,grid3D *papaL);
 	void Traslada(double dx,double dy,double dz);
 	void EscalaZ(double lambda);
+
 };
 
 class Cara3D {
@@ -100,6 +104,44 @@ public:
 
 	int iv[8];
 	int icara[6];
+	int no;
+	double volumen;
+	R3 centro;
+	grid3D *papa;
+
+//-----
+	void save(ofstream &myfile);
+	void read(ifstream &myfile,grid3D *papaL);
+	void Traslada(double dx,double dy,double dz);
+	void EscalaZ(double lambda);
+
+	void draw_caraGL(int ,int,int,int);
+	void draw_caraGL(vector<double> F,double,double,int ,int,int,int);
+	void draw_edgeGL(int i0,int i1);
+	void CalculaVolumen();
+};
+
+
+class VolumenFinito {
+	// Hexaedros:
+	//	  2------3
+	//   /|     /|
+	//  6-|----7 |
+	//	| |    | |
+	//	| 0----|-1
+	//	|/     |/
+	//  4------5
+
+public:
+	vector<PoligonoPlano> Poligono;		// El hexahedro [i] con el g.h3D[i].vecino[j] se unen por g.h3D[i].Poligono[j]
+	vector<int> vecino;					// Lista de Hexahedros vecinos (O Cara en el borde)
+	vector<int> tipo_vecino;			// Lista del mismo largo, == ES_BOQUE o ES_CARA o ES_CARA_L2
+										// Cuando g.h3D[i].tipo_vecino[j] == ES_CARA  ==> iC=g.h3D[i].vecino[j] es una Cara verdadera: g.Cara[iC]
+	vector<R3> vecino_centro;
+	vector<R3> vecino_centro_caraoriginal;
+	vector<R3> vecino_normal;
+	vector<int> dibujado;
+
 	int no;
 	double volumen;
 	R3 centro;
@@ -174,6 +216,12 @@ public:
 	//Version >= 3
 	int nTriPrisma3D,TriPri3DAnalizados=0;
 	vector<TriPrisma>   TriPrisma3D;
+	int nVolFinito;
+	vector<VolumenFinito>   VolFinito;
+
+	vector<int>   VolFinitoSelected;
+	vector<int>   Selected_Triprisma;
+	int imprimir=0;
 	
 
 //----------------------
@@ -190,28 +238,43 @@ public:
 	void drawGL();
 	void drawGL(vector<double> F);
 	void drawVoronoi();
+	void Voronoi_Draw_i(int iv);
+	void TriPrisma_Draw_i(int iv);
 
-	void drawVelGL_TriPrisma(vector<double> U,vector<double> V,vector<double> W);
+
+
+
+
+	void drawParticulas_TriPrisma(vector<double> U,vector<double> V,vector<double> W);
 	void drawVelGL(vector<double>,vector<double>,vector<double>);
 	void drawVelGL2(vector<double>,vector<double>,vector<double>);
 
 	void GeneraCaras(int inicia=false);	
+
+	void DZmin(double DzMin);
 	void GeneraCarasTriPri();
 	int BuscaCara3(int i0,int i1,int i2) ;
-	int AddCara3(int ib,int i0,int i1,int i2);
+	int AddCara3(int ib,int i0,int i1,int i2,int iBC);
 	int BuscaCara4(int i0,int i1,int i2,int i3) ;
 	int AddCara4(int ib,int i0,int i1,int i2,int i3);
 	void draw_caraGL(int ii[4]);
 
 	void draw_caraGL(vector<double>F,double minF,double maxF,int ii[4]);
-	void generaPoligonos2();
+	void Poligonos_Generar_Version3();
 	void generaPoligonos2Algunos(vector<int> &CualesRehacer);
-	void GeneraPoligonoInicial(R3 a, R3 b, PoligonoPlano &P);
+	void Poligono_Inicial(R3 a, R3 b, PoligonoPlano &P);
+	void Poligono_InicialCara(R3 a, R3 b, PoligonoPlano &P,int iC);
+
 	void CentroCarasBloques();
 
+	void Soporte_Vertices();
 	void CalculaVolumen();
 	void PosINI(int i);
 	void PosINI3(double posX, double posY, double posZ);
+
+
+	void SeleccionaVolFinito(double px,double py,double pz);
+	void SeleccionaYMuestraCara(double px,double py,double pz);
 
 
 

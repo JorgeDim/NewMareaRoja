@@ -172,7 +172,7 @@ GLuint baseF,baseBIT;
 int mode=0;
 const int modeT=1,modeR=(1<<1);
 
-int MueveCentro=0,Add_Particulas=0;
+int MueveCentro=0,Add_Particulas=0,Add_Voronoi=0,Add_VolumenINI=0,Flag_MuestraCara=0;
 float CentroX=0,CentroY=0,CentroZ=0;
 char s[100];
 float VersionDatos;

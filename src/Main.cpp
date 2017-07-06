@@ -41,56 +41,19 @@ char  text[200000] = {"Hello World!"};
 
 #if defined _WIN32 || defined _WIN64s
 string  GetFileName( const string & prompt ) {
-    const int BUFSIZE = 1024;
-    char buffer[BUFSIZE] = {0};
-    OPENFILENAME ofns = {0};
-    ofns.lStructSize = sizeof( ofns );
-    ofns.lpstrFile = buffer;
-    ofns.nMaxFile = BUFSIZE;
-    ofns.lpstrTitle = prompt.c_str();
-    GetOpenFileName( & ofns );
-    return buffer;
+	const int BUFSIZE = 1024;
+	char buffer[BUFSIZE] = {0};
+	OPENFILENAME ofns = {0};
+	ofns.lStructSize = sizeof( ofns );
+	ofns.lpstrFile = buffer;
+	ofns.nMaxFile = BUFSIZE;
+	ofns.lpstrTitle = prompt.c_str();
+	GetOpenFileName( & ofns );
+	return buffer;
 }
 #endif
 
 void TesteDeVariablesGlobales() ;
-
-void calculaFracionVolumen(vector<double> &Temp) {
-	int i;
-//	cout<<"calculaFracionVolumen()"<<endl;
-	double FraccionVolumen=0,VolumenTotal=0;
-	for (i=0;i<gtotal->h3D.size();i++) {
-		VolumenTotal += gtotal->h3D[i].volumen;
-		if (Temp[i]>TLimite) FraccionVolumen += gtotal->h3D[i].volumen;
-
-	}
-	//cout<<"calculaFracionVolumen()2"<<endl;
-	for (i=0;i<gtotal->Cara.size();i++) {
-		if (gtotal->Cara[i].iBC ==2 || gtotal->Cara[i].iBC ==3 ) {
-			VolumenTotal += gtotal->Cara[i].volumen;
-			if (gtotal->Cara[i].BC2>TLimite) FraccionVolumen += gtotal->Cara[i].volumen;
-		}
-	}
-
-	//cout<<"Volumen con T>"<<TLimite<<" = "<<FraccionVolumen<<"\tVolumenTotal"<<VolumenTotal<<"\t(nH3D="<<gtotal->nH3D<<")"<<endl;
-	FraccionVolumen /= VolumenTotal;
-
-	if (TipoCalculo==CalculoEvolucion) {
-		cout<<"Fraccion Volumen con T>"<<TLimite<<" = "<<FraccionVolumen
-				<<"\tT = "<<TiempoCalculo<<endl;
-		myfileSalida<<"Fraccion Volumen con T>"<<TLimite<<" = "<<FraccionVolumen
-				<<"\tT = "<<TiempoCalculo<<endl;
-		myfileVol<<TiempoCalculo<<" "<<FraccionVolumen<<endl;
-	} else {
-		cout<<"Fraccion Volumen con T>"<<TLimite<<" = "<<FraccionVolumen<<endl;
-		myfileSalida<<"Fraccion Volumen con T>"<<TLimite<<" = "<<FraccionVolumen<<endl;
-	}
-
-	char s[100];
-	sprintf(s,"Fraccion=%f\n",FraccionVolumen);if (glui != NULL) glui_porcentaje->set_name(s);
-
-//	cout<<"calculaFracionVolumen():END"<<endl;
-}
 
 
 
@@ -140,13 +103,568 @@ void Lectura_Bahia_y_CalculosGeometricosMalla(char * fname) {
 	gtotal->CentroCarasBloques();
 
 
-	gtotal->generaPoligonos2();
-//	Modo_DibujaCentroBloques=true;
-//		Modo_DibujaCentroCaras=true;
+	gtotal->Poligonos_Generar_Version3();
+	//	Modo_DibujaCentroBloques=true;
+	//		Modo_DibujaCentroCaras=true;
 	err0=1e-12;
 
 
 	gtotal->CalculaVolumen();
+
+}
+
+
+
+void Etapa_Lectura_de_Malla()
+{
+	char fn[100],fnmsh[100],fnbin[100];
+	sprintf(fn,"bahia-TriPrismas%d.msh3D",caso);
+	sprintf(fnmsh,"malla_gtotal%d.msh",caso);
+	sprintf(fnbin,"malla_gtotal%d.bin",caso);
+	switch (CasoLectura){
+	case 1: //Leeer archivo generado por matlab (leeento)
+		//Lectura_Bahia_y_CalculosGeometricosMalla("bahia-TriPrismas.msh3D");
+		//Lectura_Bahia_y_CalculosGeometricosMalla("bahia-TriPrismas2.msh3D");
+		Lectura_Bahia_y_CalculosGeometricosMalla(fn);
+		binario=0;
+
+		gtotal->write(fnmsh);
+		binario=1;
+		gtotal->write(fnbin);
+		break;
+	case 2: //Lee archivo ASCIII y escribe Binario
+		gtotal->read(fnmsh);
+		//			gtotal->CentroCarasBloques();
+		binario=1;gtotal->write(fnbin);
+		break;
+	case 3: //Lee el archivo binario
+		binario=1;
+		gtotal->read(fnbin);
+		binario=0;
+		//			gtotal->write("malla_gtotal2.msh");
+		break;
+	case 4: //Lee binario calculo y escribo binario
+		binario=1;
+		gtotal->read(fnbin);
+
+
+		cout<<"gtotal->GeneraCarasTriPri()..."<<endl;
+
+		start_t = clock();
+		gtotal->TriPri3DAnalizados=0;
+		gtotal->Cara.resize(0);
+		gtotal->nCaras=0;
+		gtotal->GeneraCarasTriPri();
+
+		end_t = clock();
+		total_t = ((double)(end_t - start_t)) / CLOCKS_PER_SEC;
+
+
+		cout<<"Listo gtotal->GeneraCarasTriPri() ";
+		cout<<" en "<<total_t<<"seg";
+		if (total_t>60) {
+			int min=total_t/60; total_t-=min*60;
+			cout<<" ( "<<min<<":"<<total_t<<"min)";
+		}
+		cout <<endl;
+
+
+		gtotal->minmax();
+		gtotal->CentroCarasBloques();
+
+
+
+		binario=1;gtotal->write(fnbin);
+		break;
+	}
+
+	//TODO
+	//gtotal->xmax
+	gtotal->minmax();
+	vecXEsfera[0]=(gtotal->xmax+gtotal->xmin)/2;
+	vecXEsfera[1]=(gtotal->ymax+gtotal->ymin)/2;
+	vecXEsfera[2]=(gtotal->zmax+gtotal->zmin)/2;
+
+	//		cout<<"E vecUEsfera="<<vecUEsfera[0]<<","<<vecUEsfera[1]<<"."<<vecUEsfera[2]<<","<<vecUEsfera[3]<<endl;
+
+	tic(); cout<<"gtotal->CalculaNormalVertex()"<<endl;
+	gtotal->CalculaNormalVertex();
+	cout<<"FIN:gtotal->CalculaNormalVertex() en ";toc();
+}
+
+void Etapa_Lectura_de_Velocidad(int step)
+{
+	//Lectura de campo de Velocidades
+	int i;
+
+	cout<<"Lectura de campo de Velocidades"<<endl;
+
+	U.resize(gtotal->nTriPrisma3D);V.resize(gtotal->nTriPrisma3D);W.resize(gtotal->nTriPrisma3D);
+
+	cout<<"532"<<endl;
+	FILE * pFile;
+	int nn,tmp;
+	char name[100];
+	sprintf(name,"UVW%d_%05d.dat",caso,step);
+
+	cout<<"532"<<endl;
+
+	pFile = fopen (name,"r");
+
+	fscanf(pFile,"%d\n",&nn);
+	if (nn != gtotal->nTriPrisma3D) {
+		cout<<"nn != gtotal->nTriPrisma3D: "<<nn<<" != "<<gtotal->nTriPrisma3D<<endl;
+
+		exit(1);
+	}
+
+	cout<<"549"<<endl;
+
+	for (i=0;i<nn;i++) {
+		double v1,v2,v3;
+		fscanf(pFile,"%d %lf %lf %lf\n",&tmp,&v1,&v2,&(W[i]));
+		U[i]=v1;V[i]=v2;//W[i]=v3;
+		if (i<10) {
+			cout<<tmp<<" "<<v1<<" "<<v2<<" "<<v3<<endl;
+			cout<<tmp<<" "<<U[i]<<" "<<V[i]<<" "<<W[i]<<endl;
+		}
+		if (tmp!=i) {
+			cout<<"tmp!=i"<<tmp<<" "<<i<<endl;
+			exit(1);
+		}
+	}
+	fclose(pFile);
+
+	if (glui != NULL) {
+		if (PanelFlimite != NULL) PanelFlimite->enable();
+		if (Checkbox_particulas != NULL)Checkbox_particulas->enable();
+		if (PanelParticulas != NULL)PanelParticulas->enable();
+	}
+}
+
+
+void calculaFracionVolumen(vector<double> &Temp) {
+	int i;
+	//	cout<<"calculaFracionVolumen()"<<endl;
+	double FraccionVolumen=0,VolumenTotal=0;
+	for (i=0;i<gtotal->h3D.size();i++) {
+		VolumenTotal += gtotal->h3D[i].volumen;
+		if (Temp[i]>TLimite) FraccionVolumen += gtotal->h3D[i].volumen;
+
+	}
+	//cout<<"calculaFracionVolumen()2"<<endl;
+	for (i=0;i<gtotal->Cara.size();i++) {
+		if (gtotal->Cara[i].iBC ==2 || gtotal->Cara[i].iBC ==3 ) {
+			VolumenTotal += gtotal->Cara[i].volumen;
+			if (gtotal->Cara[i].BC2>TLimite) FraccionVolumen += gtotal->Cara[i].volumen;
+		}
+	}
+
+	//cout<<"Volumen con T>"<<TLimite<<" = "<<FraccionVolumen<<"\tVolumenTotal"<<VolumenTotal<<"\t(nH3D="<<gtotal->nH3D<<")"<<endl;
+	FraccionVolumen /= VolumenTotal;
+
+	if (TipoCalculo==CalculoEvolucion) {
+		cout<<"Fraccion Volumen con T>"<<TLimite<<" = "<<FraccionVolumen
+				<<"\tT = "<<TiempoCalculo<<endl;
+		myfileSalida<<"Fraccion Volumen con T>"<<TLimite<<" = "<<FraccionVolumen
+				<<"\tT = "<<TiempoCalculo<<endl;
+		myfileVol<<TiempoCalculo<<" "<<FraccionVolumen<<endl;
+	} else {
+		cout<<"Fraccion Volumen con T>"<<TLimite<<" = "<<FraccionVolumen<<endl;
+		myfileSalida<<"Fraccion Volumen con T>"<<TLimite<<" = "<<FraccionVolumen<<endl;
+	}
+
+	char s[100];
+	sprintf(s,"Fraccion=%f\n",FraccionVolumen);if (glui != NULL) glui_porcentaje->set_name(s);
+
+	//	cout<<"calculaFracionVolumen():END"<<endl;
+}
+
+
+void Etapa_Calcula_Escurrimiento_Superficial()
+{
+	int i;
+	EtapaGlobal=ETAPA_CALCULO_T_ARRIBA;EtapaGlobal2Local=Etapa;
+
+
+	cout<<"------------------------------------------------------"<<endl;
+	cout<<"Calculo Escurrimiento y Temperaturas  (con err0="<<err0<<")"<<endl;
+	myfileSalida<<"------------------------------------------------------"<<endl;
+	myfileSalida<<"Calculo Escurrimiento y Temperaturas  (con err0="<<err0<<")"<<endl;
+
+
+	sprintf(text,"%sEtapa:%d:Calculo V,T Arriba (err0=%.2e)\n",text,EtapaGlobal,err0);if (glui != NULL) glui_edittext->set_text(text);
+
+
+
+	Guardar=1;
+	double minPsi,maxPsi,err,err2,errComb;
+	double minTemp,maxTemp;
+	cout<<"Interaciones hasta que: err<"<<err0<<endl;
+	myfileSalida<<"Interaciones hasta que: err<"<<err0<<endl;
+
+	err=CalculaMpunto(PotencialPsi,Temperatura,UU,VV,WW,*gtotal,gtotal->nH3D,err0);
+	err2=CalculaTempSuperficie(Temperatura,PotencialPsi,UU2,VV2,WW2,*gtotal,gtotal->nH3D,err0);
+	errComb=max(err,err2);
+	U.resize(gtotal->nV3D);V.resize(gtotal->nV3D);W.resize(gtotal->nV3D);	F.resize(gtotal->nV3D);
+	U.assign(gtotal->nV3D,0);V.assign(gtotal->nV3D,0);W.assign(gtotal->nV3D,0);F.assign(gtotal->nV3D,0);
+	vector<int> cuantos(gtotal->nV3D);
+	cuantos.assign(gtotal->nV3D,0);
+
+	CopiaBloquesAVertices(PotencialPsi,F,&minPsi,&maxPsi,1);
+	printf("minPotencialVel=%f, maxPotencialVel=%f, errPV=%.2e",minPsi,maxPsi,err);cout<<endl;
+	myfileSalida<<"minPotencialVel="<<minPsi<<", maxPotencialVel="<<maxPsi<<", errPV="<<err<<endl;
+	sprintf(s,"e=%.0e,FF[%.0e,%.0e]\n",errComb,minPsi,maxPsi);
+
+	sprintf(text,"%serr=%.2e err2=%.2e\n",text,err,err2);if (glui != NULL) glui_edittext->set_text(text);
+
+
+	CopiaBloquesAVertices(UU,U,&minPsi,&maxPsi,0);
+	//		printf("minUU=%e, maxUU=%e, errABS=%g",minF,maxF,err);cout<<endl;
+	CopiaBloquesAVertices(VV,V,&minPsi,&maxPsi,0);
+	//		printf("minVV=%e, maxVV=%e, errABS=%g",minF,maxF,err);cout<<endl;
+	CopiaBloquesAVertices(WW,W,&minPsi,&maxPsi,0);
+	//		printf("minWW=%e, maxWW=%e, errABS=%g",minF,maxF,err);cout<<endl;
+
+
+
+
+	//if (glui != NULL) glui_MSG->set_name(s);
+
+
+	minTemp=maxTemp=Temperatura[0];
+	for (i=0;i<gtotal->nH3D;i++) {
+		if (minTemp>Temperatura[i]) minTemp=Temperatura[i];
+		if (maxTemp<Temperatura[i]) maxTemp=Temperatura[i];
+	}
+
+	printf("minTemp=%f\tmaxTemp=%f (int)\terrT=%.2e",minTemp,maxTemp,err2);cout<<endl;
+	myfileSalida<<"minTemp="<<minTemp<<"\tmaxTemp="<<maxTemp<<" (int)\terrT="<<err2<<endl;
+	sprintf(text,"%sminT=%.2f maxT=%.2f\n",text,minTemp,maxTemp);if (glui != NULL) glui_edittext->set_text(text);
+
+	F2Nodos.resize(gtotal->nV3D);
+	CopiaBloquesAVertices(Temperatura,F2Nodos,&minTemp,&maxTemp,2);
+
+	printf("minTemp=%f\tmaxTemp=%f (wBC)\terrT=%.2e",minTemp,maxTemp,err2);cout<<endl;
+	myfileSalida<<"minTemp="<<minTemp<<"\tmaxTemp="<<maxTemp<<" (wBC)\terrT="<<err2<<endl;
+	sprintf(text,"%sminT=%.2f maxT=%.2f (wBC)\n",text,minTemp,maxTemp);if (glui != NULL) glui_edittext->set_text(text);
+
+
+	if (gtotal->nH3D<40){
+		int j;
+		cout <<"xC=[";j=0;
+		for (i=0;i<gtotal->nH3D;i++) {
+			cout <<gtotal->h3D[i].centro.x<<" ";j++;
+			if (j>12) {cout<<"..."<<endl;j=0;}
+		} cout <<"];"<<endl;
+
+		cout <<"TC=["; j=0;
+		for (i=0;i<gtotal->nH3D;i++) {
+			cout <<Temperatura[i]<<" ";j++;
+			if (j>12) {cout<<"..."<<endl;j=0;}
+		} cout <<"];"<<endl;
+	}
+
+
+	err0=errComb*1e-4;
+	if (err0<ErrorMax_Cada_t) err0=ErrorMax_Cada_t;
+	if (errComb>ErrorMax_Cada_t)	Etapa=InicioEtapa-1;
+
+	if (DBG) cout<<"Voy a calculaFracionVolumen(Temperatura). Etapa="<<Etapa<<endl;
+	calculaFracionVolumen(Temperatura) ;
+
+	if (DBG) cout<<"Voy Volvi calculaFracionVolumen(Temperatura). Etapa="<<Etapa<<endl;
+	sprintf(text,"%sFin Etapa\n",text);	if (glui != NULL) glui_edittext->set_text(text);
+}
+
+
+void Etapa_Malla2D_to_Malla3D() {
+
+	int i;
+	EtapaGlobal=ETAPA_MALLADO_2D_3D;EtapaGlobal2Local=Etapa;
+	cout<<"Mallando2D-->3D "<<endl;
+	myfileSalida<<"Mallando2D-->3D "<<endl;
+	InicioEtapa=Etapa;
+
+
+	if (glui != NULL) {
+		if (PanelFlimite != NULL) PanelFlimite->disable();
+		MODO_CampoVelocidades=0;
+		glui->sync_live();
+		Checkbox_particulas->disable();
+		PanelParticulas->disable();
+	}
+
+
+	//sprintf(text,"%sCambio malla a dominio inferior\n",text);if (glui != NULL) glui_edittext->set_text(text);
+
+	//TODO   Cambio malla a dominio inferior
+	sprintf(text,"%sCambio CB\n",text);if (glui != NULL) glui_edittext->set_text(text);
+
+	CualesRehacer.resize(0);
+	for ( i=0 ; i<gtotal->nCaras ; i++ ) {
+		if ( gtotal->Cara[i].nVolumenes == 1 && gtotal->Cara[i].iBC == 2) {
+			gtotal->Cara[i].iBC = 1;    //Condicion Neumann homogeneo
+			CualesRehacer.push_back(gtotal->Cara[i].ih[0]);
+			//				cout<<"CualesRehacer.size()="<<CualesRehacer.size()<<endl;
+			//				cout<<"CualesRehacer.end()="<<CualesRehacer.back()<<endl;
+		}
+	}
+
+	gtotal->CentroCarasBloques();
+	sprintf(text,"%s A la proxima: Poligonos2Algunos\n",text);if (glui != NULL) glui_edittext->set_text(text);
+}
+
+
+void Etapa_CompletoPoligonosNuevosNiveles()
+{
+	int i;
+	sprintf(text,"%sGenero Poligonos2Algunos\n",text);if (glui != NULL) glui_edittext->set_text(text);
+
+	cout<<"Genero Poligonos2Algunos: "<<CualesRehacer.size()<<endl;
+	myfileSalida<<"Genero Poligonos2Algunos: "<<CualesRehacer.size()<<endl;
+	gtotal->generaPoligonos2Algunos(CualesRehacer);
+
+
+
+	sprintf(text,"%sCambio malla a dominio inferior\n",text);if (glui != NULL) glui_edittext->set_text(text);
+
+	g2=*gtotal;
+	g2.Traslada(0,0,-Dominio_Hsup);
+	g2.EscalaZ(Dominio_Hmax/Dominio_Hsup/NDivZ);
+	*gtotal=g2;
+
+	sprintf(text,"%sFin Etapa\n",text);
+
+	if (glui != NULL) glui_edittext->set_text(text);
+
+	for (i=1;i<NDivZ;i++) {
+		g2.Traslada(0,0,-Dominio_Hmax/NDivZ);
+		gtotal->Junta(g2);
+	}
+	sprintf(text,"%sFin Etapa (listo para calcular?)\n",text);	if (glui != NULL) glui_edittext->set_text(text);
+}
+
+void Etapa_Temp3D_Arreglo_CB_3D ()
+{
+	int i;
+	sprintf(text,"%sg.CentroCarasBloques()\n",text);	if (glui != NULL) glui_edittext->set_text(text);
+
+	gtotal->minmax();
+	gtotal->CentroCarasBloques();
+
+
+	sprintf(text,"%sArreglo CB nuevas\n",text);	if (glui != NULL) glui_edittext->set_text(text);
+
+	CualesRehacer.resize(0);
+	for ( i=0 ; i<gtotal->nCaras ; i++ ) {
+		if ( gtotal->Cara[i].nVolumenes == 2) {
+			gtotal->Cara[i].iBC =0 ;  ///nodo interno
+		} else {
+			double x,y,z;
+			x=gtotal->Cara[i].centro.x;
+			y=gtotal->Cara[i].centro.y;
+			z=gtotal->Cara[i].centro.z;
+			gtotal->Cara[i].iBC = 1;    //Condicion Neumann homogeneo
+			gtotal->Cara[i].BC  = 0;
+			//				if (sqrt(sqr(x)+sqr(y))+1e-5>=Dominio_Rmax*cos(dTheta_med)
+			//						|| z+Dominio_Hmax< 1e-5 ) {
+			if ( z-1e-5 < -Dominio_Hmax ) { //Abajo
+				gtotal->Cara[i].iBC = 11; //Condicion Convectiva
+
+				int iC=i;
+				if(1==0) cout<<"g.Cara[iC].BC2="<<gtotal->Cara[iC].BC2
+						<<"\t.BC="<<gtotal->Cara[iC].BC
+						<<"\tg.Cara[iC].iBC="<<gtotal->Cara[iC].iBC
+						<<"\tiC="<<iC
+						<<"\tx="<<x
+						<<"\ty="<<y
+						<<"\tz="<<z
+						<<endl;
+			}
+			if ( x+1e-5 > Dominio_Xmax ) { // Adelante
+				gtotal->Cara[i].iBC = 12; //Condicion Convectiva mas espesor
+
+			}
+			if ( y+1e-5 > Dominio_Xmax ) { //Derecha
+				gtotal->Cara[i].iBC = 12; //Condicion Convectiva mas espesor
+
+			}
+			if (z>=-1e-5) {
+
+				//TODO 	CualesRehacer.resize(0);
+
+				CualesRehacer.push_back(gtotal->Cara[i].ih[0]);
+
+				gtotal->Cara[i].iBC = 2;    //Condicion Temperatura conocida
+				gtotal->Cara[i].BC  = 0;
+				gtotal->Cara[i].BC2  = Temperatura[ gtotal->Cara[i].ih[0] ];
+
+				int iC=i;
+				if(1==0) cout<<"g.Cara[iC].BC2="<<gtotal->Cara[iC].BC2
+						<<"\t.BC="<<gtotal->Cara[iC].BC
+						<<"\tg.Cara[iC].iBC="<<gtotal->Cara[iC].iBC
+						<<"\tiC="<<iC
+						<<"\tx="<<x
+						<<"\ty="<<y
+						<<"\tz="<<z
+						<<endl;
+			}
+			int iC=i;
+			if(1==0) cout<<"g.Cara[iC].BC2="<<gtotal->Cara[iC].BC2
+					<<"\t.BC="<<gtotal->Cara[iC].BC
+					<<"\tg.Cara[iC].iBC="<<gtotal->Cara[iC].iBC
+					<<"\tiC="<<iC
+					<<"\tx="<<x
+					<<"\ty="<<y
+					<<"\tz="<<z
+					<<endl;
+
+		}
+	}
+
+}
+
+void Etapa_Temp3D_Calculo_temperaturas_pila_Modelo_Evolucion()
+{
+	int i;
+
+	EtapaGlobal=ETAPA_CALCULO_T_PILA; EtapaGlobal2Local=Etapa;Guardar=1;
+
+	if (Reiterando==0) {
+		cout<<"============================================================"<<endl;
+		myfileSalida<<"============================================================"<<endl;
+		if (TipoCalculo==CalculoEvolucion) {
+			double tmin=TiempoCalculo/60;
+			double thoras=tmin/60;
+			cout<<"Calculo para TiempoCalculo= "<<TiempoCalculo<<" seg."<<" = "<<tmin<<" min."<<" = "<<thoras<<" hrs."<<endl;
+			myfileSalida<<"Calculo para TiempoCalculo= "<<TiempoCalculo<<" seg."<<" = "<<tmin<<" min."<<" = "<<thoras<<" hrs."<<endl;
+		} else {
+			cout<<"Calculo Estacionario:"<<endl;
+			myfileSalida<<"Calculo Estacionario:"<<endl;
+		}
+	}
+
+	/////////////////////////////////////////////////////////////////////////////////
+	//   Calculo de temperaturas en la pila : Modelo de Evolucion
+	//
+	//
+	//
+	//cout<<"Etapa="<<Etapa<<"IniciEtapa="<<InicioEtapa <<"EtapaGlobal2Local="<<EtapaGlobal2Local<<endl;
+
+	cout<<"------------------------------------------------------"<<endl;
+	myfileSalida<<"------------------------------------------------------"<<endl;
+
+	printf("Etapa: Calculo T° en la Pila, con err0=%e",err0);cout<<endl;
+	myfileSalida<<"Etapa: Calculo T° en la Pila, con err0="<<err0<<endl;
+
+	if (TipoCalculo==CalculoEvolucion) {
+		sprintf(text,"%sCalculo T en Pila (t=%.0f err0=%.2e)\n",text,TiempoCalculo,err0);if (glui != NULL) glui_edittext->set_text(text);
+	} else {
+		sprintf(text,"%sCalculo T en Pila Estacionario (err0=%.2e)\n",text,err0);if (glui != NULL) glui_edittext->set_text(text);
+
+	}
+	if (PanelFlimite != NULL)  PanelFlimite->enable();
+	double err2,minTemp,maxTemp;
+
+	printf("numero de celdas=%d",gtotal->nH3D);cout<<endl;
+	myfileSalida<<"numero de celdas="<<gtotal->nH3D<<endl;
+	PotencialVInfiltracion.resize(gtotal->nH3D);
+	TempPilaBloques.resize(gtotal->nH3D);
+	UU2.resize(gtotal->nH3D);
+	VV2.resize(gtotal->nH3D);
+	WW2.resize(gtotal->nH3D);
+	TempPilaVertices.resize(gtotal->nV3D);
+	for (i=0;i<gtotal->nH3D;i++) {
+		PotencialVInfiltracion[i]=gtotal->h3D[i].centro.z*Datos_Vinyeccion;
+	}
+
+	//// Esta funcion hace el calculo de TempPilaBloques hasta que el error sea < err0
+	err2=CalculaTemperaturaPilaEnTmasDt(TempPilaBloques,PotencialVInfiltracion,UU2,VV2,WW2,
+			*gtotal,gtotal->nH3D,err0,TempPilaBloquesPrevia);
+
+
+	F.resize(gtotal->nV3D);
+	F2Nodos.resize(gtotal->nV3D);
+	CopiaBloquesAVertices(TempPilaBloques,F2Nodos,&minTemp,&maxTemp,1);
+
+
+	minTemp=maxTemp=TempPilaBloques[0];
+	for (i=0;i<gtotal->nH3D;i++) {
+		if (minTemp>TempPilaBloques[i]) minTemp=TempPilaBloques[i];
+		if (maxTemp<TempPilaBloques[i]) maxTemp=TempPilaBloques[i];
+	}
+	//		printf("min,max TempPilaBloques=%f, %f, errABS=%g (%d)",minTemp,maxTemp,err2,gtotal->nH3D);cout<<endl;
+
+	//		sprintf(text,"%sminT=%.2f maxT=%.2f\n errS=%.2e\n",text,minTemp,maxTemp,err2);if (glui != NULL) glui_edittext->set_text(text);
+
+	printf("minTemp=%f\tmaxTemp=%f (int)\terrT=%.2e",minTemp,maxTemp,err2);cout<<endl;
+	myfileSalida<<"minTemp="<<minTemp<<"\tmaxTemp="<<maxTemp<<" (int)\terrT="<<err2<<endl;
+
+	sprintf(text,"%s(errT=%.2e)\n",text,err2);if (glui != NULL) glui_edittext->set_text(text);
+
+	sprintf(text,"%sminT=%.2f maxT=%.2f (int)\n",text,minTemp,maxTemp);if (glui != NULL) glui_edittext->set_text(text);
+
+
+	CopiaBloquesAVertices(TempPilaBloques,F,&minTemp,&maxTemp,2);
+	CopiaBloquesAVertices(TempPilaBloques,F2Nodos,&minTemp,&maxTemp,2);
+
+
+
+	printf("minTemp=%f\tmaxTemp=%f (wBC)\terrT=%.2e",minTemp,maxTemp,err2);cout<<endl;
+	myfileSalida<<"minTemp="<<minTemp<<"\tmaxTemp="<<maxTemp<<" (wBC)\terrT="<<err2<<endl;
+
+	sprintf(text,"%sminT=%.2f maxT=%.2f (wBC)\n",text,minTemp,maxTemp);if (glui != NULL) glui_edittext->set_text(text);
+
+
+	calculaFracionVolumen(TempPilaBloques) ;
+
+	err0=err2*1e-4;
+	if (err0<ErrorMax_Cada_t) err0=ErrorMax_Cada_t;
+
+	Reiterando=0;
+	if (err2>ErrorMax_Cada_t) {
+		cout<<"Reitero..."<<endl;
+		myfileSalida<<"Reitero..."<<endl;
+		Reiterando=1;
+		Etapa=InicioEtapa-1;
+	} else {
+		// Termine con el calculo para este Tiempo
+		if (TipoCalculo==CalculoEvolucion) {
+			cout<<"Termine con el calculo para este Tiempo"<<endl;
+			myfileSalida<<"Termine con el calculo para este Tiempo"<<endl;
+
+			//cout<<"CalculoContinuo="<<CalculoContinuo<<endl;
+			if (CalculoContinuo) {
+				GuardarInstantanea();
+				Guardar=0;
+			}
+
+			TiempoCalculo += Datos_dt ;
+			if (TiempoCalculo<=Datos_Tmax) {
+				//Paso al Tiempo siguiente....
+				//err0=1e-10;
+				for (i=0;i<gtotal->nH3D;i++) {
+					TempPilaBloquesPrevia[i]=TempPilaBloques[i];
+				}
+				cout<<"Paso al T= "<<TiempoCalculo<<" seg"<<endl;
+				myfileSalida<<"Paso al T= "<<TiempoCalculo<<" seg"<<endl;
+				Etapa=InicioEtapa-1;
+
+			} else {
+				TipoCalculo=CalculoEstacionario;
+
+				cout<<"Terminé evolucion: Comienzo caso Estacionario..."<<endl;
+				myfileSalida<<"Terminé evolucion: Comienzo caso Estacionario..."<<endl;
+				err0=1e-10;
+				Etapa=InicioEtapa-1;
+			}
+		}
+	}
+
+	sprintf(text,"%sFin Etapa\n",text);
+
+	if (glui != NULL) glui_edittext->set_text(text);
 
 }
 
@@ -182,7 +700,7 @@ void malla1(int &Etapa, int &iEtapa) {
 
 		//PAUSA
 		ThetaMax=atan(1)*2;
-//		printf("Etapa: Se comprime g ");cout<<endl;
+		//		printf("Etapa: Se comprime g ");cout<<endl;
 		double q=exp(0.4*(log(Dominio_Rmed/Dominio_Rint)/(nR)));
 		cout<<"q="<<q<<endl;
 		myfileSalida<<"q="<<q<<endl;
@@ -209,7 +727,7 @@ void malla1(int &Etapa, int &iEtapa) {
 
 		//PAUSA
 
-//		printf("Etapa: Se comprime g2\n");cout<<endl;
+		//		printf("Etapa: Se comprime g2\n");cout<<endl;
 		for (i=0;i<g2.nV3D;i++) {
 			xL=g2.v3D[i].x;	yL=g2.v3D[i].y;
 			int nRL=(yL*nR+.5);
@@ -233,17 +751,17 @@ void malla1(int &Etapa, int &iEtapa) {
 
 		//PAUSA
 
-//		printf("Etapa: junto g y g2 \n");cout<<endl;
+		//		printf("Etapa: junto g y g2 \n");cout<<endl;
 		gtotal->Junta(g1);
 
 		gtotal->GeneraCaras(gtotal->nH3D); //A partir de ahora se agregan las caras para los bloques actuales
-PAUSA2
+		PAUSA2
 
 		//printf("Etapa: Se agrega corona 2 lado\n");cout<<endl;
 		g2.cubo(nR2,nTh,nZ,x2,x2a,LZ);g2.Traslada(x2a,0,0);gtotal->Junta(g2);
 
 		gtotal->GeneraCaras(gtotal->nH3D); //A partir de ahora se agregan las caras para los bloques acuales
-PAUSA2
+		PAUSA2
 
 		//printf("Etapa: Se copia corona lateral 2 veces\n");cout<<endl;
 		g2.cubo(nTh,nR2,nZ,x2a,x2,LZ);g2.Traslada(0,x2a,0);gtotal->Junta(g2);
@@ -251,7 +769,7 @@ PAUSA2
 
 
 		gtotal->GeneraCaras(gtotal->nH3D); //A partir de ahora se agregan las caras para los bloques acuales
-PAUSA
+		PAUSA
 
 		sprintf(text,"%sRetoco la malla\n",text);if (glui != NULL)glui_edittext->set_text(text);
 
@@ -329,7 +847,7 @@ PAUSA
 
 		if(errG>errMalla)		Etapa--;
 
-PAUSA
+		PAUSA
 
 	}
 }
@@ -356,7 +874,7 @@ void malla2(int &Etapa, int &iEtapa) {
 
 		switch (CualMalla) {
 		case 2:
-//			nR=34;nTh=10;
+			//			nR=34;nTh=10;
 			nTh=nTh/2;    //Despues se duplicará la malla ( nth/2*2=nTh)
 			ThetaMax=atan(1)*4; //pi+duplicacion
 			ThetaMin=-atan(1)*0;
@@ -366,8 +884,8 @@ void malla2(int &Etapa, int &iEtapa) {
 			//			nR=34;nTh=1;
 			ThetaMax=atan(1)/15; //
 			ThetaMin=-atan(1)/15;
-//			ThetaMax=atan(1)/2; //Test
-//			ThetaMin=-atan(1)*0;
+			//			ThetaMax=atan(1)/2; //Test
+			//			ThetaMin=-atan(1)*0;
 
 			break;
 		case 4:
@@ -422,9 +940,6 @@ void Calculo_EtapaS(int inicializa)
 	int iEtapa,i;
 	static int inicio=0;
 
-#if DBGMain
-	cout<<"\nCalculo_EtapaS(): Etapa="<<Etapa<<"\tinicio="<<inicio<<"\tFalta_llamar_etapaS="<<llamar_etapa_Siguiente_PAUSA2<<endl;
-#endif
 
 	if (inicializa) {
 		Etapa=0;
@@ -432,9 +947,6 @@ void Calculo_EtapaS(int inicializa)
 	Etapa++;
 	iEtapa=1;
 
-#if DBGMain
-	cout<<"\nCalculo_EtapaS()[341]... Etapa++="<<Etapa<<":"<<endl;
-#endif
 
 	if (CalculoContinuo==0 && inicio==0 && llamar_etapa_Siguiente_PAUSA2==0) {
 		sprintf(text,"Etapa=%d\n",Etapa);
@@ -447,571 +959,135 @@ void Calculo_EtapaS(int inicializa)
 		inicio =1;
 		Etapa--;
 
-#if DBGMain
-		cout<<"\nCalculo_EtapaS()[353]... Etapa--="<<Etapa<<":"<<endl;
-#endif
 		llamar_etapa_Siguiente_PAUSA2=1;
 		return;
 	}
+
+
 	inicio=0;
 	llamar_etapa_Siguiente_PAUSA2=0;
 
-	caso=2;
-	CasoLectura=3; //1:LeeMatlab, 3:Leebinario
+	caso=2; //1: malla vieja, 2:Malla nueva, 3: Malla extendida
+	CasoLectura=3 ; //1:LeeMatlab, 3:Leebinario
 	int step=1000;
 
 	if (Etapa==iEtapa) {
 
-		char fn[100],fnmsh[100],fnbin[100];
-		sprintf(fn,"bahia-TriPrismas%d.msh3D",caso);
-		sprintf(fnmsh,"malla_gtotal%d.msh",caso);
-		sprintf(fnbin,"malla_gtotal%d.bin",caso);
-		switch (CasoLectura){
-		case 1: //Leeer archivo generado por matlab (leeento)
-			//Lectura_Bahia_y_CalculosGeometricosMalla("bahia-TriPrismas.msh3D");
-			//Lectura_Bahia_y_CalculosGeometricosMalla("bahia-TriPrismas2.msh3D");
-			Lectura_Bahia_y_CalculosGeometricosMalla(fn);
+		{
+			Etapa_Lectura_de_Malla();
+		}
+		PAUSA;
+		{
+			Etapa_Lectura_de_Velocidad(step);
+		}
+
+		PAUSA;
+		{
+			gtotal->TriPri3DAnalizados=0;
+			gtotal->Cara.resize(0);
+			gtotal->DZmin(1e-7);
+			gtotal->nCaras=0;
+			gtotal->GeneraCarasTriPri();
+			gtotal->Soporte_Vertices();
+			gtotal->CentroCarasBloques();
+			gtotal->Poligonos_Generar_Version3();
+
+
+			char fnmsh[100];
+			sprintf(fnmsh,"malla_gtotal%d.msh",caso);
 			binario=0;
 
 			gtotal->write(fnmsh);
-			binario=1;
-			gtotal->write(fnbin);
-			break;
-		case 2: //Lee archivo ASCIII y escribe Binario
-			gtotal->read(fnmsh);
-			//			gtotal->CentroCarasBloques();
-			binario=1;
-			gtotal->write(fnbin);
-			break;
-		case 3: //Lee el archivo binario
-			binario=1;
-			gtotal->read(fnbin);
-			binario=0;
-//			gtotal->write("malla_gtotal2.msh");
-			break;
-		}
 
-//TODO
-		//gtotal->xmax
-		gtotal->minmax();
-		vecXEsfera[0]=(gtotal->xmax+gtotal->xmin)/2;
-		vecXEsfera[1]=(gtotal->ymax+gtotal->ymin)/2;
-		vecXEsfera[2]=(gtotal->zmax+gtotal->zmin)/2;
 
-//		cout<<"E vecUEsfera="<<vecUEsfera[0]<<","<<vecUEsfera[1]<<"."<<vecUEsfera[2]<<","<<vecUEsfera[3]<<endl;
 
-		tic(); cout<<"gtotal->CalculaNormalVertex()"<<endl;
-		gtotal->CalculaNormalVertex();
-		cout<<"FIN:gtotal->CalculaNormalVertex() en ";toc();
-
-PAUSA2;
-
-		//Lectura de campo de Velocidades
-
-		cout<<"Lectura de campo de Velocidades"<<endl;
-
-		U.resize(gtotal->nTriPrisma3D);V.resize(gtotal->nTriPrisma3D);W.resize(gtotal->nTriPrisma3D);
-
-		cout<<"532"<<endl;
-		  FILE * pFile;
-		  int nn,tmp;
-		   char name[100];
-		   sprintf(name,"UVW%d_%05d.dat",caso,step);
-
-		   cout<<"532"<<endl;
-
-		   pFile = fopen (name,"r");
-
-		   fscanf(pFile,"%d\n",&nn);
-		   if (nn != gtotal->nTriPrisma3D) {
-				cout<<"nn != gtotal->nTriPrisma3D: "<<nn<<" != "<<gtotal->nTriPrisma3D<<endl;
-
-			   exit(1);
-		   }
-
-			cout<<"549"<<endl;
-
-		   for (i=0;i<nn;i++) {
-			   double v1,v2,v3;
-			   fscanf(pFile,"%d %lf %lf %lf\n",&tmp,&v1,&v2,&(W[i]));
-			   U[i]=v1;V[i]=v2;//W[i]=v3;
-			   if (i<10) {
-				   cout<<tmp<<" "<<v1<<" "<<v2<<" "<<v3<<endl;
-				   cout<<tmp<<" "<<U[i]<<" "<<V[i]<<" "<<W[i]<<endl;
-			   }
-			   if (tmp!=i) {
-					cout<<"tmp!=i"<<tmp<<" "<<i<<endl;
-				   exit(1);
-			   }
-		   }
-		   fclose(pFile);
-
-			if (glui != NULL) {
-				if (PanelFlimite != NULL) PanelFlimite->enable();
-				if (Checkbox_particulas != NULL)Checkbox_particulas->enable();
-				if (PanelParticulas != NULL)PanelParticulas->enable();
-			}
-
-PAUSA;
 			Etapa--; //Ultima etapa por ahora
-PAUSA;
-
-		EtapaGlobal=ETAPA_CALCULO_T_ARRIBA;EtapaGlobal2Local=Etapa;
-
-#if DBGMain
-		cout<<"Etapa="<<Etapa<<"IniciEtapa="<<InicioEtapa <<"EtapaGlobal2Local="<<EtapaGlobal2Local<<endl;
-#endif
-		cout<<"------------------------------------------------------"<<endl;
-		cout<<"Calculo Escurrimiento y Temperaturas  (con err0="<<err0<<")"<<endl;
-		myfileSalida<<"------------------------------------------------------"<<endl;
-		myfileSalida<<"Calculo Escurrimiento y Temperaturas  (con err0="<<err0<<")"<<endl;
-
-
-		sprintf(text,"%sEtapa:%d:Calculo V,T Arriba (err0=%.2e)\n",text,EtapaGlobal,err0);if (glui != NULL) glui_edittext->set_text(text);
-
-
-PAUSA;
-
-		Guardar=1;
-		double minPsi,maxPsi,err,err2,errComb;
-		double minTemp,maxTemp;
-		cout<<"Interaciones hasta que: err<"<<err0<<endl;
-		myfileSalida<<"Interaciones hasta que: err<"<<err0<<endl;
-
-#if DBGMain
-		cout<<"***Etapa="<<Etapa<<"IniciEtapa="<<InicioEtapa <<"EtapaGlobal2Local="<<EtapaGlobal2Local<<endl;
-#endif
-
-		err=CalculaMpunto(PotencialPsi,Temperatura,UU,VV,WW,*gtotal,gtotal->nH3D,err0);
-		err2=CalculaTempSuperficie(Temperatura,PotencialPsi,UU2,VV2,WW2,*gtotal,gtotal->nH3D,err0);
-		errComb=max(err,err2);
-		U.resize(gtotal->nV3D);V.resize(gtotal->nV3D);W.resize(gtotal->nV3D);	F.resize(gtotal->nV3D);
-		U.assign(gtotal->nV3D,0);V.assign(gtotal->nV3D,0);W.assign(gtotal->nV3D,0);F.assign(gtotal->nV3D,0);
-		vector<int> cuantos(gtotal->nV3D);
-		cuantos.assign(gtotal->nV3D,0);
-
-		CopiaBloquesAVertices(PotencialPsi,F,&minPsi,&maxPsi,1);
-		printf("minPotencialVel=%f, maxPotencialVel=%f, errPV=%.2e",minPsi,maxPsi,err);cout<<endl;
-		myfileSalida<<"minPotencialVel="<<minPsi<<", maxPotencialVel="<<maxPsi<<", errPV="<<err<<endl;
-		sprintf(s,"e=%.0e,FF[%.0e,%.0e]\n",errComb,minPsi,maxPsi);
-
-		sprintf(text,"%serr=%.2e err2=%.2e\n",text,err,err2);if (glui != NULL) glui_edittext->set_text(text);
-
-
-		CopiaBloquesAVertices(UU,U,&minPsi,&maxPsi,0);
-		//		printf("minUU=%e, maxUU=%e, errABS=%g",minF,maxF,err);cout<<endl;
-		CopiaBloquesAVertices(VV,V,&minPsi,&maxPsi,0);
-		//		printf("minVV=%e, maxVV=%e, errABS=%g",minF,maxF,err);cout<<endl;
-		CopiaBloquesAVertices(WW,W,&minPsi,&maxPsi,0);
-		//		printf("minWW=%e, maxWW=%e, errABS=%g",minF,maxF,err);cout<<endl;
-
-
-
-
-		//if (glui != NULL) glui_MSG->set_name(s);
-
-
-		minTemp=maxTemp=Temperatura[0];
-		for (i=0;i<gtotal->nH3D;i++) {
-			if (minTemp>Temperatura[i]) minTemp=Temperatura[i];
-			if (maxTemp<Temperatura[i]) maxTemp=Temperatura[i];
 		}
+		PAUSA;
+		{
+			Etapa_Calcula_Escurrimiento_Superficial();
+		}
+		PAUSA
+		{
+			Etapa_Malla2D_to_Malla3D();
+		}
+		PAUSA2
+		{
+			Etapa_CompletoPoligonosNuevosNiveles();
+			Etapa_Temp3D_Arreglo_CB_3D () ;
+			{}
+		}
+		PAUSA2
+		{
+			printf("Calculos Geometrico malla 3D");cout<<endl;
+			myfileSalida<<"Calculos Geometrico malla 3D"<<endl;
+			sprintf(text,"%sSCalculos Geometrico malla 3D\n",text);if (glui != NULL) glui_edittext->set_text(text);
+		}
+		PAUSA2
+		{
+			gtotal->generaPoligonos2Algunos(CualesRehacer);
+			err0=1e-10;
 
-		printf("minTemp=%f\tmaxTemp=%f (int)\terrT=%.2e",minTemp,maxTemp,err2);cout<<endl;
-		myfileSalida<<"minTemp="<<minTemp<<"\tmaxTemp="<<maxTemp<<" (int)\terrT="<<err2<<endl;
-		sprintf(text,"%sminT=%.2f maxT=%.2f\n",text,minTemp,maxTemp);if (glui != NULL) glui_edittext->set_text(text);
+			//cout<<"***Etapa="<<Etapa<<"IniciEtapa="<<InicioEtapa <<"EtapaGlobal2Local="<<EtapaGlobal2Local<<endl;
 
-		F2Nodos.resize(gtotal->nV3D);
-		CopiaBloquesAVertices(Temperatura,F2Nodos,&minTemp,&maxTemp,2);
+			gtotal->CalculaVolumen();
 
-		printf("minTemp=%f\tmaxTemp=%f (wBC)\terrT=%.2e",minTemp,maxTemp,err2);cout<<endl;
-		myfileSalida<<"minTemp="<<minTemp<<"\tmaxTemp="<<maxTemp<<" (wBC)\terrT="<<err2<<endl;
-		sprintf(text,"%sminT=%.2f maxT=%.2f (wBC)\n",text,minTemp,maxTemp);if (glui != NULL) glui_edittext->set_text(text);
+			sprintf(text,"%sFin Etapa\n",text);if (glui != NULL) glui_edittext->set_text(text);
 
-
-		if (gtotal->nH3D<40){
-			int j;
-			cout <<"xC=[";j=0;
+			TiempoCalculo=Datos_dt ;
+			Reiterando=0;
+			cout<<"Inicializo Temperaturas = Tambiente "<<endl;
+			myfileSalida<<"Inicializo Temperaturas = Tambiente "<<endl;
+			TempPilaBloquesPrevia.resize(gtotal->nH3D);
+			TempPilaBloques.resize(gtotal->nH3D);
 			for (i=0;i<gtotal->nH3D;i++) {
-				cout <<gtotal->h3D[i].centro.x<<" ";j++;
-				if (j>12) {cout<<"..."<<endl;j=0;}
-			} cout <<"];"<<endl;
-
-			cout <<"TC=["; j=0;
-			for (i=0;i<gtotal->nH3D;i++) {
-				cout <<Temperatura[i]<<" ";j++;
-				if (j>12) {cout<<"..."<<endl;j=0;}
-			} cout <<"];"<<endl;
-		}
-
-
-		err0=errComb*1e-4;
-		if (err0<ErrorMax_Cada_t) err0=ErrorMax_Cada_t;
-		if (errComb>ErrorMax_Cada_t)	Etapa=InicioEtapa-1;
-
-		if (DBG) cout<<"Voy a calculaFracionVolumen(Temperatura). Etapa="<<Etapa<<endl;
-		calculaFracionVolumen(Temperatura) ;
-
-		if (DBG) cout<<"Voy Volvi calculaFracionVolumen(Temperatura). Etapa="<<Etapa<<endl;
-		sprintf(text,"%sFin Etapa\n",text);	if (glui != NULL) glui_edittext->set_text(text);
-
-PAUSA
-		EtapaGlobal=ETAPA_MALLADO_2D_3D;EtapaGlobal2Local=Etapa;
-		cout<<"Mallando2D-->3D "<<endl;
-		myfileSalida<<"Mallando2D-->3D "<<endl;
-		InicioEtapa=Etapa;
-
-
-		if (glui != NULL) {
-			if (PanelFlimite != NULL) PanelFlimite->disable();
-			MODO_CampoVelocidades=0;
-			glui->sync_live();
-			Checkbox_particulas->disable();
-			PanelParticulas->disable();
-		}
-
-
-		//sprintf(text,"%sCambio malla a dominio inferior\n",text);if (glui != NULL) glui_edittext->set_text(text);
-
-		//TODO   Cambio malla a dominio inferior
-		sprintf(text,"%sCambio CB\n",text);if (glui != NULL) glui_edittext->set_text(text);
-
-		CualesRehacer.resize(0);
-		for ( i=0 ; i<gtotal->nCaras ; i++ ) {
-			if ( gtotal->Cara[i].nVolumenes == 1 && gtotal->Cara[i].iBC == 2) {
-				gtotal->Cara[i].iBC = 1;    //Condicion Neumann homogeneo
-				CualesRehacer.push_back(gtotal->Cara[i].ih[0]);
-//				cout<<"CualesRehacer.size()="<<CualesRehacer.size()<<endl;
-//				cout<<"CualesRehacer.end()="<<CualesRehacer.back()<<endl;
+				TempPilaBloquesPrevia[i]=Datos_Tambiente;
+				TempPilaBloques[i]=Datos_Tambiente;
 			}
 		}
+		PAUSA
+		{
+			Etapa_Temp3D_Calculo_temperaturas_pila_Modelo_Evolucion();
 
-		gtotal->CentroCarasBloques();
-		sprintf(text,"%s A la proxima: Poligonos2Algunos\n",text);if (glui != NULL) glui_edittext->set_text(text);
-PAUSA2
-		sprintf(text,"%sGenero Poligonos2Algunos\n",text);if (glui != NULL) glui_edittext->set_text(text);
-		cout<<"Genero Poligonos2Algunos: "<<CualesRehacer.size()<<endl;
-		myfileSalida<<"Genero Poligonos2Algunos: "<<CualesRehacer.size()<<endl;
-		gtotal->generaPoligonos2Algunos(CualesRehacer);
-PAUSA2
-
-
-
-		sprintf(text,"%sCambio malla a dominio inferior\n",text);if (glui != NULL) glui_edittext->set_text(text);
-
-		g2=*gtotal;
-		g2.Traslada(0,0,-Dominio_Hsup);
-		g2.EscalaZ(Dominio_Hmax/Dominio_Hsup/NDivZ);
-		*gtotal=g2;
-
-		sprintf(text,"%sFin Etapa\n",text);
-
-		if (glui != NULL) glui_edittext->set_text(text);
-
-PAUSA2
-
-		for (i=1;i<NDivZ;i++) {
-			g2.Traslada(0,0,-Dominio_Hmax/NDivZ);
-			gtotal->Junta(g2);
+			{}
 		}
-		sprintf(text,"%sFin Etapa (listo para calcular?)\n",text);	if (glui != NULL) glui_edittext->set_text(text);
-
-PAUSA2
-
-		sprintf(text,"%sg.CentroCarasBloques()\n",text);	if (glui != NULL) glui_edittext->set_text(text);
-
-		gtotal->minmax();
-		gtotal->CentroCarasBloques();
-
-
-
-PAUSA2
-
-		sprintf(text,"%sArreglo CB nuevas\n",text);	if (glui != NULL) glui_edittext->set_text(text);
-
-		CualesRehacer.resize(0);
-		for ( i=0 ; i<gtotal->nCaras ; i++ ) {
-			if ( gtotal->Cara[i].nVolumenes == 2) {
-				gtotal->Cara[i].iBC =0 ;  ///nodo interno
-			} else {
-				double x,y,z;
-				x=gtotal->Cara[i].centro.x;
-				y=gtotal->Cara[i].centro.y;
-				z=gtotal->Cara[i].centro.z;
-				gtotal->Cara[i].iBC = 1;    //Condicion Neumann homogeneo
-				gtotal->Cara[i].BC  = 0;
-				//				if (sqrt(sqr(x)+sqr(y))+1e-5>=Dominio_Rmax*cos(dTheta_med)
-				//						|| z+Dominio_Hmax< 1e-5 ) {
-				if ( z-1e-5 < -Dominio_Hmax ) { //Abajo
-					gtotal->Cara[i].iBC = 11; //Condicion Convectiva
-
-					int iC=i;
-					if(1==0) cout<<"g.Cara[iC].BC2="<<gtotal->Cara[iC].BC2
-							<<"\t.BC="<<gtotal->Cara[iC].BC
-							<<"\tg.Cara[iC].iBC="<<gtotal->Cara[iC].iBC
-							<<"\tiC="<<iC
-							<<"\tx="<<x
-							<<"\ty="<<y
-							<<"\tz="<<z
-							<<endl;
-				}
-				if ( x+1e-5 > Dominio_Xmax ) { // Adelante
-					gtotal->Cara[i].iBC = 12; //Condicion Convectiva mas espesor
-
-				}
-				if ( y+1e-5 > Dominio_Xmax ) { //Derecha
-					gtotal->Cara[i].iBC = 12; //Condicion Convectiva mas espesor
-
-				}
-				if (z>=-1e-5) {
-
-					//TODO 	CualesRehacer.resize(0);
-
-					CualesRehacer.push_back(gtotal->Cara[i].ih[0]);
-
-					gtotal->Cara[i].iBC = 2;    //Condicion Temperatura conocida
-					gtotal->Cara[i].BC  = 0;
-					gtotal->Cara[i].BC2  = Temperatura[ gtotal->Cara[i].ih[0] ];
-
-					int iC=i;
-					if(1==0) cout<<"g.Cara[iC].BC2="<<gtotal->Cara[iC].BC2
-							<<"\t.BC="<<gtotal->Cara[iC].BC
-							<<"\tg.Cara[iC].iBC="<<gtotal->Cara[iC].iBC
-							<<"\tiC="<<iC
-							<<"\tx="<<x
-							<<"\ty="<<y
-							<<"\tz="<<z
-							<<endl;
-				}
-				int iC=i;
-				if(1==0) cout<<"g.Cara[iC].BC2="<<gtotal->Cara[iC].BC2
-						<<"\t.BC="<<gtotal->Cara[iC].BC
-						<<"\tg.Cara[iC].iBC="<<gtotal->Cara[iC].iBC
-						<<"\tiC="<<iC
-						<<"\tx="<<x
-						<<"\ty="<<y
-						<<"\tz="<<z
-						<<endl;
-
-			}
-		}
-
-
-PAUSA2
-		printf("Calculos Geometrico malla 3D");cout<<endl;
-		myfileSalida<<"Calculos Geometrico malla 3D"<<endl;
-		sprintf(text,"%sSCalculos Geometrico malla 3D\n",text);if (glui != NULL) glui_edittext->set_text(text);
-
-PAUSA2
-		gtotal->generaPoligonos2Algunos(CualesRehacer);
-		err0=1e-10;
-
-		//cout<<"***Etapa="<<Etapa<<"IniciEtapa="<<InicioEtapa <<"EtapaGlobal2Local="<<EtapaGlobal2Local<<endl;
-
-		gtotal->CalculaVolumen();
-
-		sprintf(text,"%sFin Etapa\n",text);if (glui != NULL) glui_edittext->set_text(text);
-
-		TiempoCalculo=Datos_dt ;
-		Reiterando=0;
-		cout<<"Inicializo Temperaturas = Tambiente "<<endl;
-		myfileSalida<<"Inicializo Temperaturas = Tambiente "<<endl;
-		TempPilaBloquesPrevia.resize(gtotal->nH3D);
-		TempPilaBloques.resize(gtotal->nH3D);
-		for (i=0;i<gtotal->nH3D;i++) {
-			TempPilaBloquesPrevia[i]=Datos_Tambiente;
-			TempPilaBloques[i]=Datos_Tambiente;
-		}
-
-PAUSA
-		EtapaGlobal=ETAPA_CALCULO_T_PILA; EtapaGlobal2Local=Etapa;Guardar=1;
-
-		if (Reiterando==0) {
-			cout<<"============================================================"<<endl;
-			myfileSalida<<"============================================================"<<endl;
-			if (TipoCalculo==CalculoEvolucion) {
-				double tmin=TiempoCalculo/60;
-				double thoras=tmin/60;
-				cout<<"Calculo para TiempoCalculo= "<<TiempoCalculo<<" seg."<<" = "<<tmin<<" min."<<" = "<<thoras<<" hrs."<<endl;
-				myfileSalida<<"Calculo para TiempoCalculo= "<<TiempoCalculo<<" seg."<<" = "<<tmin<<" min."<<" = "<<thoras<<" hrs."<<endl;
-			} else {
-				cout<<"Calculo Estacionario:"<<endl;
-				myfileSalida<<"Calculo Estacionario:"<<endl;
-			}
-		}
-
-/////////////////////////////////////////////////////////////////////////////////
-//   Calculo de temperaturas en la pila : Modelo de Evolucion
-//
-//
-//
-		//cout<<"Etapa="<<Etapa<<"IniciEtapa="<<InicioEtapa <<"EtapaGlobal2Local="<<EtapaGlobal2Local<<endl;
-
-		cout<<"------------------------------------------------------"<<endl;
-		myfileSalida<<"------------------------------------------------------"<<endl;
-
-		printf("Etapa: Calculo T° en la Pila, con err0=%e",err0);cout<<endl;
-		myfileSalida<<"Etapa: Calculo T° en la Pila, con err0="<<err0<<endl;
-
-		if (TipoCalculo==CalculoEvolucion) {
-			sprintf(text,"%sCalculo T en Pila (t=%.0f err0=%.2e)\n",text,TiempoCalculo,err0);if (glui != NULL) glui_edittext->set_text(text);
-		} else {
-			sprintf(text,"%sCalculo T en Pila Estacionario (err0=%.2e)\n",text,err0);if (glui != NULL) glui_edittext->set_text(text);
-
-		}
-		if (PanelFlimite != NULL)  PanelFlimite->enable();
-		double err2,minTemp,maxTemp;
-
-		printf("numero de celdas=%d",gtotal->nH3D);cout<<endl;
-		myfileSalida<<"numero de celdas="<<gtotal->nH3D<<endl;
-		PotencialVInfiltracion.resize(gtotal->nH3D);
-		TempPilaBloques.resize(gtotal->nH3D);
-		UU2.resize(gtotal->nH3D);
-		VV2.resize(gtotal->nH3D);
-		WW2.resize(gtotal->nH3D);
-		TempPilaVertices.resize(gtotal->nV3D);
-		for (i=0;i<gtotal->nH3D;i++) {
-			PotencialVInfiltracion[i]=gtotal->h3D[i].centro.z*Datos_Vinyeccion;
-		}
-
-		//// Esta funcion hace el calculo de TempPilaBloques hasta que el error sea < err0
-		err2=CalculaTemperaturaPilaEnTmasDt(TempPilaBloques,PotencialVInfiltracion,UU2,VV2,WW2,
-				*gtotal,gtotal->nH3D,err0,TempPilaBloquesPrevia);
-
-
-		F.resize(gtotal->nV3D);
-		F2Nodos.resize(gtotal->nV3D);
-		CopiaBloquesAVertices(TempPilaBloques,F2Nodos,&minTemp,&maxTemp,1);
-
-
-		minTemp=maxTemp=TempPilaBloques[0];
-		for (i=0;i<gtotal->nH3D;i++) {
-			if (minTemp>TempPilaBloques[i]) minTemp=TempPilaBloques[i];
-			if (maxTemp<TempPilaBloques[i]) maxTemp=TempPilaBloques[i];
-		}
-//		printf("min,max TempPilaBloques=%f, %f, errABS=%g (%d)",minTemp,maxTemp,err2,gtotal->nH3D);cout<<endl;
-
-//		sprintf(text,"%sminT=%.2f maxT=%.2f\n errS=%.2e\n",text,minTemp,maxTemp,err2);if (glui != NULL) glui_edittext->set_text(text);
-
-		printf("minTemp=%f\tmaxTemp=%f (int)\terrT=%.2e",minTemp,maxTemp,err2);cout<<endl;
-		myfileSalida<<"minTemp="<<minTemp<<"\tmaxTemp="<<maxTemp<<" (int)\terrT="<<err2<<endl;
-
-		sprintf(text,"%s(errT=%.2e)\n",text,err2);if (glui != NULL) glui_edittext->set_text(text);
-
-		sprintf(text,"%sminT=%.2f maxT=%.2f (int)\n",text,minTemp,maxTemp);if (glui != NULL) glui_edittext->set_text(text);
-
-
-		CopiaBloquesAVertices(TempPilaBloques,F,&minTemp,&maxTemp,2);
-		CopiaBloquesAVertices(TempPilaBloques,F2Nodos,&minTemp,&maxTemp,2);
-
-
-
-		printf("minTemp=%f\tmaxTemp=%f (wBC)\terrT=%.2e",minTemp,maxTemp,err2);cout<<endl;
-		myfileSalida<<"minTemp="<<minTemp<<"\tmaxTemp="<<maxTemp<<" (wBC)\terrT="<<err2<<endl;
-
-		sprintf(text,"%sminT=%.2f maxT=%.2f (wBC)\n",text,minTemp,maxTemp);if (glui != NULL) glui_edittext->set_text(text);
-
-
-		calculaFracionVolumen(TempPilaBloques) ;
-
-		err0=err2*1e-4;
-		if (err0<ErrorMax_Cada_t) err0=ErrorMax_Cada_t;
-
-		Reiterando=0;
-		if (err2>ErrorMax_Cada_t) {
-			cout<<"Reitero..."<<endl;
-			myfileSalida<<"Reitero..."<<endl;
-			Reiterando=1;
-			Etapa=InicioEtapa-1;
-		} else {
-			// Termine con el calculo para este Tiempo
-			if (TipoCalculo==CalculoEvolucion) {
-				cout<<"Termine con el calculo para este Tiempo"<<endl;
-				myfileSalida<<"Termine con el calculo para este Tiempo"<<endl;
-
-				//cout<<"CalculoContinuo="<<CalculoContinuo<<endl;
-				if (CalculoContinuo) {
-					GuardarInstantanea();
-					Guardar=0;
-				}
-
-				TiempoCalculo += Datos_dt ;
-				if (TiempoCalculo<=Datos_Tmax) {
-					//Paso al Tiempo siguiente....
-					//err0=1e-10;
-					for (i=0;i<gtotal->nH3D;i++) {
-						TempPilaBloquesPrevia[i]=TempPilaBloques[i];
-					}
-					cout<<"Paso al T= "<<TiempoCalculo<<" seg"<<endl;
-					myfileSalida<<"Paso al T= "<<TiempoCalculo<<" seg"<<endl;
-					Etapa=InicioEtapa-1;
-
-				} else {
-					TipoCalculo=CalculoEstacionario;
-
-					cout<<"Terminé evolucion: Comienzo caso Estacionario..."<<endl;
-					myfileSalida<<"Terminé evolucion: Comienzo caso Estacionario..."<<endl;
-					err0=1e-10;
-					Etapa=InicioEtapa-1;
-				}
-			}
-		}
-
-		sprintf(text,"%sFin Etapa\n",text);
-
-		if (glui != NULL) glui_edittext->set_text(text);
-
-PAUSAF
-		cout<<"Fin"<<endl;
-
-		EtapaGlobal=EtapaFIN;
-
-		FinEtapas=1;
-		CalculoContinuo=0;
-		sprintf(text,"%sNada mas\n",text);if (glui != NULL) glui_edittext->set_text(text);
-		Etapa--;
-
 		PAUSAF
-		cout<<"Etapa: Nada mas"<<endl;
+		{
+			cout<<"Fin"<<endl;
 
-		EtapaGlobal=EtapaFIN;
+			EtapaGlobal=EtapaFIN;
 
-		FinEtapas=1;
-		CalculoContinuo=0;
-		sprintf(text,"%sNada mas\n",text);if (glui != NULL) glui_edittext->set_text(text);
-		Etapa--;
-
+			FinEtapas=1;
+			CalculoContinuo=0;
+			sprintf(text,"%sNada mas\n",text);if (glui != NULL) glui_edittext->set_text(text);
+			Etapa--;
+		}
 		PAUSAF
-		cout<<"Etapa: Nada mas"<<endl;
+		{
+			cout<<"Etapa: Nada mas"<<endl;
 
-		EtapaGlobal=EtapaFIN;
+			EtapaGlobal=EtapaFIN;
 
-		FinEtapas=1;
-		CalculoContinuo=0;
-		sprintf(text,"%sNada mas\n",text);if (glui != NULL) glui_edittext->set_text(text);
-		Etapa--;
+			FinEtapas=1;
+			CalculoContinuo=0;
+			sprintf(text,"%sNada mas\n",text);if (glui != NULL) glui_edittext->set_text(text);
+			Etapa--;
+		}
+		PAUSAF
+		{
+			cout<<"Etapa: Nada mas"<<endl;
+
+			EtapaGlobal=EtapaFIN;
+
+			FinEtapas=1;
+			CalculoContinuo=0;
+			sprintf(text,"%sNada mas\n",text);if (glui != NULL) glui_edittext->set_text(text);
+			Etapa--;
+		}
 
 
 	}
 
-
-#ifdef NODEF
-	F.init(gtotal->nV3D);
-	U.init(gtotal->nV3D);
-	V.init(gtotal->nV3D);
-	W.init(gtotal->nV3D);
-
-	for (i=0;i<gtotal->nV3D;i++) {
-		float x,y,z;
-		x=gtotal->v3D[i].x;
-		y=gtotal->v3D[i].y;
-		z=gtotal->v3D[i].z;
-		F[i]=sqrt(x*x+z*z);
-		U[i]=-y;
-		V[i]=x;
-		W[i]=x/20;
-	}
-#endif
 }
 
 
@@ -1021,29 +1097,29 @@ void NuevaLecturaDeDatos() {
 #if defined _WIN32 || defined _WIN64s
 
 	string fname = GetFileName( "Number which file: " );
-/*	ifstream ifs( fname.c_str() );
+	/*	ifstream ifs( fname.c_str() );
 	if ( ! ifs.is_open() ) {
 		cerr << "cannot open " << fname << " for input" << endl;
 	}
 	else {
-	*/
-		strcpy(file_name,fname.c_str());
-		SaveOrRead(file_name,SaveReadMode);
+	 */
+	strcpy(file_name,fname.c_str());
+	SaveOrRead(file_name,SaveReadMode);
 
-		if (SaveReadMode==2) { //2:read
-			sprintf(text,"%s\nEtapa=%d\n",file_name,Etapa);
-			glui_edittext->set_text(text);glui_edittext->redraw_window();
-			glui->refresh();
-//			glutSetWindow(main_window);
-//			glutPostRedisplay();
-		}
-		/*
+	if (SaveReadMode==2) { //2:read
+		sprintf(text,"%s\nEtapa=%d\n",file_name,Etapa);
+		glui_edittext->set_text(text);glui_edittext->redraw_window();
+		glui->refresh();
+		//			glutSetWindow(main_window);
+		//			glutPostRedisplay();
+	}
+	/*
 		string line;
 		int lineno = 1;
 		while( getline( ifs, line ) ) {
 			cout << setw(5) << right << lineno++ << " : " << line << "\n";
 		}
-		*/
+	 */
 	//}
 #endif
 
@@ -1108,7 +1184,7 @@ void control_cb( int control )
 		fb->fbreaddir(".");
 		fb->execute_callback();
 		glui2->show();
-		*/
+		 */
 
 	}
 	if (control==1003) {  // Read
@@ -1119,7 +1195,7 @@ void control_cb( int control )
 		fb->fbreaddir(".");
 		fb->execute_callback();
 		glui2->show();
-*/
+		 */
 		NuevaLecturaDeDatos();
 
 
@@ -1127,11 +1203,11 @@ void control_cb( int control )
 	}
 
 	if (control==1102) {  // Plot Particulas
-//		MODO_Ejes=!MODO_Ejes;
+		//		MODO_Ejes=!MODO_Ejes;
 	}
 
 	if (control==1101) {  // Plot Particulas
-//		MODO_CampoVelocidades=!MODO_CampoVelocidades;
+		//		MODO_CampoVelocidades=!MODO_CampoVelocidades;
 	}
 
 	if (control==8001) { //Reset FPS
@@ -1171,17 +1247,17 @@ void control_cb( int control )
 			cuantos=gtotal->h3D.size()/3;
 			cuantos=std::min(500,cuantos);
 			CualesBloquesDibuja.resize(cuantos);
-//			cout <<"gtotal->nH3D="<<gtotal->nH3D<<endl;
-//			int rmax=0;
+			//			cout <<"gtotal->nH3D="<<gtotal->nH3D<<endl;
+			//			int rmax=0;
 			for (i=0;i<CualesCarasDibuja.size();i++) {
 				CualesCarasDibuja[i]=AlgunosI[i];
 				//				rmax=max(rmax,CualesCarasDibuja[i]);
 			}
 			for (i=0;i<CualesBloquesDibuja.size();i++) {
 				CualesBloquesDibuja[i]=rand()*gtotal->h3D.size()/RAND_MAX;
-//				rmax=max(rmax,CualesCarasDibuja[i]);
+				//				rmax=max(rmax,CualesCarasDibuja[i]);
 			}
-//			cout<<"rmax="<<rmax<<endl;
+			//			cout<<"rmax="<<rmax<<endl;
 
 		}
 	}
@@ -1247,10 +1323,10 @@ void control_cb( int control )
 
 		MatrizTrXvector4(FuncionesOpenGL::modelview,vecUEsfera,vecDUEsfera);  //Eye_Coord
 		MatrizTrXvector4(FuncionesOpenGL::projection,vecDUEsfera,vecUEsfera); //Clip_Coord
-//		vecUEsfera[0] /= vecUEsfera[3];
-//		vecUEsfera[1] /= vecUEsfera[3];
-//		vecUEsfera[2] /= vecUEsfera[3];
-//		vecUEsfera[3] /= vecUEsfera[3];
+		//		vecUEsfera[0] /= vecUEsfera[3];
+		//		vecUEsfera[1] /= vecUEsfera[3];
+		//		vecUEsfera[2] /= vecUEsfera[3];
+		//		vecUEsfera[3] /= vecUEsfera[3];
 		cout<<"M BvecDUEsfera=["<<vecDUEsfera[0]<<","<<vecDUEsfera[1]<<","<<vecDUEsfera[2]<<","<<vecDUEsfera[3]<<"]"<<endl;
 		cout<<"M CvecUEsfera=["<<vecUEsfera[0]<<","<<vecUEsfera[1]<<","<<vecUEsfera[2]<<","<<vecUEsfera[3]<<"]"<<endl;
 
@@ -1271,7 +1347,7 @@ void control_cb( int control )
 
 		cout<<"M BvecDUEsfera=["<<vecDUEsfera[0]<<","<<vecDUEsfera[1]<<","<<vecDUEsfera[2]<<","<<vecDUEsfera[3]<<"]"<<endl;
 		cout<<"M FvecUEsfera=["<<vecUEsfera[0]<<","<<vecUEsfera[1]<<","<<vecUEsfera[2]<<","<<vecUEsfera[3]<<"]"<<endl;
-			Escala *= GlobalFovy/GlobalOldFovy;
+		Escala *= GlobalFovy/GlobalOldFovy;
 		GlobalOldFovy=GlobalFovy;
 	}
 
@@ -1342,7 +1418,7 @@ void control_cb( int control )
 		}
 
 	}
-		if (control==10002) {
+	if (control==10002) {
 		glui3->hide();
 	}
 
@@ -1380,10 +1456,10 @@ int main(int argc,char **argv)
 	char cCurrentPath[FILENAME_MAX];
 
 
-	 if (!getcwd(cCurrentPath, sizeof(cCurrentPath)))
-	     {
-	     return errno;
-	     }
+	if (!getcwd(cCurrentPath, sizeof(cCurrentPath)))
+	{
+		return errno;
+	}
 
 	cCurrentPath[sizeof(cCurrentPath) - 1] = '\0'; /* not really required */
 
@@ -1642,7 +1718,7 @@ void   formulario_glui()
 #if 0
 	PanelFlimite = glui->add_panel("",GLUI_PANEL_EMBOSSED);
 	ptmp2 = glui->add_panel_to_panel(PanelFlimite,"",GLUI_PANEL_NONE);
-//	ptmp->set_alignment(GLUI_ALIGN_LEFT);
+	//	ptmp->set_alignment(GLUI_ALIGN_LEFT);
 	glui->add_checkbox_to_panel(ptmp2,"TLimite",&TLimite_if);
 	glui->add_column_to_panel(ptmp2,false);
 	tsp=glui->add_spinner_to_panel(ptmp2,"" ,GLUI_SPINNER_FLOAT, &TLimite , 1105, control_cb );
@@ -1666,7 +1742,7 @@ void   formulario_glui()
 	//	gluiNumera		=glui->add_checkbox("'N' Numera Vertices(on/off)",NULL, 'N'+100 ,control_cb );
 	glui->add_checkbox("[ ] Ejes ",&MODO_Ejes, 1102 ,control_cb);
 	//glui->add_checkbox("[ ] Vel ",&MODO_CampoVelocidades2);
-//	gluiNormales		=glui->add_checkbox("[N] Normales ",&ModoDibujaNormales);
+	//	gluiNormales		=glui->add_checkbox("[N] Normales ",&ModoDibujaNormales);
 	gluiInterior		=glui->add_checkbox("[I] Interior ",&ModoDibujaInterior);
 	gluiBordes		=glui->add_checkbox("[B] Bordes ",&ModoDibujaFrontera);
 	glui->add_checkbox("[ ] centros ",&Modo_DibujaCentroBloques);
@@ -1695,8 +1771,8 @@ void   formulario_glui()
 	Spinner_particulas =tsp=glui->add_spinner_to_panel(PanelParticulas,"N Particulas",GLUI_SPINNER_INT, &nParticulas,2223,control_cb);
 	tsp->set_int_limits(1,20000);
 
-//	tsp=glui->add_spinner("Factor[0,1]",GLUI_SPINNER_FLOAT, &FactorCercania );
-//	tsp->set_int_limits(0,1);
+	//	tsp=glui->add_spinner("Factor[0,1]",GLUI_SPINNER_FLOAT, &FactorCercania );
+	//	tsp->set_int_limits(0,1);
 	tsp=glui->add_spinner_to_panel(PanelParticulas,"Lento=",GLUI_SPINNER_INT, &npasadas );
 	tsp->set_int_limits( 1, maxpasadas);
 	//	tsp->edittext->set_w(0);
@@ -1704,16 +1780,16 @@ void   formulario_glui()
 
 
 
-//	glui->add_spinner("[ ]=FactV",GLUI_SPINNER_FLOAT, &factorV );
+	//	glui->add_spinner("[ ]=FactV",GLUI_SPINNER_FLOAT, &factorV );
 	glui->add_spinner_to_panel(PanelParticulas,"Factor Vh",GLUI_SPINNER_FLOAT, &factorVh );
 
 	glui->add_statictext( "" );
-//	glui->add_statictext( "");
+	//	glui->add_statictext( "");
 	glui_FPS=glui->add_statictext( "FPS" );
 	glui_FPS->set_alignment(GLUI_ALIGN_CENTER);
 	glui->add_button("Reset", 8001 ,control_cb );
-//	glui_MSG=glui->add_statictext( "" );
-//	glui_MSG->set_alignment(GLUI_ALIGN_LEFT);
+	//	glui_MSG=glui->add_statictext( "" );
+	//	glui_MSG->set_alignment(GLUI_ALIGN_LEFT);
 
 
 	glui_edittext= new GLUI_TextBox(glui,text);
@@ -1730,7 +1806,7 @@ void   formulario_glui()
 	glui->add_radiobutton_to_group(glui_GrupoModoDelMouse,"[e]=Escala");
 
 
-//	glui->add_button("'R'=Reset View", 'R'+100 ,control_cb );  //Eliminado en Version1
+	//	glui->add_button("'R'=Reset View", 'R'+100 ,control_cb );  //Eliminado en Version1
 	glui->add_button("'F'=Full(on/off)", 'F'+100 ,control_cb );
 	//	glui->add_button("'G'=Game", 'g'+100 ,control_cb );
 	glui->add_button("'C'=Color", 'C'+100 ,control_cb );
@@ -1741,7 +1817,7 @@ void   formulario_glui()
 
 	gluiHelp		=glui->add_checkbox("[V] Verbose ",&MODO_MenuMENSAJES); //Eliminado en Version 1
 	glui->add_checkbox("[ ] NumH ",&MODO_NumeraH);
-//	glui->add_checkbox("[ ] NumFF ",&MODO_NumeraFF); //Eliminado en Version 1
+	//	glui->add_checkbox("[ ] NumFF ",&MODO_NumeraFF); //Eliminado en Version 1
 
 	if (1==0) { // Formulario para abrir archivo
 		glui2 = GLUI_Master.create_glui("GLUI Window");
@@ -1782,12 +1858,12 @@ void   formulario_glui()
 		GLUI_Panel *panel3 = glui3->add_panel( "P" );
 
 
-//		glui3->add_edittext_to_panel(panel3, "CalculoContinuo", GLUI_EDITTEXT_INT, &E_CalculoContinuo);
+		//		glui3->add_edittext_to_panel(panel3, "CalculoContinuo", GLUI_EDITTEXT_INT, &E_CalculoContinuo);
 		Glui3_EditParametros= new GLUI_TextBox(panel3, StringParametros);
 
 		Glui3_EditParametros->set_w(320);
 		Glui3_EditParametros->set_h(520);
-//		Glui3_EditParametros->set_font( GLUT_BITMAP_8_BY_13);
+		//		Glui3_EditParametros->set_font( GLUT_BITMAP_8_BY_13);
 
 
 		GLUI_Panel *panel3b = glui3->add_panel( "" );
@@ -1840,7 +1916,7 @@ void TesteDeVariablesGlobales() {
 	tsp->set_float_limits(0,1000);
 	tsp->set_speed(0.1);
 
-/*
+	/*
 	tsp=glui->add_spinner("Ambient",GLUI_SPINNER_FLOAT, &FactorAmbient);
 	tsp->set_float_limits(0,3);
 	tsp->set_speed(0.1);
@@ -1857,7 +1933,7 @@ void TesteDeVariablesGlobales() {
 	tsp->set_float_limits(0,3);
 	tsp->set_speed(0.1);
 
-*/
+	 */
 
 
 
@@ -1869,7 +1945,7 @@ void TesteDeVariablesGlobales() {
 
 
 	tsp=glui->add_spinner("Fovy",GLUI_SPINNER_FLOAT, &GlobalFovy, 9002 ,control_cb);
-	tsp->set_float_limits(0.001,90);
+	tsp->set_float_limits(0.05,90);
 	tsp->set_speed(1);
 
 	tsp=glui->add_spinner("SizeCentros",GLUI_SPINNER_FLOAT, &GlobalCentros);

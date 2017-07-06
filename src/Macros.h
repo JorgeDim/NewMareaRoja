@@ -17,6 +17,9 @@
 #define ETAPA_CALCULO_T_PILA 2
 #define EtapaFIN 9
 
+#define IBC_INF 11
+#define IBC_SUP 12
+
 
 
 
