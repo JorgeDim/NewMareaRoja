@@ -17,7 +17,10 @@
  GLint    FuncionesOpenGL::viewport[4]={0,0,0,0};
  GLdouble FuncionesOpenGL::modelview[16]={1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
  GLdouble FuncionesOpenGL::projection[16]={1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
- extern  float FactorAmbient,FactorDifusse,FactorSpecular,FactorEmission;
+ extern  float FactorAmbient,FactorDifusse,FactorSpecular,FactorEmission,FactorClaridad;
+ extern  float FactorAmbientL1,FactorDifusseL1,FactorSpecularL1,FactorEmissionL1;
+ extern  float FactorAmbientL2,FactorDifusseL2,FactorSpecularL2,FactorEmissionL2;
+ extern  float FactorZ;
 
  class R3{ //Puntos,vectores y Doblepuntos de \R^3
  public:
@@ -116,9 +119,9 @@ void FuncionesOpenGL::World2Win(GLdouble posX,GLdouble posY,GLdouble posZ, GLdou
 
 void FuncionesOpenGL::ObtieneMatrices()
 {
-	if (!modelview_calculado) glGetDoublev( GL_MODELVIEW_MATRIX, modelview );
-	if (!projection_calculado) 			glGetDoublev( GL_PROJECTION_MATRIX, projection );
-	if (!viewport_calculado) 			glGetIntegerv( GL_VIEWPORT, viewport );
+	if (!modelview_calculado) 	glGetDoublev( GL_MODELVIEW_MATRIX, modelview );
+	if (!projection_calculado) 	glGetDoublev( GL_PROJECTION_MATRIX, projection );
+	if (!viewport_calculado) 	glGetIntegerv( GL_VIEWPORT, viewport );
 	modelview_calculado=true;
 	projection_calculado=true;
 	viewport_calculado=true;
@@ -138,7 +141,8 @@ void FuncionesOpenGL::cono(double x0,double y0,double z0,double x1,double y1,dou
 	R3 TT,NN,BB;
 	TT.x=x1-x0;
 	TT.y=y1-y0;
-	TT.z=z1-z0;
+	TT.z=(z1-z0);
+//	z0 *= FactorZ;
 	TT.NormaUnitario();
 	NN.x=-TT.y;NN.y=TT.x;NN.z=0;NN.NormaUnitario();
 	BB.x=TT.y*NN.z-TT.z*NN.y;
@@ -164,6 +168,13 @@ void FuncionesOpenGL::cono(double x0,double y0,double z0,double x1,double y1,dou
 		glNormal3d(Escala*x3,Escala*y3,Escala*z3);
 		glVertex3d(x0+R*(TT.x+x3),y0+R*(TT.y+y3),z0+R*(TT.z+z3));
 		glEnd();
+
+		glBegin(GL_TRIANGLES);
+		glNormal3d(TT.x,TT.y,TT.z);
+		glVertex3d(x0+R*(TT.x),y0+R*(TT.y),z0+R*(TT.z));
+		glVertex3d(x0+R*(TT.x+x2),y0+R*(TT.y+y2),z0+R*(TT.z+z2));
+		glVertex3d(x0+R*(TT.x+x3),y0+R*(TT.y+y3),z0+R*(TT.z+z3));
+		glEnd();
 	}
 
 }
@@ -179,6 +190,7 @@ void FuncionesOpenGL::esfera(double x0,double y0,double z0,double R,int N,int N2
 	double x3,y3,z3;
 	double x4,y4,z4;
 
+	//z0 *= FactorZ;
 
 	for (j=0;j<N;j++) {
 		dt2=2*pi/N2;
@@ -385,6 +397,53 @@ void FuncionesOpenGL::ColorF3(float t,int code)
 }
 
 
+void FuncionesOpenGL::ColorF4(float t,int code)
+{
+
+	GLfloat mat_ambient[3] ;
+	GLfloat mat_diffuse[3] ;
+	GLfloat mat_specular[3];
+	GLfloat r,g,b;
+	if (t<.3) {
+		r=0;
+		g=t/.3;
+		b=1;
+	} else if (t<.5) {
+		r=0;
+		g=1;
+		b=(.5-t)/.2;
+	} else if (t<.7) {
+		r=(t-.5)/.2;
+		g=1;
+		b=0;
+	} else {
+		r=1;
+		g=(1-t)/.3;
+		b=0;
+	}
+//	r=sqrt(r);g=sqrt(g);b=sqrt(b);
+	if (code==1) {
+		glColor3f(r,g,b);
+	} else {
+		mat_ambient[0]=r/3 ;
+		mat_ambient[1]=g/3 ;
+		mat_ambient[2]=b/3 ;
+		mat_diffuse[0]=r/2 ;
+		mat_diffuse[1]=g/2 ;
+		mat_diffuse[2]=b/2 ;
+		mat_specular[0]=r ;
+		mat_specular[1]=g ;
+		mat_specular[2]=b ;
+
+		glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT, mat_ambient);
+//		glMaterialfv (GL_FRONT_AND_BACK, GL_DIFFUSE, mat_diffuse);
+		glMaterialfv (GL_FRONT_AND_BACK, GL_DIFFUSE, mat_specular);
+		glMaterialfv (GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
+//		glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION,  mat_ambient);
+	}
+}
+
+
 void FuncionesOpenGL::material(int cual)
 {
 
@@ -412,10 +471,10 @@ void FuncionesOpenGL::material(int cual)
 	GLfloat mat_verde2_specular[] = {0.15, 0.6 , 0.15 , 1.0f};
 	GLfloat mat_verde2_emission[] = {0.025, 0.1, 0.025, 1.0f};
 	
-	GLfloat mat_3_ambient[] =  {0.1, 0.2 , 0.05 , 1.0f}; 
-	GLfloat mat_3_diffuse[] =  {0.3, 0.4  , 0.1  , 1.0f};
-	GLfloat mat_3_specular[] = {0.4, 0.6 , 0.15 , 1.0f};
-	GLfloat mat_3_emission[] = {0.1, 0.15, 0.025, 1.0f};
+	GLfloat mat_3_ambient[] =  {0.05, 0.15 , 1.05 , 0.5f};
+	GLfloat mat_3_diffuse[] =  {0.1, 0.2  , 1.1  , 0.5f};
+	GLfloat mat_3_specular[] = {0.15, 0.3 , 1.15 , 0.5f};
+	GLfloat mat_3_emission[] = {0.025, 0.03, 1.025, 0.5f};
 
 	GLfloat matBC_2_ambient[] =  {0.1, 0.0 , 0.05 , 1.0f}; 
 	GLfloat matBC_2_diffuse[] =  {0.3, 0.0  , 0.1  , 1.0f};
@@ -432,11 +491,18 @@ void FuncionesOpenGL::material(int cual)
 	GLfloat  mat_diffuse_1[] = { 0.2, 0.25, 0.35, 1.0f};
 	GLfloat mat_specular_1[] = {0.5, 0.05, 0.5, 1.0f};
 
-	float faclara=1.7;
-	GLfloat  mat_ambient_1b[] = {0.3*faclara*FactorAmbient, 0.3*faclara*FactorAmbient, 0.50*faclara*FactorAmbient, 1.0f};
-	GLfloat  mat_diffuse_1b[] = {0.20*faclara*0.4*FactorDifusse, 0.25*faclara*0.4*FactorDifusse, 0.35*faclara*0.4*FactorDifusse, 1.0f};
-	GLfloat mat_specular_1b[] = {0.03*FactorSpecular        , 0.1*FactorSpecular          , 0.02*FactorSpecular         , 1.0f};
-	GLfloat mat_emission_1b[] = {0.15*.5*FactorEmission         , 0.15*.5*FactorEmission         , 0.15*.6*FactorEmission       , 1.0f};
+	GLfloat  mat_ambient_1b[] = {0.392*FactorClaridad*0.7*FactorAmbient,
+								 0.461*FactorClaridad*0.7*FactorAmbient,
+								 0.577*FactorClaridad*0.7*FactorAmbient, 1.0f};
+	GLfloat  mat_diffuse_1b[] = {0.392*FactorClaridad*0.2*FactorDifusse,
+								 0.461*FactorClaridad*0.2*FactorDifusse,
+								 0.577*FactorClaridad*0.2*FactorDifusse, 1.0f};
+	GLfloat mat_specular_1b[] = {0.392*FactorClaridad*0.1*FactorSpecular        ,
+								 0.461*FactorClaridad*0.1*FactorSpecular          ,
+								 0.577*FactorClaridad*0.1*FactorSpecular         , 1.0f};
+	GLfloat mat_emission_1b[] = {0.392*FactorClaridad*.2*FactorEmission         ,
+								 0.461*FactorClaridad*.2*FactorEmission         ,
+								 0.577*FactorClaridad*.2*FactorEmission       , 1.0f};
 
 	
 	switch (cual) 
@@ -532,24 +598,44 @@ void FuncionesOpenGL::material(int cual)
 void FuncionesOpenGL::ActivaLuz0()
 {
 
-	GLfloat light_ambient[] = { 0.75, 0.75, 0.75, 1.0 };
-	GLfloat light_diffuse[] = { 1.0, 1.0, 1.0, 1.0 };
-	GLfloat light_specular[] = { 1.0, 1.0, 1.0, 1.0 };
-	GLfloat light_position[] = { 0.0, 0.0, 10.0, 0.0 };
-	GLfloat light2_position[] = { -2.0, -2.0, 10.0, 0.0 };
+	GLfloat light_ambient[] = { FactorAmbientL1, FactorAmbientL1, FactorAmbientL1, 1.0 };
+	GLfloat light_diffuse[] = { FactorDifusseL1, FactorDifusseL1, FactorDifusseL1, 1.0 };
+	GLfloat light_specular[] = { FactorSpecularL1, FactorSpecularL1, FactorSpecularL1, 1.0 };
+	GLfloat light2_ambient[] = { FactorAmbientL2, FactorAmbientL2, FactorAmbientL2, 1.0 };
+	GLfloat light2_diffuse[] = { FactorDifusseL2, FactorDifusseL2, FactorDifusseL2, 1.0 };
+	GLfloat light2_specular[] = { FactorSpecularL2, FactorSpecularL2, FactorSpecularL2, 1.0 };
+
+//	GLfloat light_position[] = { 10000, 11000, 30.0*FactorZ , 0.0 };
+//	GLfloat light2_position[] = {  20000, 11000, 300*FactorZ ,0.0 };
+GLfloat light_position[] = { 0, 0, 10 , 0.0 };
+GLfloat light2_position[] = {  -5, -5, 10 ,0.0 };
+
 	glLightfv (GL_LIGHT0, GL_AMBIENT, light_ambient);
 	glLightfv (GL_LIGHT0, GL_DIFFUSE, light_diffuse);
 	glLightfv (GL_LIGHT0, GL_SPECULAR, light_specular);
-	glLightfv (GL_LIGHT0, GL_POSITION, light_position);
+	glLightfv (GL_LIGHT0, GL_POSITION, light2_position);
 
-	glLightfv (GL_LIGHT1, GL_AMBIENT, light_ambient);
-	glLightfv (GL_LIGHT1, GL_DIFFUSE, light_diffuse);
-	glLightfv (GL_LIGHT1, GL_SPECULAR, light_specular);
+	glLightfv (GL_LIGHT1, GL_AMBIENT, light2_ambient);
+	glLightfv (GL_LIGHT1, GL_DIFFUSE, light2_diffuse);
+	glLightfv (GL_LIGHT1, GL_SPECULAR, light2_specular);
 	glLightfv (GL_LIGHT1, GL_POSITION, light_position);
 
 
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
-//	glEnable(GL_LIGHT1);
+	glEnable(GL_LIGHT1);
+
+
+	glTranslatef(light_position[0], light_position[1],light_position[2]);
+	FuncionesOpenGL::material(22);
+	//	FuncionesOpenGL::esfera(0.2*500,20);
+		FuncionesOpenGL::esfera(0.002*10,20);
+	glTranslatef(-light_position[0], -light_position[1],-light_position[2]);
+	glTranslatef(light2_position[0], light2_position[1],light2_position[2]);
+	FuncionesOpenGL::material(22);
+	FuncionesOpenGL::esfera(0.002*10,20);
+	glTranslatef(-light2_position[0], -light2_position[1],-light2_position[2]);
+
+
 }
 

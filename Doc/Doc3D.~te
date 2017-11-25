@@ -17,117 +17,65 @@
 
 \catcode`@=11
 \def\sen{\mathop {\operator@font sen}\nolimits}
+\def\div{\mathop {\operator@font div}\nolimits}
 \usepackage{graphicx}
 
 \begin{document}
 
-\section{Ecuación de escurrimiento superficial}
-Conservación de la masa y energía 2D:\footnotesize
-%\vspace{-20pt}%
-%\vbox to 0pt{\vspace{4ex}\hbox to 0pt{%
-%\hspace{8.1em}\framebox[11.2em]{\raise-12ex\hbox{}}%
-%\hspace{0.9em}\framebox[8.2em]{\raise-12ex\hbox{}}%
-%\hspace{0.9em}\framebox[9.6em]{\raise-12ex\hbox{}}%
-%\hspace{0.8em}\framebox[16.2em]{\raise-12ex\hbox{}}%
-%\hss}\vss}%
-\begin{eqnarray*}
-\int_\omega\dot M_0\delta(x,y)&=&\int_\omega\rho V d\omega+\int_{\partial\omega}(-\nabla \psi) .\vec n \,ds +\int_\omega \Phi_{ev}(T)d\omega 
-\\
-\int_\omega\dot M_0cT_0\delta(x,y)&=&\int_\omega\rho VcT d\omega+\int_{\partial\omega}cT(-\nabla \psi) .\vec n \,ds +\int_\omega\tilde h(T-T_a)d\omega+\int_\omega (L+cT)\Phi_{ev}(T)d\omega 
-\end{eqnarray*}
-donde $\rho=\rho_f$, $c=c_f$.
-
-\subsection{Volúmenes finitos 3D}
-$V=\omega\times[0,h]$, $\partial V=\Sigma_0\cup\Sigma_h\cup\Sigma_\omega$ donde 
-$$
-\Sigma_0=\omega\times\{0\},\quad 
-\Sigma_h=\omega\times\{h\},\quad 
-\Sigma_\omega=\partial\omega \times[0,h].
-$$
-Así, las integrales anteriores se pueden escribir como:
-\begin{eqnarray*}
-\int_V\dot M_0\delta(x,y,z)&=&\int_{\Sigma_0}\rho \vec V \cdot \vec nd\Sigma-\int_{\partial V} \nabla \psi .\vec n \,\frac{d\Sigma}{h} +\int_{\Sigma_h} \Big(\Phi_{ev}(T)\vec k\Big)\cdot\vec nd\Sigma 
-\\
-\int_V\dot M_0cT_0\delta(x,y,z)&=&\int_{\Sigma_0}\Big(\rho \vec VcT\Big) \cdot \vec nd\Sigma-\int_{\partial V } cT\nabla \psi .\vec n \,\frac{d\Sigma}{h} +\int_{\Sigma_h} \Big( \Big[\tilde h(T-T_a)+(L+cT)\Phi_{ev}(T)\Big]\vec k\Big)\cdot\vec nd\Sigma 
-\end{eqnarray*}
-
-Forma discreta: Para todo $V\not\ni\vec 0$ tenemos que:
-\begin{eqnarray*}
-0&=&\rho V |\Sigma_0|-\sum_j \frac {\psi_j-\psi_\omega}{d_{\omega \to j}} \,\frac{|\Sigma_j|}{h} +\Phi_{ev}(T)|\Sigma_h| 
-\\
-0&=&\rho V cT_\omega |\Sigma_0|
--\sum_j \frac {\psi_j-\psi_\omega}{d_{\omega \to j}} cT_{\omega j}\,\frac{|\Sigma|}{h} +\Big[\tilde h(T-T_a)+(L+cT)\Phi_{ev}(T)\Big]|\Sigma_h| 
-\end{eqnarray*}
-Multiplicando la primera ecuación por $cT_\omega$ y restándola a la segunda queda el sistema:
-\begin{eqnarray*}
-0&=&\sum_j \frac {\psi_\omega-\psi_j}{d_{\omega \to j}} \,\frac{|\Sigma_j|}{h} +\rho V |\Sigma_0|+\Phi_{ev}(T)|\Sigma_h| 
-\\
-0&=&\sum_j \frac {\psi_\omega-\psi_j}{d_{\omega \to j}} c(T_{\omega j}-T_\omega)\,\frac{|\Sigma_j|}{h} +\Big[\tilde h(T_\omega-T_a)+L\Phi_{ev}(T)\Big]|\Sigma_h| 
-\end{eqnarray*}
-
-La primera ecuación permite calcular $\psi$ en la medida que $T$ sea conocida mediante la ecuación iterativa:
-\begin{eqnarray*}
-\psi_\omega &=&
-\frac{\di\sum_j \frac {|\Sigma_j|/h}{d_{\omega \to j}}\,\psi_j
--\rho V |\Sigma_0|-\Phi_{ev}(T)|\Sigma_h|} 
-{\di\sum_j \frac {|\Sigma_j|/h}{d_{\omega \to j}}}
-\end{eqnarray*}
-La segunda ecuación permite calcular $T$, en la medida que $\psi$ sea conocida. Para el término de conveccion se considera una condición UPWIND, de modo que:
-$$
-T_{\omega j}=\begin{cases} 
-T_\omega &\mbox{si }\psi_\omega\geq \psi_j
-\\
-T_j &\mbox{si }\psi_\omega<\psi_j.
-\end{cases}
-$$
-Con esta consideración, la ecuacion de $T$ queda
-\begin{eqnarray*}
-T_\omega&=&
-\frac{\di\sum_{j:\atop \psi_j>\psi_\omega}\frac {\psi_j-\psi_\omega}{d_{\omega \to j}} c\,\frac{|\Sigma_j|}{h} \cdot T_{ j}\, +\tilde h|\Sigma_h|\cdot T_a-L\Phi_{ev}(T)|\Sigma_h|}
-{\di\sum_{j:\atop \psi_j>\psi_\omega} \frac {\psi_j-\psi_\omega}{d_{\omega \to j}} c\,\frac{|\Sigma_j|}{h} +\tilde h|\Sigma_h|} 
-\end{eqnarray*}
+ 
 
 
-\section{Ecuación al interior de la Pila}
-Integrando sobre un volumen $V$ la ecuación:
-$$
-(\rho c)_f \vec V\cdot \nabla T-{\rm div}(  k_m\nabla T)=0
-$$
-se obtiene que:
+\section{Ecuación de difusión-convección}
+Ecuación a tratar:
+
+\begin{equation}
+a(x,t)C(x,t)+\div (C \vec V)-{\rm div}(  D\nabla C)=F.
+\end{equation}
+Integrando sobre un volumen $\omega$ se obtiene que:
 \begin{eqnarray}\label{Vint}
-0&=&\int_{\partial V}(\rho c)_f (\underbrace{\vec V}_{=-\nabla \psi}
-\cdot \vec n)T\, d\Sigma-\int_{\partial V } k_m\nabla T .\vec n \,d\Sigma.  
+\int_\omega aCd\omega+\int_{\partial \omega}C (\vec V
+\cdot \vec n)\, d\Sigma-\int_{\partial \omega } D(\nabla C \cdot\vec n) \,d\Sigma &=& \int_\omega Fd\omega.  
 \end{eqnarray}
-Si $T_\omega$ es la temperatura media del volumen $V$, esta ecuación 
-se puede escribir\begin{eqnarray*}
-0&=&\int_{\partial V}\Big((\rho c)_f \frac{\partial \psi}{\partial n}(T-T_\omega)\Big) d\Sigma+\int_{\partial V } k_m\frac{\partial T }{\partial n} \,d\Sigma  
-\end{eqnarray*}
-Forma discreta: Para todo $V$ tenemos que:
+
+Forma discreta: Para todo $\omega$ tal que $\partial\omega=\bigcup\limits_{j=1}^M\Sigma_j$ tenemos que:
 \begin{eqnarray*}
-0&=&\sum_j (\rho c)_f \frac {\psi_j-\psi_\omega}{d_{\omega \to j}} (T_{\omega j}-T_\omega)\,
-|\Sigma_j| +\sum_j k_m \frac {T_j-T_\omega}{d_{\omega \to j}} \,|\Sigma_j|
+\langle aC\rangle_\omega|\omega|+\sum_j C _{\Sigma_j}(\vec V_{\Sigma_j}
+\cdot \vec n_j)\,
+|\Sigma_j| -\sum_j D \frac {C_{\omega_j}-C_\omega}{d_{\omega \to\omega_ j}} \,|\Sigma_j| &=& \langle F\rangle_\omega|\omega|
 \end{eqnarray*}
 Usando la condición UPWIND:
 $$
-T_{\omega j}=\begin{cases} 
-T_\omega &\mbox{si }\psi_\omega\geq \psi_j
+C_{\Sigma j}=\begin{cases} 
+C_\omega &\mbox{si }(\vec V_{\Sigma_j}
+\cdot \vec n_j)\geq 0
 \\
-T_j &\mbox{si }\psi_\omega<\psi_j.
+C_{\omega_j} &\mbox{si }(\vec V_{\Sigma_j}
+\cdot \vec n_j)< 0.
 \end{cases}
 $$
 la ecuación queda
 \begin{eqnarray*}
-0&=&\sum_{j:\atop \psi_j>\psi_\omega} (\rho c)_f \frac {\psi_j-\psi_\omega}{d_{\omega \to j}} (T_{j}-T_\omega)\,
-|\Sigma_j| +\sum_j k_m \frac {T_j-T_\omega}{d_{\omega \to j}} \,|\Sigma_j|
+\langle aC\rangle_\omega|\omega|+\sum_{j:\atop \vec V_{\Sigma_j}
+\cdot \vec n_j\geq 0}C _{\omega}(\vec V_{\Sigma_j}
+\cdot \vec n_j)\,
+|\Sigma_j| +\sum_{j:\atop \vec V_{\Sigma_j}
+\cdot \vec n_j< 0}C _{\omega_j}(\vec V_{\Sigma_j}
+\cdot \vec n_j)\,
+|\Sigma_j| -\sum_j D \frac {C_{\omega_j}-C_\omega}{d_{\omega \to\omega_ j}} \,|\Sigma_j| &=& \langle F\rangle_\omega|\omega|
 \end{eqnarray*}
 de donde se despeja:
 \begin{eqnarray*}
-T_\omega&=&
-\frac{\di\sum_{j:\atop \psi_j>\psi_\omega}(\rho c)_f \frac {\psi_j-\psi_\omega}{d_{\omega \to j}} \,
-|\Sigma_j| \cdot T_{ j}\, + \sum_j  \frac {k_m|\Sigma_j|}{d_{\omega \to j}}\cdot T_{ j}}
-{\di\sum_{j:\atop \psi_j>\psi_\omega} (\rho c)_f \frac {\psi_j-\psi_\omega}{d_{\omega \to j}} \,
-|\Sigma_j|+ \sum_j  \frac {k_m|\Sigma_j|}{d_{\omega \to j}} \,} 
+C_\omega&=&
+\frac{\di\sum_{j:\atop \vec V_{\Sigma_j}
+\cdot \vec n_j< 0}(-\vec V_{\Sigma_j}
+\cdot \vec n_j)\,
+|\Sigma_j|C_{\omega_j} +\sum_j  \frac {D}{d_{\omega \to\omega_ j}} \,|\Sigma_j|C_{\omega_j}+\langle F\rangle_\omega|\omega|}
+{\di\sum_{j:\atop \vec V_{\Sigma_j}
+\cdot \vec n_j\geq 0}(\vec V_{\Sigma_j}
+\cdot \vec n_j)\,
+|\Sigma_j| +\sum_j  \frac {D}{d_{\omega \to\omega_ j}} \,|\Sigma_j|+\langle a\rangle_\omega|\omega| \,} 
 \end{eqnarray*}
+En esta ecuación, (dado que en general el campo de velocidades no tiene divergencia nula) es conveniente usar: $\vec V_{\Sigma_j}=\frac 12(\vec V_\omega+\vec V_{\omega_j})$
 
 \subsection{Condición de borde en pared Convectiva:}
 

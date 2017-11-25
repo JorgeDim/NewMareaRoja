@@ -25,6 +25,7 @@ public:
 	static void ColorF(double minF,double maxF,double lF);
 	static void ColorF2(double minF,double maxF,double lF);
 	static void ColorF3(float t,int code);
+	static void ColorF4(float t,int code);
 	static void ActivaLuz0();
 	static void Win2World(GLfloat WinX ,GLfloat winY,GLfloat winZ, GLdouble *posX,GLdouble *posY,GLdouble *posZ);
 	static void World2Win(GLdouble posX,GLdouble posY,GLdouble posZ, GLdouble *WinX ,GLdouble *winY,GLdouble *winZ);

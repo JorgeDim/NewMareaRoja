@@ -1,3 +1,6 @@
 awk '!/^#/&&!/^H/&&!/^:/{print }' Z1>Z1b
  git commit -a -m "julio"
  git push origin master
+tar -cvf foo.tar  --newer "2017-11-21" .
+git add .git rm --cached  Debug/anim/*
+git rm --cached  foo.tar.gz 

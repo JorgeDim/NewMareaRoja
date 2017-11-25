@@ -4,8 +4,9 @@
 #include "Class_Vector.h"
 #include<vector>
 
+
 int const maxpasadas=20;
-extern float factorV, factorVh;
+extern float factorV, factorDespegaLineas;
 extern int MODO_NumeraH,MODO_NumeraFF;
 extern vector<double> PotencialPsi,UU,VV,WW;
 extern int binario;
@@ -55,6 +56,10 @@ public:
 	R3 normalVetex;
 	vector<int> soporte;
 
+	//no se guarda
+	double vz;
+	int nvz;
+
 //----
 	void save(ofstream &myfile);
 	void read(ifstream &myfile,grid3D *papaL);
@@ -71,6 +76,10 @@ public:
 	double BC,BC2,volumen;
 	R3 centro;
 	R3 normalCara;
+	//No se guardan....
+	int signo2;
+	double winX1,winY1,winX2,winY2,winX3,winY3,winZ1,winZ2,winZ3;
+	double nRandom;
 
 //----
 	void save(ofstream &myfile);
@@ -179,6 +188,7 @@ public:
 	double volumen;
 	int icara[5];
 	R3 centro;
+	int CentroDibujado;
 
 	vector<PoligonoPlano> Poligono;		// El TriPrisma [i] con el g.h3D[i].vecino[j] se unen por g.h3D[i].Poligono[j]
 	vector<int> vecino;					// Lista de TriPrismas vecinos (O Cara en el borde)
@@ -244,8 +254,11 @@ public:
 
 
 
+	void DibujaParticula (int i,R3 & origen);
+	void drawParticulas_TriPrisma();
 
-	void drawParticulas_TriPrisma(vector<double> U,vector<double> V,vector<double> W);
+	int EnCualTriprisma(float px,float py,float pz,int tri0);
+	int EnCualTriprismaXY(float px,float py,int tri0);
 	void drawVelGL(vector<double>,vector<double>,vector<double>);
 	void drawVelGL2(vector<double>,vector<double>,vector<double>);
 
@@ -269,8 +282,8 @@ public:
 
 	void Soporte_Vertices();
 	void CalculaVolumen();
-	void PosINI(int i);
-	void PosINI3(double posX, double posY, double posZ);
+	void Particulas_Init(int i);
+	void Particulas_Init_3(double posX, double posY, double posZ);
 
 
 	void SeleccionaVolFinito(double px,double py,double pz);

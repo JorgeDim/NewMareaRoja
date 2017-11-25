@@ -10,7 +10,11 @@
 #include <iomanip>
 
 #include "GlutFreeGlut.h"
+#include "GL/glext.h"
 #include "globales.h"
+
+#include <objidl.h>
+#include <gdiplus.h>
 using namespace std;
 //#endif
 
@@ -18,7 +22,8 @@ using namespace std;
 extern int nParticulas;
 extern double ThetaMax,ThetaMin,dTheta_med;
 extern  int primerdrawVelGL;
-extern int const maxpasadas;
+//extern int const maxpasadas;
+//extern int const maxpasadas;
 extern int GL_immediate_mode;
 extern int GL_threads;
 
@@ -27,7 +32,6 @@ extern int GL_threads;
 ////////////////////////////////////WEB
 
 void				GuardarInstantanea();
-char  text[200000] = {"Hello World!"};
 
 //#define PAUSA 	                       }iEtapa++;cout<<"iEtapa="<<iEtapa<<endl;if (Etapa==iEtapa) { InicioEtapaP=InicioEtapa;InicioEtapa=Etapa;Guardar=1;
 //#define PAUSAF 	                       }iEtapa++;cout<<"iEtapa="<<iEtapa<<endl;if (Etapa==iEtapa) { Guardar=1;
@@ -54,6 +58,7 @@ string  GetFileName( const string & prompt ) {
 #endif
 
 void TesteDeVariablesGlobales() ;
+void formulario_opciones_programa();
 
 
 
@@ -184,30 +189,32 @@ void Etapa_Lectura_de_Malla()
 	vecXEsfera[0]=(gtotal->xmax+gtotal->xmin)/2;
 	vecXEsfera[1]=(gtotal->ymax+gtotal->ymin)/2;
 	vecXEsfera[2]=(gtotal->zmax+gtotal->zmin)/2;
+	Escala=10/(gtotal->xmax-gtotal->xmin);
 
 	//		cout<<"E vecUEsfera="<<vecUEsfera[0]<<","<<vecUEsfera[1]<<"."<<vecUEsfera[2]<<","<<vecUEsfera[3]<<endl;
 
-	tic(); cout<<"gtotal->CalculaNormalVertex()"<<endl;
+	if (PrintTiempos) {tic(); cout<<"gtotal->CalculaNormalVertex()"<<endl;}
 	gtotal->CalculaNormalVertex();
-	cout<<"FIN:gtotal->CalculaNormalVertex() en ";toc();
+	if (PrintTiempos) {cout<<"FIN:gtotal->CalculaNormalVertex() en ";toc();}
 }
 
+#if 0
 void Etapa_Lectura_de_Velocidad(int step)
 {
 	//Lectura de campo de Velocidades
 	int i;
 
-	cout<<"Lectura de campo de Velocidades"<<endl;
+	if (PrintLecturas) cout<<"Lectura de campo de Velocidades"<<endl;
 
 	U.resize(gtotal->nTriPrisma3D);V.resize(gtotal->nTriPrisma3D);W.resize(gtotal->nTriPrisma3D);
 
-	cout<<"532"<<endl;
+	if (PrintLinea)  cout<<"532"<<endl;
 	FILE * pFile;
 	int nn,tmp;
 	char name[100];
 	sprintf(name,"UVW%d_%05d.dat",caso,step);
 
-	cout<<"532"<<endl;
+	if (PrintLinea)  cout<<"532"<<endl;
 
 	pFile = fopen (name,"r");
 
@@ -218,15 +225,15 @@ void Etapa_Lectura_de_Velocidad(int step)
 		exit(1);
 	}
 
-	cout<<"549"<<endl;
+	if (PrintLinea) cout<<"549"<<endl;
 
 	for (i=0;i<nn;i++) {
 		double v1,v2,v3;
 		fscanf(pFile,"%d %lf %lf %lf\n",&tmp,&v1,&v2,&(W[i]));
 		U[i]=v1;V[i]=v2;//W[i]=v3;
 		if (i<10) {
-			cout<<tmp<<" "<<v1<<" "<<v2<<" "<<v3<<endl;
-			cout<<tmp<<" "<<U[i]<<" "<<V[i]<<" "<<W[i]<<endl;
+			if (PrintLecturas) cout<<tmp<<" "<<v1<<" "<<v2<<" "<<v3<<endl;
+			if (PrintLecturas) cout<<tmp<<" "<<U[i]<<" "<<V[i]<<" "<<W[i]<<endl;
 		}
 		if (tmp!=i) {
 			cout<<"tmp!=i"<<tmp<<" "<<i<<endl;
@@ -240,6 +247,100 @@ void Etapa_Lectura_de_Velocidad(int step)
 		if (Checkbox_particulas != NULL)Checkbox_particulas->enable();
 		if (PanelParticulas != NULL)PanelParticulas->enable();
 	}
+}
+#endif
+
+void Etapa_Lectura_de_Velocidades(int cuantos)
+{
+	//Lectura de campo de Velocidades
+	int i,step;
+
+	if (PrintLecturas) cout<<"Lectura_ZdeT"<<endl;
+
+	U.resize(cuantos);V.resize(cuantos);W.resize(cuantos);
+	for(step=0;step<cuantos;step++) {
+
+
+		if (PrintLecturas) cout<<"Lectura de campo de Velocidades"<<endl;
+
+		U[step].resize(gtotal->nTriPrisma3D);V[step].resize(gtotal->nTriPrisma3D);W[step].resize(gtotal->nTriPrisma3D);
+
+		if (PrintLinea)  cout<<"532"<<endl;
+		FILE * pFile;
+		int nn,tmp;
+		char name[100];
+		sprintf(name,"UVW%d_%05d.dat",caso,step);
+
+		if (PrintLinea)  cout<<"532"<<endl;
+
+		pFile = fopen (name,"r");
+
+		fscanf(pFile,"%d\n",&nn);
+		if (nn != gtotal->nTriPrisma3D) {
+			cout<<"nn != gtotal->nTriPrisma3D: "<<nn<<" != "<<gtotal->nTriPrisma3D<<endl;
+			exit(1);
+		}
+
+		if (PrintLinea) cout<<"549"<<endl;
+
+		for (i=0;i<nn;i++) {
+			double v1,v2,v3;
+			fscanf(pFile,"%d %lf %lf %lf\n",&tmp,&v1,&v2,&(W[step][i]));
+			U[step][i]=v1;V[step][i]=v2;//W[i]=v3;
+			if (i<10) {
+				if (PrintLecturas) cout<<tmp<<" "<<v1<<" "<<v2<<" "<<v3<<endl;
+				if (PrintLecturas) cout<<tmp<<" "<<U[step][i]<<" "<<V[step][i]<<" "<<W[step][i]<<endl;
+			}
+			if (tmp!=i) {
+				cout<<"tmp!=i"<<tmp<<" "<<i<<endl;
+				exit(1);
+			}
+		}
+		fclose(pFile);
+	}
+
+}
+
+
+void Lectura_ZdeT(int cuantos)
+{
+	int i,step;
+
+	if (PrintLecturas) cout<<"Lectura_ZdeT"<<endl;
+
+	ZdeT.resize(cuantos);
+	for(step=0;step<cuantos;step++) {
+
+		FILE * pFile;
+		int nn,tmp;
+		char name[100];
+		sprintf(name,"Z%d_%05d.msh3D",caso,step+1);//Matlab de 1..N
+//		cout<<"name="<<name<<endl;
+
+		if (PrintLinea)  cout<<"532"<<endl;
+
+		pFile = fopen (name,"r");
+
+		fscanf(pFile,"%d\n",&nn);
+
+		ZdeT[step].resize(nn);
+
+		if (PrintLinea) cout<<"549"<<endl;
+
+		for (i=0;i<nn;i++) {
+			double v1,v2,v3;
+			fscanf(pFile,"%d %lf\n",&tmp,&v1);
+			ZdeT[step][i]=v1;
+			if (tmp!=i) {
+				cout<<"tmp!=i"<<tmp<<" "<<i<<endl;
+				exit(1);
+			}
+		}
+		fclose(pFile);
+
+	}
+	cout<<"fin de lectura"<<endl;
+
 }
 
 
@@ -280,7 +381,7 @@ void calculaFracionVolumen(vector<double> &Temp) {
 	//	cout<<"calculaFracionVolumen():END"<<endl;
 }
 
-
+#if 0
 void Etapa_Calcula_Escurrimiento_Superficial()
 {
 	int i;
@@ -382,7 +483,7 @@ void Etapa_Malla2D_to_Malla3D() {
 
 	int i;
 	EtapaGlobal=ETAPA_MALLADO_2D_3D;EtapaGlobal2Local=Etapa;
-	cout<<"Mallando2D-->3D "<<endl;
+	//cout<<" Mallando2D-->3D "<<endl;
 	myfileSalida<<"Mallando2D-->3D "<<endl;
 	InicioEtapa=Etapa;
 
@@ -668,11 +769,13 @@ void Etapa_Temp3D_Calculo_temperaturas_pila_Modelo_Evolucion()
 
 }
 
+#endif
+
 
 void malla1(int &Etapa, int &iEtapa) {
 
 #if DBG==1
-	cout<<"malla1()"<<endl;
+	//cout<<"Malla1()"<<endl;
 #endif
 
 	int i,j,iL,malla;
@@ -969,23 +1072,66 @@ void Calculo_EtapaS(int inicializa)
 
 	caso=2; //1: malla vieja, 2:Malla nueva, 3: Malla extendida
 	CasoLectura=3 ; //1:LeeMatlab, 3:Leebinario
-	int step=1000;
 
 	if (Etapa==iEtapa) {
 
 		{
 			Etapa_Lectura_de_Malla();
+			for (i=0;i<gtotal->Cara.size();i++) {
+				gtotal->Cara[i].nRandom=(   (double)rand() / ((double)(RAND_MAX)+(double)(1)) );
+			}
+
 		}
 		PAUSA;
 		{
-			Etapa_Lectura_de_Velocidad(step);
+			int bin2=1;
+			if (bin2==0) {
+				cout<<"voy a leer UVWdeT"<<endl;
+				Etapa_Lectura_de_Velocidades(2452);//900
+				cout<<"voy a leer zdeT"<<endl;
+				Lectura_ZdeT(2452);
+				cout<<"Ya lei zdeT"<<endl;
+				writeUVWZdeT_Binario("UVWZdeT.bin")  ;
+				cout<<"Ok"<<endl;
+				for (i=0;i<10;i++){
+					cout <<ZdeT[100][i]<<"\t"<<U[100][i]<<"\t"<<V[100][i]<<"\t"<<W[100][i]<<endl;
+				}
+				for (i=0;i<10;i++){
+					cout <<ZdeT[100][i]<<"\t"<<U[100][i]<<"\t"<<V[100][i]<<"\t"<<W[100][i]<<endl;
+				}
+				int it=ZdeT.size()-1;
+				int iit=ZdeT[it].size()-1;
+				cout<<"it="<<it<<"\tiit="<<iit<<endl;
+				for (i=0;i<10;i++){
+					cout <<ZdeT[it][iit-i]<<"\t"<<U[it][iit-i]<<"\t"<<V[it][iit-i]<<"\t"<<W[it][iit-i]<<endl;
+				}
+			} else {
+				cout<<"Leo archivo binario"<<endl;
+				readUVWZdeT_Binario("UVWZdeT.bin")  ;
+				cout<<"Ok"<<endl;
+				for (i=0;i<10;i++){
+					cout <<ZdeT[100][i]<<"\t"<<U[100][i]<<"\t"<<V[100][i]<<"\t"<<W[100][i]<<endl;
+				}
+				int it=ZdeT.size()-1;
+				int iit=ZdeT[it].size()-1;
+				cout<<"it="<<it<<"\tiit="<<iit<<endl;
+				for (i=0;i<10;i++){
+					cout <<ZdeT[it][iit-i]<<"\t"<<U[it][iit-i]<<"\t"<<V[it][iit-i]<<"\t"<<W[it][iit-i]<<endl;
+				}
+			}
+
+			if (glui != NULL) {
+				if (PanelFlimite != NULL) PanelFlimite->enable();
+				if (Checkbox_particulas != NULL)Checkbox_particulas->enable();
+				if (PanelParticulas != NULL)PanelParticulas->enable();
+			}
 		}
 
 		PAUSA;
 		{
 			gtotal->TriPri3DAnalizados=0;
 			gtotal->Cara.resize(0);
-			gtotal->DZmin(1e-7);
+			gtotal->DZmin(1e-2);
 			gtotal->nCaras=0;
 			gtotal->GeneraCarasTriPri();
 			gtotal->Soporte_Vertices();
@@ -999,31 +1145,14 @@ void Calculo_EtapaS(int inicializa)
 
 			gtotal->write(fnmsh);
 
+			//// Verificacion
+			gtotal->CalculaVolumen();
+			CalculaFactorMallaCCRGJSM(*gtotal);
 
 
 			Etapa--; //Ultima etapa por ahora
 		}
 		PAUSA;
-		{
-			Etapa_Calcula_Escurrimiento_Superficial();
-		}
-		PAUSA
-		{
-			Etapa_Malla2D_to_Malla3D();
-		}
-		PAUSA2
-		{
-			Etapa_CompletoPoligonosNuevosNiveles();
-			Etapa_Temp3D_Arreglo_CB_3D () ;
-			{}
-		}
-		PAUSA2
-		{
-			printf("Calculos Geometrico malla 3D");cout<<endl;
-			myfileSalida<<"Calculos Geometrico malla 3D"<<endl;
-			sprintf(text,"%sSCalculos Geometrico malla 3D\n",text);if (glui != NULL) glui_edittext->set_text(text);
-		}
-		PAUSA2
 		{
 			gtotal->generaPoligonos2Algunos(CualesRehacer);
 			err0=1e-10;
@@ -1046,23 +1175,6 @@ void Calculo_EtapaS(int inicializa)
 			}
 		}
 		PAUSA
-		{
-			Etapa_Temp3D_Calculo_temperaturas_pila_Modelo_Evolucion();
-
-			{}
-		}
-		PAUSAF
-		{
-			cout<<"Fin"<<endl;
-
-			EtapaGlobal=EtapaFIN;
-
-			FinEtapas=1;
-			CalculoContinuo=0;
-			sprintf(text,"%sNada mas\n",text);if (glui != NULL) glui_edittext->set_text(text);
-			Etapa--;
-		}
-		PAUSAF
 		{
 			cout<<"Etapa: Nada mas"<<endl;
 
@@ -1215,6 +1327,7 @@ void control_cb( int control )
 		clock2=clock0;
 	}
 	if (control==11030) {  //Previo a 1103
+		/*
 		int i,j,nt,tmp;
 		nt=gtotal->Cara.size();
 		AlgunosI.resize(nt);
@@ -1235,12 +1348,14 @@ void control_cb( int control )
 				}
 			}
 		}
+		*/
 		control=1103;
 	}
 	if (control==1103) {  //
 
 		cout<< "ModoDibujaAlgunos="<< ModoDibujaAlgunos<<endl;
 		if (ModoDibujaAlgunos) {
+/*
 			int i,cuantos=10,j;
 			cuantos=Algunos_Porcentaje*gtotal->Cara.size()/100;
 			CualesCarasDibuja.resize(cuantos);
@@ -1258,6 +1373,8 @@ void control_cb( int control )
 				//				rmax=max(rmax,CualesCarasDibuja[i]);
 			}
 			//			cout<<"rmax="<<rmax<<endl;
+
+*/
 
 		}
 	}
@@ -1282,8 +1399,8 @@ void control_cb( int control )
 	if (control==9002) { // TestDeVariables
 
 
-		cout<<"M \nGlobalOldFovy="<<GlobalOldFovy<<" GlobalFovy="<<GlobalFovy<<endl;
-		cout<<"M A1 vecUEsfera=["<<vecUEsfera[0]<<","<<vecUEsfera[1]<<","<<vecUEsfera[2]<<","<<vecUEsfera[3]<<"]"<<endl;
+		//cout<<"M \nGlobalOldFovy="<<GlobalOldFovy<<" GlobalFovy="<<GlobalFovy<<endl;
+		//cout<<"M A1 vecUEsfera=["<<vecUEsfera[0]<<","<<vecUEsfera[1]<<","<<vecUEsfera[2]<<","<<vecUEsfera[3]<<"]"<<endl;
 
 
 #if (1==1)
@@ -1299,17 +1416,18 @@ void control_cb( int control )
 
 		FuncionesOpenGL::World2Win((GLdouble)vecUEsfera[0], (GLdouble)vecUEsfera[1], (GLdouble)vecUEsfera[2],
 				&xP,&yP,&zP);
-		cout<<"M xyzP=[ "<<xP<<" , "<<yP<<" , "<<zP<<" ]"<<endl;
-		cout<<"M A2 vecUEsfera=["<<vecUEsfera[0]<<","<<vecUEsfera[1]<<","<<vecUEsfera[2]<<","<<vecUEsfera[3]<<"]"<<endl;
+		//cout<<"M xyzP=[ "<<xP<<" , "<<yP<<" , "<<zP<<" ]"<<endl;
+		//cout<<"M A2 vecUEsfera=["<<vecUEsfera[0]<<","<<vecUEsfera[1]<<","<<vecUEsfera[2]<<","<<vecUEsfera[3]<<"]"<<endl;
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
 		gluPerspective((GLdouble)GlobalFovy, aspect, (GLdouble)1, (GLdouble)100.0);
 		glTranslated( 0, 0, -10);
 		FuncionesOpenGL::Win2World(xP,yP,zP, &xW,&yW,&zW);
+		zW /= FactorZ;
 		vecUEsfera[0]=xW;
 		vecUEsfera[1]=yW;
 		vecUEsfera[2]=zW;
-		cout<<"M A3 vecUEsfera=["<<vecUEsfera[0]<<","<<vecUEsfera[1]<<","<<vecUEsfera[2]<<","<<vecUEsfera[3]<<"]"<<endl;
+		//cout<<"M A3 vecUEsfera=["<<vecUEsfera[0]<<","<<vecUEsfera[1]<<","<<vecUEsfera[2]<<","<<vecUEsfera[3]<<"]"<<endl;
 
 
 #else
@@ -1327,8 +1445,8 @@ void control_cb( int control )
 		//		vecUEsfera[1] /= vecUEsfera[3];
 		//		vecUEsfera[2] /= vecUEsfera[3];
 		//		vecUEsfera[3] /= vecUEsfera[3];
-		cout<<"M BvecDUEsfera=["<<vecDUEsfera[0]<<","<<vecDUEsfera[1]<<","<<vecDUEsfera[2]<<","<<vecDUEsfera[3]<<"]"<<endl;
-		cout<<"M CvecUEsfera=["<<vecUEsfera[0]<<","<<vecUEsfera[1]<<","<<vecUEsfera[2]<<","<<vecUEsfera[3]<<"]"<<endl;
+		//cout<<"M BvecDUEsfera=["<<vecDUEsfera[0]<<","<<vecDUEsfera[1]<<","<<vecDUEsfera[2]<<","<<vecDUEsfera[3]<<"]"<<endl;
+		//cout<<"M CvecUEsfera=["<<vecUEsfera[0]<<","<<vecUEsfera[1]<<","<<vecUEsfera[2]<<","<<vecUEsfera[3]<<"]"<<endl;
 
 		//Encuentra nuevas matrices
 
@@ -1345,8 +1463,8 @@ void control_cb( int control )
 		//		MatrizXvector4(FuncionesOpenGL::projection,vecDUEsfera,vecUEsfera);
 #endif
 
-		cout<<"M BvecDUEsfera=["<<vecDUEsfera[0]<<","<<vecDUEsfera[1]<<","<<vecDUEsfera[2]<<","<<vecDUEsfera[3]<<"]"<<endl;
-		cout<<"M FvecUEsfera=["<<vecUEsfera[0]<<","<<vecUEsfera[1]<<","<<vecUEsfera[2]<<","<<vecUEsfera[3]<<"]"<<endl;
+		//cout<<"M BvecDUEsfera=["<<vecDUEsfera[0]<<","<<vecDUEsfera[1]<<","<<vecDUEsfera[2]<<","<<vecDUEsfera[3]<<"]"<<endl;
+		//cout<<"M FvecUEsfera=["<<vecUEsfera[0]<<","<<vecUEsfera[1]<<","<<vecUEsfera[2]<<","<<vecUEsfera[3]<<"]"<<endl;
 		Escala *= GlobalFovy/GlobalOldFovy;
 		GlobalOldFovy=GlobalFovy;
 	}
@@ -1422,6 +1540,19 @@ void control_cb( int control )
 		glui3->hide();
 	}
 
+	if (control==20001) {
+		gluiHelp2->hide();
+	}
+
+	if (control==30001) {
+		gluiOpciones->hide();
+	}
+	if (control==30002) {
+		//cout<<"PrintMouse1="<<PrintMouse<<endl;
+		//if (gluiOpciones) gluiOpciones->sync_live();
+		//cout<<"PrintMouse2="<<PrintMouse<<endl;
+	}
+
 
 	if (control==2223) 		{
 #if DBG==1
@@ -1429,6 +1560,89 @@ void control_cb( int control )
 #endif
 		primerdrawVelGL=1;
 	}
+
+	if (control==25000)
+	{
+
+		switch(ListaCaso) {
+		case 0:
+			FlagMuestraCaraSuperior=1;
+			FlagCaraSuperiorTransparente=0;
+			FlagCaraSuperiorTextura=0;
+			FlagCaraInferiorTextura=0;
+			FlagDibujaLineas=1;
+			break;
+		case 1:
+			FlagMuestraCaraSuperior=0;
+			FlagCaraSuperiorTransparente=0;
+			FlagCaraSuperiorTextura=0;
+			FlagCaraInferiorTextura=1;
+			FlagDibujaLineas=0;
+			break;
+		case 2:
+			FlagMuestraCaraSuperior=1;
+			FlagCaraSuperiorTransparente=1;
+			FlagCaraSuperiorTextura=1;
+			FlagCaraInferiorTextura=1;
+			FlagDibujaLineas=0;
+			break;
+		case 3:
+			Calculo_EtapaS();
+			FlagMuestraCaraSuperior=1;
+			FlagCaraSuperiorTransparente=1;
+			FlagCaraSuperiorTextura=1;
+			FlagCaraInferiorTextura=1;
+			FlagDibujaLineas=0;
+
+			//Reset View
+			Escala=M3_Escala;
+			for (int i=0;i<16;i++){
+				MatrizRotacionGlobal[i]   =M3_MatrizRotacionGlobal[i];
+				MatrizRotacionGlobalINV[i]=M3_MatrizRotacionGlobalINV[i];
+			}
+			cout <<"vecXEsfera=["<<vecXEsfera[0]<<","<<vecXEsfera[1]<<","<<vecXEsfera[2]<<"]"<<endl;
+			cout <<"vecUEsfera=["<<vecUEsfera[0]<<","<<vecUEsfera[1]<<","<<vecUEsfera[2]<<"]"<<endl;
+			vecDUEsfera[0]=(vecXEsfera[0]-(gtotal->xmax+gtotal->xmin)/2)*Escala;
+			vecDUEsfera[1]=(vecXEsfera[1]-(gtotal->ymax+gtotal->ymin)/2)*Escala;
+			vecDUEsfera[2]=(vecXEsfera[2]-(gtotal->zmax+gtotal->zmin)/2)*Escala;
+
+			MatrizXvector4(MatrizRotacionGlobal,vecDUEsfera,vecUEsfera);
+
+			cout <<"vecUEsfera=["<<vecUEsfera[0]<<","<<vecUEsfera[1]<<","<<vecUEsfera[2]<<"]"<<endl;
+			break;
+
+		case 4:
+			MODO_CampoVelocidades=1;
+			nParticulas=1000;
+			primerdrawVelGL=1;
+			FlagMuestraCaraSuperior=0;
+			FlagCaraSuperiorTransparente=1;
+			FlagCaraSuperiorTextura=1;
+			FlagCaraInferiorTextura=1;
+			FlagDibujaLineas=0;
+
+			break;
+		case 5:
+			MODO_CampoVelocidades=1;
+			nParticulas=5000;
+			primerdrawVelGL=1;
+			FlagMuestraCaraSuperior=0;
+			FlagCaraSuperiorTransparente=1;
+			FlagCaraSuperiorTextura=1;
+			FlagCaraInferiorTextura=1;
+			FlagDibujaLineas=0;
+
+			break;
+
+		}
+		if (glui != NULL) {
+			glui->sync_live();
+		}
+
+	}
+
+
+
 	else if (control>100 && control <10000) CB_keyboard(control-100);
 
 }
@@ -1441,17 +1655,79 @@ int main(int argc,char **argv)
 #endif
 	glutInit(&argc, argv);
 
+	////////////////BEGIN BMP
+
+	ifstream mybmpfilespointer;
+	///Imagen 1
+	mybmpfilespointer.open ("mar.bmp", std::ios::in | std::ios::binary);
+	mybmpfilespointer.read(headerinfo, 54); // read the 54-byte header size_t fread ( void * ptr, size_t size, size_t count, FILE * stream );
+
+	// extract image height and width from header
+	 imagenwidth = *(int*)&headerinfo[18];
+	 imagenheight = *(int*)&headerinfo[22];
+
+	int size = 3 * imagenwidth * imagenheight;
+	imagendata = new char[size+1]; // allocate 3 bytes per pixel
+	mybmpfilespointer.read(imagendata,  size); // read the rest of the imagesdata at once
+	mybmpfilespointer.close();
 
 
+	///BGR --> RGB
+	for (int i = 0; i < size; i += 3)
+	{
+		byte dummy = imagendata[i];
+		imagendata[i] = imagendata[i + 2];
+		imagendata[i + 2] = dummy;
+	}
+
+
+	///Imagen 2
+	mybmpfilespointer.open ("arena2.bmp", std::ios::in | std::ios::binary);
+	mybmpfilespointer.read(headerinfo, 54); // read the 54-byte header size_t fread ( void * ptr, size_t size, size_t count, FILE * stream );
+
+	// extract image height and width from header
+	 imagen2width = *(int*)&headerinfo[18];
+	 imagen2height = *(int*)&headerinfo[22];
+
+	size = 3 * imagen2width * imagen2height;
+	imagen2data = new char[size+1]; // allocate 3 bytes per pixel
+	mybmpfilespointer.read(imagen2data,  size); // read the rest of the imagesdata at once
+	mybmpfilespointer.close();
+
+	///BGR --> RGB
+	for (int i = 0; i < size; i += 3)
+	{
+		byte dummy = imagen2data[i];
+		imagen2data[i] = imagen2data[i + 2];
+		imagen2data[i + 2] = dummy;
+	}
+
+	// display image height and width from header
+	 cout << "image width:" << imagenwidth << endl;
+	cout << "image height:" << imagenheight << endl;
+
+#if 0
+	// Guardar un archivo BMP con los datos leidos (como verificacion)
+	ofstream arrayfile("bmpofstream.bmp", std::ios::out | std::ios::binary); // File Creation
+
+	arrayfile.write(headerinfo, 54);
+	arrayfile.write(imagendata, size);
+	arrayfile.close();
+#endif
+
+	////TEXTURE
+
+
+	////////////////////////END BMP
 
 	gtotal=new grid3D;
 
 	//------------------Linea de comandos
 	strcpy(FDatos,"Datos.txt");
 	int i;
-	cout<<"argc="<<argc<<endl;
-	cout<<"argv[0]="<<argv[0]<<endl;
-	cout<<"_getcwd="<<getcwd<<endl;
+	if (PrintInicio) cout<<"argc="<<argc<<endl;
+	if (PrintInicio) cout<<"argv[0]="<<argv[0]<<endl;
+	if (PrintInicio) cout<<"_getcwd="<<getcwd<<endl;
 
 	char cCurrentPath[FILENAME_MAX];
 
@@ -1463,7 +1739,7 @@ int main(int argc,char **argv)
 
 	cCurrentPath[sizeof(cCurrentPath) - 1] = '\0'; /* not really required */
 
-	printf ("The current working directory is %s\n", cCurrentPath);
+	if (PrintInicio) printf ("The current working directory is %s\n", cCurrentPath);
 
 	sprintf(mensajes0,"argc=%d\n",argc);
 	sprintf(mensajes0,"argv[0]=%s\n",argv[0]);
@@ -1589,7 +1865,7 @@ int main(int argc,char **argv)
 
 		altoT=glutGet(GLUT_SCREEN_HEIGHT);
 
-		printf("ancho=%d, alto=%d\n",anchoT,altoT);cout<<endl;
+		if (PrintInicio) { printf("ancho=%d, alto=%d\n",anchoT,altoT);cout<<endl; }
 
 		width=anchoT-10*0;
 		height=altoT-40*0;
@@ -1600,8 +1876,6 @@ int main(int argc,char **argv)
 		main_window =glutCreateWindow("VersionGLUT-cubo");
 
 		glutPositionWindow(glutGet(GLUT_SCREEN_WIDTH)-width-5, glutGet(GLUT_SCREEN_HEIGHT)-height-5);
-
-
 
 
 		/// #AQUI
@@ -1655,6 +1929,8 @@ int main(int argc,char **argv)
 #if DBG==1
 		if (DBG) cout<<"Inicio4"<<endl;
 #endif
+
+
 		glutMainLoop();
 		printf("hola");
 
@@ -1706,14 +1982,14 @@ void   formulario_glui()
 
 	tsp=glui->add_spinner_to_panel( mipanel, "Ax:" ,GLUI_SPINNER_FLOAT, &Ax );
 	tsp->set_alignment(GLUI_ALIGN_LEFT);	tsp->w=10;
-	cout<<"Antes set_w ....."<<endl;
+	if (PrintInicio) cout<<"Antes set_w ....."<<endl;
 	tsp=glui->add_spinner_to_panel( mipanel, "+By:",GLUI_SPINNER_FLOAT, &By );
 	tsp->set_alignment(GLUI_ALIGN_LEFT);	tsp->w=10;
 	tsp=glui->add_spinner_to_panel( mipanel, "+Cz:",GLUI_SPINNER_FLOAT, &Cz );
 	tsp->set_alignment(GLUI_ALIGN_LEFT);	tsp->w=10;
 	tsp=glui->add_spinner_to_panel( mipanel, " =D:" ,GLUI_SPINNER_FLOAT, &DD );
 	tsp->set_alignment(GLUI_ALIGN_LEFT);	tsp->w=10;
-	cout<<"Despues set_w"<<endl;
+	if (PrintInicio)  cout<<"Despues set_w"<<endl;
 	GLUI_Panel *ptmp2;
 #if 0
 	PanelFlimite = glui->add_panel("",GLUI_PANEL_EMBOSSED);
@@ -1738,23 +2014,31 @@ void   formulario_glui()
 	glui->add_button_to_panel(ptmp2,"Read", 1003 ,control_cb );
 #endif
 
-	gluiMueve		=glui->add_checkbox("[M] Mueve centro",&MueveCentro);
+//	gluiMueve		=glui->add_checkbox("[M] Mueve centro",&MueveCentro);
 	//	gluiNumera		=glui->add_checkbox("'N' Numera Vertices(on/off)",NULL, 'N'+100 ,control_cb );
-	glui->add_checkbox("[ ] Ejes ",&MODO_Ejes, 1102 ,control_cb);
+//	glui->add_checkbox("[ ] Ejes ",&MODO_Ejes, 1102 ,control_cb);
 	//glui->add_checkbox("[ ] Vel ",&MODO_CampoVelocidades2);
 	//	gluiNormales		=glui->add_checkbox("[N] Normales ",&ModoDibujaNormales);
-	gluiInterior		=glui->add_checkbox("[I] Interior ",&ModoDibujaInterior);
-	gluiBordes		=glui->add_checkbox("[B] Bordes ",&ModoDibujaFrontera);
+//	gluiInterior		=glui->add_checkbox("[I] Interior ",&ModoDibujaInterior);
+//	gluiBordes		=glui->add_checkbox("[B] Bordes ",&ModoDibujaFrontera);
 	glui->add_checkbox("[ ] centros ",&Modo_DibujaCentroBloques);
 
-	glui->add_checkbox("Algunos ",&ModoDibujaAlgunos, 11030 ,control_cb);
-	Spinner_Algunos =tsp=glui->add_spinner("Porcentaje",GLUI_SPINNER_INT, &Algunos_Porcentaje,1103,control_cb);
+	ptmp2 = glui->add_panel("",GLUI_PANEL_RAISED);
+	glui->add_checkbox_to_panel(ptmp2, "",&ModoDibujaAlgunos, 11030 ,control_cb);
+	glui->add_column_to_panel(ptmp2,false);
+	Spinner_Algunos =tsp=glui->add_spinner_to_panel(ptmp2, "%",GLUI_SPINNER_INT, &Algunos_Porcentaje,1103,control_cb);
 
 	tsp->set_int_limits(0,100);
 
+	if (DBG) cout<<"linea 2007"<<endl;
+
 	glui->add_statictext( "" );
 
+	if (DBG) cout<<"linea 2011"<<endl;
+
 	TesteDeVariablesGlobales();
+
+	if (DBG) cout<<"linea 2015"<<endl;
 
 #if 0
 	glui->add_statictext( "" );
@@ -1763,25 +2047,24 @@ void   formulario_glui()
 #endif
 
 	PanelParticulas = glui->add_panel("",GLUI_PANEL_EMBOSSED);
-	Checkbox_particulas=glui->add_checkbox_to_panel(PanelParticulas,"Particulas ?",&MODO_CampoVelocidades, 1101 ,control_cb );
+	Checkbox_particulas=glui->add_checkbox_to_panel(PanelParticulas,"Particulas",&MODO_CampoVelocidades, 1101 ,control_cb );
 	glui->add_checkbox_to_panel(PanelParticulas,"Origen",&MODO_Origen);
 	glui->add_checkbox_to_panel(PanelParticulas,"Pausa",&MODO_Pausa);
 
 
+	if (DBG) cout<<"linea 2029"<<endl;
+
 	Spinner_particulas =tsp=glui->add_spinner_to_panel(PanelParticulas,"N Particulas",GLUI_SPINNER_INT, &nParticulas,2223,control_cb);
-	tsp->set_int_limits(1,20000);
+	tsp->set_int_limits(0,20000);
 
 	//	tsp=glui->add_spinner("Factor[0,1]",GLUI_SPINNER_FLOAT, &FactorCercania );
 	//	tsp->set_int_limits(0,1);
-	tsp=glui->add_spinner_to_panel(PanelParticulas,"Lento=",GLUI_SPINNER_INT, &npasadas );
-	tsp->set_int_limits( 1, maxpasadas);
+	tsp=glui->add_spinner_to_panel(PanelParticulas,"Largo=",GLUI_SPINNER_INT, &largoCola );
+	tsp->set_int_limits( 0, maxpasadas);
 	//	tsp->edittext->set_w(0);
 
 
 
-
-	//	glui->add_spinner("[ ]=FactV",GLUI_SPINNER_FLOAT, &factorV );
-	glui->add_spinner_to_panel(PanelParticulas,"Factor Vh",GLUI_SPINNER_FLOAT, &factorVh );
 
 	glui->add_statictext( "" );
 	//	glui->add_statictext( "");
@@ -1796,7 +2079,6 @@ void   formulario_glui()
 	glui_edittext->set_w(220);
 	glui_edittext->set_h(120);
 
-	cout<<"formulario_glui()2"<<endl;
 
 	mipanel=glui->add_panel("Uso del Boton 1 del Mouse");
 	glui_GrupoModoDelMouse=glui->add_radiogroup_to_panel(mipanel,&MODO_de_mover);
@@ -1819,6 +2101,7 @@ void   formulario_glui()
 	glui->add_checkbox("[ ] NumH ",&MODO_NumeraH);
 	//	glui->add_checkbox("[ ] NumFF ",&MODO_NumeraFF); //Eliminado en Version 1
 
+#if 1==0
 	if (1==0) { // Formulario para abrir archivo
 		glui2 = GLUI_Master.create_glui("GLUI Window");
 
@@ -1850,6 +2133,7 @@ void   formulario_glui()
 
 
 	}
+#endif
 
 	if (1==1) { // Formulario para abrir archivo
 		glui3 = GLUI_Master.create_glui("GLUI Window");
@@ -1876,6 +2160,37 @@ void   formulario_glui()
 
 		glui3 ->hide();
 	}
+
+	formulario_opciones_programa();
+
+	if (1==1) { // Formulario para mostrar Help
+		gluiHelp2 = GLUI_Master.create_glui("GLUI Help",GLUI_SUBWINDOW_RIGHT);
+
+
+
+//		glui = GLUI_Master.create_glui_subwindow(main_window,GLUI_SUBWINDOW_RIGHT);
+//		glui->set_main_gfx_window( main_window);
+
+
+
+
+		GLUI_Panel *panelH1 = gluiHelp2->add_panel( "" );
+
+		TextBoxHelp= new GLUI_TextBox(panelH1,textHelp);
+		TextBoxHelp->set_w(320);
+		TextBoxHelp->set_h(520);
+
+
+
+
+		GLUI_Panel *panelH2 = gluiHelp2->add_panel( "" );
+		panelH2->set_w(320);
+		gluiHelp2->add_statictext_to_panel(panelH2,"       ");
+		gluiHelp2->add_column_to_panel(panelH2,false);
+		gluiHelp2->add_button_to_panel(panelH2,"Hide", 20001 ,control_cb )->set_alignment(GLUI_ALIGN_RIGHT);
+
+		gluiHelp2 ->hide();
+	}
 	//	glutIdleFunc( idleevent );
 	GLUI_Master.set_glutIdleFunc( idleevent );
 	//	glui_hide=false;
@@ -1897,14 +2212,69 @@ void   formulario_glui()
 	Checkbox_particulas->disable();
 
 	PanelParticulas->disable();
-	cout<<"formulario_glui()end"<<endl;
+	if (PrintFunciones) cout<<"formulario_glui()end"<<endl;
 }
 
+void formulario_opciones_programa()
+{
+
+	 // Formulario para mostrar Help
+	gluiOpciones = GLUI_Master.create_glui("GLUI Opciones",GLUI_SUBWINDOW_RIGHT);
+
+
+
+		//		glui = GLUI_Master.create_glui_subwindow(main_window,GLUI_SUBWINDOW_RIGHT);
+		//		glui->set_main_gfx_window( main_window);
+
+
+
+
+		GLUI_Panel *panel1 = gluiOpciones->add_panel( "Opciones" );
+
+
+		gluiOpciones->add_checkbox_to_panel(panel1,"Print Mouse",&PrintMouse, 30002,control_cb);
+		gluiOpciones->add_checkbox_to_panel(panel1,"Print Linea",&PrintLinea, 30002,control_cb);
+		gluiOpciones->add_checkbox_to_panel(panel1,"Print Tiempos",&PrintTiempos, 30002,control_cb);
+		gluiOpciones->add_checkbox_to_panel(panel1,"Print Caras",&PrintCaras, 30002,control_cb);
+		gluiOpciones->add_checkbox_to_panel(panel1,"Print Invert",&PrintInvert, 30002,control_cb);
+
+
+
+		GLUI_Panel *panelH2 = gluiOpciones->add_panel( "" );
+		panelH2->set_w(320);
+		gluiOpciones->add_statictext_to_panel(panelH2,"       ");
+		gluiOpciones->add_column_to_panel(panelH2,false);
+		gluiOpciones->add_button_to_panel(panelH2,"Hide", 30001 ,control_cb )->set_alignment(GLUI_ALIGN_RIGHT);
+
+		gluiOpciones ->hide();
+
+}
 
 void TesteDeVariablesGlobales() {
 
 	GLUI_Spinner *tsp;
 	GLUI_Panel *ptmp2;
+
+
+	ptmp2 = glui->add_panel("",GLUI_PANEL_RAISED);
+	glui->add_checkbox_to_panel(ptmp2,"TSup",&FlagMuestraCaraSuperior);
+	glui->add_checkbox_to_panel(ptmp2,"TInf",&FlagMuestraCaraInferior);
+	glui->add_checkbox_to_panel(ptmp2,"Grid",&FlagDibujaLineas);
+
+
+	if (DBG) cout<<"linea 2242"<<endl;
+
+	glui->add_column_to_panel(ptmp2,false);
+	GLUI_RadioGroup *RG=glui->add_radiogroup_to_panel(ptmp2, &ListaCaso,25000,control_cb);
+	glui->add_radiobutton_to_group(RG, "0");
+	glui->add_radiobutton_to_group(RG, "1");
+	glui->add_radiobutton_to_group(RG, "2");
+	glui->add_radiobutton_to_group(RG, "3");
+	glui->add_radiobutton_to_group(RG, "4");
+	glui->add_radiobutton_to_group(RG, "5");
+	control_cb(25000);
+
+#if 1
 	///// Test de algunas Variables
 	tsp=glui->add_spinner("FactorNormales",GLUI_SPINNER_FLOAT, &FactorNormales);
 	tsp->set_float_limits(0,1000);
@@ -1912,11 +2282,28 @@ void TesteDeVariablesGlobales() {
 	tsp->set_float_limits(0,1);
 	tsp=glui->add_spinner("FactorAchica",GLUI_SPINNER_FLOAT, &FactorAchica);
 	tsp->set_float_limits(0,1);
+//	tsp=glui->add_spinner("FactorAchicaV",GLUI_SPINNER_FLOAT, &FactorAchicaV);
+//	tsp->set_float_limits(0,1);
 	tsp=glui->add_spinner("FactorZ",GLUI_SPINNER_FLOAT, &FactorZ);
 	tsp->set_float_limits(0,1000);
 	tsp->set_speed(0.1);
+//	glui->add_spinner("Factor Vh",GLUI_SPINNER_FLOAT, &factorDespegaLineas );
 
-	/*
+#endif
+
+
+#if 0
+	tsp=glui->add_spinner("BGColorR",GLUI_SPINNER_INT, &BGColorR);
+	tsp->set_float_limits(0,255);
+	tsp=glui->add_spinner("BGColorG",GLUI_SPINNER_INT, &BGColorG);
+	tsp->set_float_limits(0,255);
+	tsp=glui->add_spinner("BGColorB",GLUI_SPINNER_INT, &BGColorB);
+	tsp->set_float_limits(0,255);
+#endif
+
+
+#if 0
+	//Test Materiales
 	tsp=glui->add_spinner("Ambient",GLUI_SPINNER_FLOAT, &FactorAmbient);
 	tsp->set_float_limits(0,3);
 	tsp->set_speed(0.1);
@@ -1933,30 +2320,70 @@ void TesteDeVariablesGlobales() {
 	tsp->set_float_limits(0,3);
 	tsp->set_speed(0.1);
 
-	 */
+#endif
 
 
+	tsp=glui->add_spinner("Claridad",GLUI_SPINNER_FLOAT, &FactorClaridad);
+	tsp->set_float_limits(0,3);
+	tsp->set_speed(0.1);
 
+#if 0
+	//Test Luces
+	tsp=glui->add_spinner("Luz1 Ambient",GLUI_SPINNER_FLOAT, &FactorAmbientL1);
+	tsp->set_float_limits(0,3);
+	tsp->set_speed(0.2);
+
+	tsp=glui->add_spinner("Luz1 Difusse",GLUI_SPINNER_FLOAT, &FactorDifusseL1);
+	tsp->set_float_limits(0,3);
+	tsp->set_speed(0.2);
+
+	tsp=glui->add_spinner("Luz1 Specular",GLUI_SPINNER_FLOAT, &FactorSpecularL1);
+	tsp->set_float_limits(0,3);
+	tsp->set_speed(0.2);
+
+
+	tsp=glui->add_spinner("Luz2 Ambient",GLUI_SPINNER_FLOAT, &FactorAmbientL2);
+	tsp->set_float_limits(0,3);
+	tsp->set_speed(0.2);
+
+	tsp=glui->add_spinner("Luz2 Difusse",GLUI_SPINNER_FLOAT, &FactorDifusseL2);
+	tsp->set_float_limits(0,3);
+	tsp->set_speed(0.2);
+
+	tsp=glui->add_spinner("Luz2 Specular",GLUI_SPINNER_FLOAT, &FactorSpecularL2);
+	tsp->set_float_limits(0,3);
+	tsp->set_speed(0.2);
+
+
+#endif
+
+
+#if 0
 	ptmp2 = glui->add_panel("",GLUI_PANEL_RAISED);
 	glui->add_button_to_panel(ptmp2,"Reset centro", 9001 ,control_cb );
 	glui->add_column_to_panel(ptmp2,false);
 	glui->add_column_to_panel(ptmp2,false);
 	glui->add_button_to_panel(ptmp2,"Reset centro2", 9001 ,control_cb );
-
+#endif
 
 	tsp=glui->add_spinner("Fovy",GLUI_SPINNER_FLOAT, &GlobalFovy, 9002 ,control_cb);
 	tsp->set_float_limits(0.05,90);
 	tsp->set_speed(1);
-
+#if 0
 	tsp=glui->add_spinner("SizeCentros",GLUI_SPINNER_FLOAT, &GlobalCentros);
 	tsp->set_float_limits(0.001,1);
 	tsp->set_speed(1);
 
 	tsp=glui->add_spinner("GL_immediate_mode",GLUI_SPINNER_INT, &GL_immediate_mode);
 	tsp->set_int_limits(0,4);
+#endif
+
 	tsp=glui->add_spinner("GL_threads",GLUI_SPINNER_INT, &GL_threads);
 	tsp->set_int_limits(1,20);
 
+
+	tsp=glui->add_spinner("FactorTime",GLUI_SPINNER_FLOAT, &FactorClockTime);
+	tsp->set_speed(1);
 
 
 
