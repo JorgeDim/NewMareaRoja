@@ -4,3 +4,4 @@ awk '!/^#/&&!/^H/&&!/^:/{print }' Z1>Z1b
 tar -cvf foo.tar  --newer "2017-11-21" .
 git add .git rm --cached  Debug/anim/*
 git rm --cached  foo.tar.gz 
+ git pull
