@@ -126,6 +126,11 @@ void Etapa_Lectura_de_Malla()
 	sprintf(fn,"bahia-TriPrismas%d.msh3D",caso);
 	sprintf(fnmsh,"malla_gtotal%d.msh",caso);
 	sprintf(fnbin,"malla_gtotal%d.bin",caso);
+
+
+	if(DBG)cout<<"Etapa_Lectura_de_Malla()"<<endl;
+
+
 	switch (CasoLectura){
 	case 1: //Leeer archivo generado por matlab (leeento)
 		//Lectura_Bahia_y_CalculosGeometricosMalla("bahia-TriPrismas.msh3D");
@@ -196,6 +201,9 @@ void Etapa_Lectura_de_Malla()
 	if (PrintTiempos) {tic(); cout<<"gtotal->CalculaNormalVertex()"<<endl;}
 	gtotal->CalculaNormalVertex();
 	if (PrintTiempos) {cout<<"FIN:gtotal->CalculaNormalVertex() en ";toc();}
+
+
+	if(DBG)cout<<"Etapa_Lectura_de_Malla():END"<<endl;
 }
 
 #if 0
@@ -1044,12 +1052,16 @@ void Calculo_EtapaS(int inicializa)
 	static int inicio=0;
 
 
+	if(DBG)cout<<"Calculo_EtapaS(int "<<inicializa<<"): BEGIN"<<endl;
+
 	if (inicializa) {
 		Etapa=0;
 	}
 	Etapa++;
 	iEtapa=1;
 
+
+	if(DBG)cout<<"1056"<<endl;
 
 	if (CalculoContinuo==0 && inicio==0 && llamar_etapa_Siguiente_PAUSA2==0) {
 		sprintf(text,"Etapa=%d\n",Etapa);
@@ -1063,12 +1075,17 @@ void Calculo_EtapaS(int inicializa)
 		Etapa--;
 
 		llamar_etapa_Siguiente_PAUSA2=1;
+		if(DBG)cout<<"1070 (return) "<<endl;
+
 		return;
 	}
 
 
 	inicio=0;
 	llamar_etapa_Siguiente_PAUSA2=0;
+
+
+	if(DBG)cout<<"1080"<<endl;
 
 	caso=2; //1: malla vieja, 2:Malla nueva, 3: Malla extendida
 	CasoLectura=3 ; //1:LeeMatlab, 3:Leebinario
@@ -1087,11 +1104,11 @@ void Calculo_EtapaS(int inicializa)
 			int bin2=1;
 			if (bin2==0) {
 				cout<<"voy a leer UVWdeT"<<endl;
-				Etapa_Lectura_de_Velocidades(2452);//900
+				Etapa_Lectura_de_Velocidades(2452);//900 ParticulasZlambda
 				cout<<"voy a leer zdeT"<<endl;
 				Lectura_ZdeT(2452);
 				cout<<"Ya lei zdeT"<<endl;
-				writeUVWZdeT_Binario("UVWZdeT.bin")  ;
+				writeUVWZdeT_Binario("../../../Datos/UVWZdeT.bin")  ;
 				cout<<"Ok"<<endl;
 				for (i=0;i<10;i++){
 					cout <<ZdeT[100][i]<<"\t"<<U[100][i]<<"\t"<<V[100][i]<<"\t"<<W[100][i]<<endl;
@@ -1107,7 +1124,7 @@ void Calculo_EtapaS(int inicializa)
 				}
 			} else {
 				cout<<"Leo archivo binario"<<endl;
-				readUVWZdeT_Binario("UVWZdeT.bin")  ;
+				readUVWZdeT_Binario("../../../Datos/UVWZdeT.bin")  ;
 				cout<<"Ok"<<endl;
 				for (i=0;i<10;i++){
 					cout <<ZdeT[100][i]<<"\t"<<U[100][i]<<"\t"<<V[100][i]<<"\t"<<W[100][i]<<endl;
@@ -1129,6 +1146,8 @@ void Calculo_EtapaS(int inicializa)
 
 		PAUSA;
 		{
+			char fnmsh[100];
+#if 0
 			gtotal->TriPri3DAnalizados=0;
 			gtotal->Cara.resize(0);
 			gtotal->DZmin(1e-2);
@@ -1138,18 +1157,45 @@ void Calculo_EtapaS(int inicializa)
 			gtotal->CentroCarasBloques();
 			gtotal->Poligonos_Generar_Version3();
 
-
-			char fnmsh[100];
-			sprintf(fnmsh,"malla_gtotal%d.msh",caso);
-			binario=0;
-
-			gtotal->write(fnmsh);
-
 			//// Verificacion
 			gtotal->CalculaVolumen();
 			CalculaFactorMallaCCRGJSM(*gtotal);
 
 
+#endif
+
+			if(1) {
+				binario=1;
+				sprintf(fnmsh,"malla_gtotal_Voronoi.msh");
+				gtotal->read(fnmsh);
+			}
+			if(0) {
+				binario=0;
+				sprintf(fnmsh,"malla_gtotal%d.msh",caso);
+				gtotal->write(fnmsh);
+			}
+			if(0) {
+				binario=1;
+				sprintf(fnmsh,"malla_gtotal_Voronoi.msh");
+				gtotal->write(fnmsh);
+			}
+		}
+		PAUSA;
+		{
+			F2Nodos.resize(gtotal->nV3D,0);
+			R3 CentroMancha;
+			CentroMancha.x=(gtotal->xmax+gtotal->xmin)/2;
+			CentroMancha.y=(gtotal->ymax+gtotal->ymin)/2;
+			CentroMancha.z=(gtotal->zmax+gtotal->zmin)/2;
+			double RadioMancha=(gtotal->xmax-gtotal->xmin)/4;
+			for (i=0;i<gtotal->nV3D;i++) {
+				if( sqr(gtotal->v3D[i].x-CentroMancha.x)+sqr(gtotal->v3D[i].y-CentroMancha.y)<sqr(RadioMancha)) {
+					F2Nodos[i]=1;
+				}
+			}
+		}
+		PAUSA;
+		{
 			Etapa--; //Ultima etapa por ahora
 		}
 		PAUSA;
@@ -1199,6 +1245,9 @@ void Calculo_EtapaS(int inicializa)
 
 
 	}
+
+
+	if(DBG)cout<<"Calculo_EtapaS(int "<<inicializa<<"): END"<<endl;
 
 }
 

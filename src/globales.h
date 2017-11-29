@@ -39,8 +39,8 @@ int BGColorR=130,BGColorG=100,BGColorB=82;
 int ClippingON=0;
 float Ax=1,By=0.17,Cz=0,DD=11000;
 
-float TLimite=40;
-int TLimite_if=1;
+float TLimite=0.5;
+int TLimite_if=0;
 
 float FactorNormales=0,FactorSuavidad=1;
 

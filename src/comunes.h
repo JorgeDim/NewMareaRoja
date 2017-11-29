@@ -324,7 +324,7 @@ void DrawGraphics()
 	glLoadIdentity();
 	glTranslated( 0, -1, -10);
 	glShadeModel(GL_SMOOTH);
-		FuncionesOpenGL::ActivaLuz0();
+	FuncionesOpenGL::ActivaLuz0();
 
 
 	glTranslatef(vecUEsfera[0], vecUEsfera[1],vecUEsfera[2]);
@@ -340,16 +340,16 @@ void DrawGraphics()
 	if (FlagPrintMatrizRotacionGlobal) {
 		cout <<"float 	  M3_Escala="<<Escala<<";"<<endl;
 		cout <<"GLfloat   M3_MatrizRotacionGlobal[16]= {";
-				for (i=0;i<16;i++){
-					cout<<MatrizRotacionGlobal[i];
-					if (i<15) cout<<" , ";
-				}
+		for (i=0;i<16;i++){
+			cout<<MatrizRotacionGlobal[i];
+			if (i<15) cout<<" , ";
+		}
 		cout <<"};"<<endl;
 		cout <<"GLfloat   M3_MatrizRotacionGlobalINV[16]= {";
-				for (i=0;i<16;i++){
-					cout<<MatrizRotacionGlobalINV[i];
-					if (i<15) cout<<" , ";
-				}
+		for (i=0;i<16;i++){
+			cout<<MatrizRotacionGlobalINV[i];
+			if (i<15) cout<<" , ";
+		}
 		cout <<"};"<<endl;
 	}
 
@@ -360,7 +360,7 @@ void DrawGraphics()
 	}
 
 
-//	FuncionesOpenGL::ActivaLuz0();
+	//	FuncionesOpenGL::ActivaLuz0();
 
 	if (ClippingON) {
 		double eq[4];
@@ -378,43 +378,46 @@ void DrawGraphics()
 
 	factorDespegaLineas=3e-2/sqrt(Escala); ///Formula deducida con Matlab....
 
-	////////////TEXTURE 1
-			glGenTextures( 1, &textureID );
-			if (DBG) cout<<"TEXTURE()2"<<endl;
-			glBindTexture( GL_TEXTURE_2D, textureID );
+	if (ColorON==0) {
+		////////////TEXTURE 1
+		glGenTextures( 1, &textureID );
+		if (DBG) cout<<" 383 "<<endl;
+		glBindTexture( GL_TEXTURE_2D, textureID );
 
 
-			//gluBuild2DMipmaps( GL_TEXTURE_2D, 3, imagenwidth, imagenheight,GL_RGB, GL_UNSIGNED_BYTE, imagesdata );
+		//gluBuild2DMipmaps( GL_TEXTURE_2D, 3, imagenwidth, imagenheight,GL_RGB, GL_UNSIGNED_BYTE, imagesdata );
 
-			//cout<<"imagenwidth="<<imagenwidth<<"  imagenheight="<<imagenheight<<endl;
+		//cout<<"imagenwidth="<<imagenwidth<<"  imagenheight="<<imagenheight<<endl;
 
-			glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, imagenwidth, imagenheight, 0, GL_RGB, GL_UNSIGNED_BYTE, imagendata);
+		glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, imagenwidth, imagenheight, 0, GL_RGB, GL_UNSIGNED_BYTE, imagendata);
 
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-			////////////TEXTURE 2
-			glGenTextures( 1, &textureID2 );
-			if (DBG) cout<<"TEXTURE()2"<<endl;
-			glBindTexture( GL_TEXTURE_2D, textureID2 );
-
-
-			glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, imagen2width, imagen2height, 0, GL_RGB, GL_UNSIGNED_BYTE, imagen2data);
-
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		////////////TEXTURE 2
+		glGenTextures( 1, &textureID2 );
+		if (DBG) cout<<"398"<<endl;
+		glBindTexture( GL_TEXTURE_2D, textureID2 );
 
 
-	//////////ENDTEXTURE
+		glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, imagen2width, imagen2height, 0, GL_RGB, GL_UNSIGNED_BYTE, imagen2data);
 
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+
+		//////////ENDTEXTURE
+	}
 
 
 
 	if (MODO_CampoVelocidades) {
-//		glDisable(GL_CLIP_PLANE0);
+		//		glDisable(GL_CLIP_PLANE0);
 		//		FuncionesOpenGL::material(0);	gtotal->drawVelGL(U,V,W);
 		FuncionesOpenGL::material(0);	gtotal->drawParticulas_TriPrisma();
 	}
+
+	if(DBG) cout<<"419"<<endl;
 
 	switch (ColorON)
 	{
@@ -425,6 +428,7 @@ void DrawGraphics()
 		gtotal->drawGL(F);
 		break;
 	case 2:  //Dibuja Campo 2
+
 		gtotal->drawGL(F2Nodos);
 		break;
 	case 3:
@@ -483,31 +487,31 @@ void DrawGraphics()
 		int size = 3 * width * height;
 		writedata = new char[size+1]; // allocate 3 bytes per pixel
 
-		  glPixelStorei(GL_PACK_ALIGNMENT, 1);
-		  glReadPixels(0, 0, width, height, GL_BGR, GL_UNSIGNED_BYTE, writedata);
+		glPixelStorei(GL_PACK_ALIGNMENT, 1);
+		glReadPixels(0, 0, width, height, GL_BGR, GL_UNSIGNED_BYTE, writedata);
 
 
-	// Guardar un archivo BMP con los datos leidos (como verificacion)
-		  char nombre[200];
-		  sprintf(nombre,"anim/bmpofstream_%08d.bmp",iframe);
-	ofstream arrayfile(nombre, std::ios::out | std::ios::binary); // File Creation
-iframe++;
+		// Guardar un archivo BMP con los datos leidos (como verificacion)
+		char nombre[200];
+		sprintf(nombre,"anim/bmpofstream_%08d.bmp",iframe);
+		ofstream arrayfile(nombre, std::ios::out | std::ios::binary); // File Creation
+		iframe++;
 
-	 headerinfo[18]=(char) width;
-	 headerinfo[22]=(char) height;
+		headerinfo[18]=(char) width;
+		headerinfo[22]=(char) height;
 
 
 		arrayfile.write(headerinfo, 18);
 		arrayfile.write((char *)&width, 4);
 		arrayfile.write((char *)&height, 4);
 		arrayfile.write((char *)(headerinfo+26), 54-18-4-4);
-	arrayfile.write(writedata, size);
-	delete writedata;
-	arrayfile.close();
+		arrayfile.write(writedata, size);
+		delete writedata;
+		arrayfile.close();
 
-	cout<<"writeTofileBPM:END OK"<<endl;//3115
-	if (iframe>=3000)
-		writeTofileBMP=0;
+		cout<<"writeTofileBPM:END OK"<<endl;//3115
+		if (iframe>=3000)
+			writeTofileBMP=0;
 #endif
 
 	}
@@ -2672,14 +2676,15 @@ void CB_keyboard(unsigned char key, int x, int y)
 		break;
 	case 'b':
 	case 'B':
-		gluiBordes->set_int_val(!ModoDibujaFrontera);ModoDibujaFrontera=gluiBordes->get_int_val();
+		ModoDibujaFrontera=1-ModoDibujaFrontera;
+		if (glui != NULL) glui->sync_live();
 		break;
 	case 'C':
 	case 'c':
 		cout<<"case 'C': ColorON="<<ColorON<<"-->";
 		ColorON++;
 		if (ColorON==1 & F.size()!=gtotal->nV3D) ColorON++;
-		if (ColorON==1 & EtapaGlobal==ETAPA_CALCULO_T_PILA) ColorON++;
+		//if (ColorON==1 & EtapaGlobal==ETAPA_CALCULO_T_PILA) ColorON++;
 
 		if (ColorON==2 & F2Nodos.size()!=gtotal->nV3D) ColorON++;
 
@@ -2797,199 +2802,197 @@ void CB_keyboard(unsigned char key, int x, int y)
 		}
 		break;
 
-	case 'h':
-	case 'H':
-		DibujaSupInf++; if (DibujaSupInf>2) DibujaSupInf=0;  //0: Dibujatodo, 1:borra tapa superior, 2:borra tapa inferior
-		break;
+		case 'h':
+		case 'H':
+			DibujaSupInf++; if (DibujaSupInf>2) DibujaSupInf=0;  //0: Dibujatodo, 1:borra tapa superior, 2:borra tapa inferior
+			break;
+		case 'i':
+		case 'I':
+			ModoDibujaInterior=1-ModoDibujaInterior;
+			if (glui != NULL) glui->sync_live();
+			break;
+		case 'j':
+		case 'J':
+			FlagPrintEscala=1-FlagPrintEscala;
+			break;
 
+		case 'k':
+		case 'K':
+			FlagPrintMatrizRotacionGlobal=1-FlagPrintMatrizRotacionGlobal;
+			break;
 
-	case 'i':
-	case 'I':
-		gluiInterior->set_int_val(!ModoDibujaInterior);ModoDibujaInterior=gluiInterior->get_int_val();
-		break;
+		case 'M':
+		case 'm':
+			//TODO
+			MueveCentro=1-MueveCentro;
+			//		gluiMueve->set_int_val(!MueveCentro);MueveCentro=gluiMueve->get_int_val();
+			if (MueveCentro)    {
+				AddMensajeRight((char *)"M=Mueve Centro");
+				//			cout<<"E vecUEsfera="<<vecUEsfera[0]<<","<<vecUEsfera[1]<<"."<<vecUEsfera[2]<<","<<vecUEsfera[3]<<endl;
 
-	case 'j':
-	case 'J':
-		FlagPrintEscala=1-FlagPrintEscala;
-		break;
+				//MueveCentro=0;
+				Add_Particulas=0;
+				Add_VolumenINI=0;
+				Add_Voronoi=0;
+				Flag_MuestraCara=0;
+			}
+			else  {
+				AddMensajeRight("");AddMensajeRight("");
+			}
+			break;
 
-	case 'k':
-	case 'K':
-		FlagPrintMatrizRotacionGlobal=1-FlagPrintMatrizRotacionGlobal;
-		break;
+		case 'n':
+		case 'N':
+			gluiNormales->set_int_val(!gluiNormales->int_val);
+			break;
+		case 'O':
+		case 'o':
 
-	case 'M':
-	case 'm':
-		//TODO
-		MueveCentro=1-MueveCentro;
-//		gluiMueve->set_int_val(!MueveCentro);MueveCentro=gluiMueve->get_int_val();
-		if (MueveCentro)    {
-			AddMensajeRight((char *)"M=Mueve Centro");
-			//			cout<<"E vecUEsfera="<<vecUEsfera[0]<<","<<vecUEsfera[1]<<"."<<vecUEsfera[2]<<","<<vecUEsfera[3]<<endl;
+			if (gluiOpciones)	{
+				gluiOpciones->show();
 
-			//MueveCentro=0;
-			Add_Particulas=0;
-			Add_VolumenINI=0;
-			Add_Voronoi=0;
-			Flag_MuestraCara=0;
-		}
-		else  {
-			AddMensajeRight("");AddMensajeRight("");
-		}
-		break;
-
-	case 'n':
-	case 'N':
-		gluiNormales->set_int_val(!gluiNormales->int_val);
-		break;
-	case 'O':
-	case 'o':
-
-		if (gluiOpciones)	{
-			gluiOpciones->show();
-
-		}
-		break;
-	case 'P':
-	case 'p':
-		gluiClipping->set_int_val(!ClippingON);ClippingON=gluiClipping->get_int_val();
-		/*
+			}
+			break;
+		case 'P':
+		case 'p':
+			gluiClipping->set_int_val(!ClippingON);ClippingON=gluiClipping->get_int_val();
+			/*
 		ClippingON=1-ClippingON;
-		 */
-		if (ClippingON)    AddMensaje("P= Cli(P)ping on..");
-		else                AddMensaje("P= Cli(P)ping off..");
-		break;
+			 */
+			if (ClippingON)    AddMensaje("P= Cli(P)ping on..");
+			else                AddMensaje("P= Cli(P)ping off..");
+			break;
 
-	case 'Q':
-	case 'q':
-		writeTofileBMP=1-writeTofileBMP;
-		iframe=0;
-		break;
+		case 'Q':
+		case 'q':
+			writeTofileBMP=1-writeTofileBMP;
+			iframe=0;
+			break;
 
-	case 'R':
-	case 'r':
+		case 'R':
+		case 'r':
 
-		//		glLoadIdentity();
-		//		glOrtho(gLeft, gRight, gBottom, gTop, gFar, -gFar);
-		//		glGetFloatv( GL_MODELVIEW_MATRIX, (GLfloat*)MatrizRotacionGlobal );
-		//		TrasponeMatriz();
+			//		glLoadIdentity();
+			//		glOrtho(gLeft, gRight, gBottom, gTop, gFar, -gFar);
+			//		glGetFloatv( GL_MODELVIEW_MATRIX, (GLfloat*)MatrizRotacionGlobal );
+			//		TrasponeMatriz();
 
-		glui_GrupoModoDelMouse->set_int_val(1);MODO_de_mover=glui_GrupoModoDelMouse->get_int_val();
-		break;
-	case 'S':
-	case 's':
-		glui_GrupoModoDelMouse->set_int_val(2);MODO_de_mover=glui_GrupoModoDelMouse->get_int_val();
-		break;
-	case 'T':
-	case 't':
-		glui_GrupoModoDelMouse->set_int_val(0);MODO_de_mover=glui_GrupoModoDelMouse->get_int_val();
-		break;
-	case 'v':
-	case 'V':
-		gluiHelp->set_int_val(!MODO_MenuMENSAJES);
-		MODO_MenuMENSAJES=gluiHelp->get_int_val();
-		if (MODO_MenuMENSAJES)
-			DrawMensajesDatos();
-		break;
-	case 'W':
-	case 'w':
-		DrawMensajesDatosGui3();
-		glui3->show();
-		break;
-		///////////////////////////////////////////////////
+			glui_GrupoModoDelMouse->set_int_val(1);MODO_de_mover=glui_GrupoModoDelMouse->get_int_val();
+			break;
+		case 'S':
+		case 's':
+			glui_GrupoModoDelMouse->set_int_val(2);MODO_de_mover=glui_GrupoModoDelMouse->get_int_val();
+			break;
+		case 'T':
+		case 't':
+			glui_GrupoModoDelMouse->set_int_val(0);MODO_de_mover=glui_GrupoModoDelMouse->get_int_val();
+			break;
+		case 'v':
+		case 'V':
+			gluiHelp->set_int_val(!MODO_MenuMENSAJES);
+			MODO_MenuMENSAJES=gluiHelp->get_int_val();
+			if (MODO_MenuMENSAJES)
+				DrawMensajesDatos();
+			break;
+		case 'W':
+		case 'w':
+			DrawMensajesDatosGui3();
+			glui3->show();
+			break;
+			///////////////////////////////////////////////////
 
-	case 'Z':
-	case 'z':
+		case 'Z':
+		case 'z':
 #if defined(GLUI_GLUI_H)
-		if (glui_hide)
-			glui->show();
-		else
-			glui->hide();
-		glui_hide=!glui_hide;
-		ResizeGraphics(glutGet(GLUT_WINDOW_WIDTH),glutGet(GLUT_WINDOW_HEIGHT));
+			if (glui_hide)
+				glui->show();
+			else
+				glui->hide();
+			glui_hide=!glui_hide;
+			ResizeGraphics(glutGet(GLUT_WINDOW_WIDTH),glutGet(GLUT_WINDOW_HEIGHT));
 #endif
-		break;
+			break;
 
-	case ',':
-		Add_Voronoi=1-Add_Voronoi;
-		if (Add_Voronoi) {
-			AddMensajeRight((char *)",=Add Voronoi");
-			MueveCentro=0;
-			Add_Particulas=0;
-			Add_VolumenINI=0;
-			//Add_Voronoi=0;
-			Flag_MuestraCara=0;
+		case ',':
+			Add_Voronoi=1-Add_Voronoi;
+			if (Add_Voronoi) {
+				AddMensajeRight((char *)",=Add Voronoi");
+				MueveCentro=0;
+				Add_Particulas=0;
+				Add_VolumenINI=0;
+				//Add_Voronoi=0;
+				Flag_MuestraCara=0;
 
-		} else {
-			AddMensajeRight("");AddMensajeRight("");
-		}
-		break;
+			} else {
+				AddMensajeRight("");AddMensajeRight("");
+			}
+			break;
 
-	case '.':
-		Add_VolumenINI=1-Add_VolumenINI;
-		if (Add_Voronoi) {
-			AddMensajeRight((char *)",=Add VolumenINI");
-			MueveCentro=0;
-			Add_Particulas=0;
-			//Add_VolumenINI=0;
-			Add_Voronoi=0;
-			Flag_MuestraCara=0;
+		case '.':
+			Add_VolumenINI=1-Add_VolumenINI;
+			if (Add_Voronoi) {
+				AddMensajeRight((char *)",=Add VolumenINI");
+				MueveCentro=0;
+				Add_Particulas=0;
+				//Add_VolumenINI=0;
+				Add_Voronoi=0;
+				Flag_MuestraCara=0;
 
-		} else {
-			AddMensajeRight("");AddMensajeRight("");
-		}
-		break;
+			} else {
+				AddMensajeRight("");AddMensajeRight("");
+			}
+			break;
 
-	case '-':
-		Flag_MuestraCara=1-Flag_MuestraCara;
-		if (Flag_MuestraCara) {
-			AddMensajeRight((char *)",=MuestraCara,");
-			MueveCentro=0;
-			Add_Particulas=0;
-			Add_VolumenINI=0;
-			Add_Voronoi=0;
-			//Flag_MuestraCara=0;
+		case '-':
+			Flag_MuestraCara=1-Flag_MuestraCara;
+			if (Flag_MuestraCara) {
+				AddMensajeRight((char *)",=MuestraCara,");
+				MueveCentro=0;
+				Add_Particulas=0;
+				Add_VolumenINI=0;
+				Add_Voronoi=0;
+				//Flag_MuestraCara=0;
 
-		} else {
-			AddMensajeRight("");AddMensajeRight("");
-		}
-		break;
-
-
-	case '?':
-		if (gluiHelp2)	{
-
-			TextBoxHelp->set_text(textHelp);glui_edittext->redraw_window();
+			} else {
+				AddMensajeRight("");AddMensajeRight("");
+			}
+			break;
 
 
-			gluiHelp2->show();
+		case '?':
+			if (gluiHelp2)	{
 
-		}
-		break;
-		///////////////////////////////////////////////////
+				TextBoxHelp->set_text(textHelp);glui_edittext->redraw_window();
 
-	case '+':
-		if (NumON==1 ) {
-			NumEscala /=1.2;
-		} else {
-			char s[100];
-			npasadas*=2;
-			if (npasadas>maxpasadas) 	npasadas=maxpasadas;
-			sprintf(s,"(+)=npasadas++=%d",npasadas);
-			AddMensaje(s);
-		}
-		break;
-	case '|':
-		if (NumON==1 ) {
-			NumEscala *=1.2;
-		} else {
-			char s[100];
-			npasadas/=2;
-			if (npasadas<=0) 				npasadas=1;
-			sprintf(s,"(-)=npasadas--=%d",npasadas);
-			AddMensaje(s);
-		}
-		break;
+
+				gluiHelp2->show();
+
+			}
+			break;
+			///////////////////////////////////////////////////
+
+		case '+':
+			if (NumON==1 ) {
+				NumEscala /=1.2;
+			} else {
+				char s[100];
+				npasadas*=2;
+				if (npasadas>maxpasadas) 	npasadas=maxpasadas;
+				sprintf(s,"(+)=npasadas++=%d",npasadas);
+				AddMensaje(s);
+			}
+			break;
+		case '|':
+			if (NumON==1 ) {
+				NumEscala *=1.2;
+			} else {
+				char s[100];
+				npasadas/=2;
+				if (npasadas<=0) 				npasadas=1;
+				sprintf(s,"(-)=npasadas--=%d",npasadas);
+				AddMensaje(s);
+			}
+			break;
 	}
 	//cout<<"CB_keyboard():END"<<endl;
 }

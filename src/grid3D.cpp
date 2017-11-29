@@ -220,11 +220,14 @@ grid3D::~grid3D(void)
 
 
 void R3::save(ofstream &myfile) {
+	if(DBG) cout<<"R3::save(ofstream &myfile)"<<endl;
 	if (binario) {
+		if (DBG) cout<<"[x,y,z,l]=["<<x<<","<<y<<","<<z<<","<<L<<"]"<<endl;
 		myfile.write((char*)&x,sizeof(x)*4);
 	} else {
 		myfile  <<x<<" "<<y<<" "<<z<<" "<<L<<endl;
 	}
+	if(DBG) cout<<"R3::save(ofstream &myfile):END"<<endl;
 }
 
 void R3::read(ifstream &myfile) {
@@ -418,7 +421,6 @@ void TriPrisma::save(ofstream &myfile) {
 
 	} else {
 
-
 		myfile  <<"#TriPrisma"<<no<<": no,Vertices[0..5],Vol"<<endl;
 		myfile  <<no<<" "<<iv[0]<<" "<<iv[1]<<" "<<iv[2]<<" "<<iv[3]<<" "<<iv[4]<<" "<<iv[5]<<" "<<volumen<<endl;
 
@@ -435,14 +437,223 @@ void TriPrisma::save(ofstream &myfile) {
 			Poligono[i].save(myfile);
 		}
 
-		myfile  <<vecino.size()<<endl;
-		for (i=0;i<     vecino.size();i++) { myfile<<     vecino[i]<<" "; } myfile<<endl;
+		myfile  <<"#Vecinos: NVecinos,cada Vecino  "<<endl;
 
-		myfile  <<tipo_vecino.size()<<endl;
-		for (i=0;i<tipo_vecino.size();i++) { myfile<<tipo_vecino[i]<<" "; } myfile<<endl;
+		myfile << vecino.size()<<endl;
 
-		myfile  <<dibujado.size()<<endl;
-		for (i=0;i<   dibujado.size();i++) { myfile<<   dibujado[i]<<" "; } myfile<<endl;
+		for (i=0;i<     vecino.size();i++) 	myfile<<vecino[i]<<" ";
+		myfile<<endl;
+
+		myfile  <<"#TipoVecinos: size,cada tipo  "<<endl;
+		myfile << tipo_vecino.size()<<endl;
+		for (i=0;i<     tipo_vecino.size();i++) 	myfile<<tipo_vecino[i]<<" ";
+		myfile<<endl;
+
+		myfile  <<"#dibujado: size,cada uno  "<<endl;
+		myfile << dibujado.size()<<endl;
+		for (i=0;i<     dibujado.size();i++) 	myfile<<dibujado[i]<<" ";
+		myfile<<endl;
+
+	}
+
+}
+
+void VolumenFinito::read(ifstream &myfile,grid3D *papaL) {
+
+	papa=papaL;
+
+	if (DBG) cout<<"VolumenFinito::read(ifstream &myfile,grid3D *papaL)"<<endl;
+
+	int i;
+	if (binario) {
+		myfile.read((char*)&no,sizeof(no));
+		myfile.read((char*)&volumen,sizeof(volumen));
+		centro.read(myfile);
+
+		if (DBG) cout<<"473"<<endl;
+
+		int psize;
+		myfile.read((char*)&psize,sizeof(psize));		Poligono.resize(psize);
+		for (i=0;i<   Poligono.size();i++)  Poligono[i].read(myfile);
+
+
+		if (DBG) cout<<"480"<<endl;
+
+		myfile.read((char*)&psize,sizeof(psize));		vecino.resize(psize);
+		for (i=0;i<     vecino.size();i++) 	myfile.read((char*)&(vecino[i]),sizeof(vecino[i]));
+
+		if (DBG) cout<<"485"<<endl;
+
+		myfile.read((char*)&psize,sizeof(psize));		tipo_vecino.resize(psize);
+		for (i=0;i<     tipo_vecino.size();i++) 	myfile.read((char*)&(tipo_vecino[i]),sizeof(tipo_vecino[i]));
+
+		if (DBG) cout<<"490"<<endl;
+
+		myfile.read((char*)&psize,sizeof(psize));		vecino_centro.resize(psize);
+		for (i=0;i<   vecino_centro.size();i++)  vecino_centro[i].read(myfile);
+
+		if (DBG) cout<<"495"<<endl;
+
+		myfile.read((char*)&psize,sizeof(psize));		vecino_centro_caraoriginal.resize(psize);
+		for (i=0;i<   vecino_centro_caraoriginal.size();i++)  vecino_centro_caraoriginal[i].read(myfile);
+
+		if (DBG) cout<<"500"<<endl;
+
+		myfile.read((char*)&psize,sizeof(psize));		vecino_normal.resize(psize);
+		for (i=0;i<   vecino_normal.size();i++)  vecino_normal[i].read(myfile);
+
+		if (DBG) cout<<"505"<<endl;
+
+		myfile.read((char*)&psize,sizeof(psize));		dibujado.resize(psize);
+		for (i=0;i<     dibujado.size();i++) 	myfile.read((char*)&(dibujado[i]),sizeof(dibujado[i]));
+
+	} else {
+
+		filtracomentario(myfile);
+
+		cout<<"grid3D.cpp:494: Falta programar esto..."<<endl;
+		exit(0);
+		if (VersionDatos>=0.099) {
+			myfile  >>volumen;
+		}
+
+		filtracomentario(myfile);
+
+		centro.read(myfile);
+
+		int i,sizeL;
+
+		filtracomentario(myfile);
+		myfile  >> sizeL; Poligono.resize(sizeL);
+		if(1==0) cout  <<"sizeL="<< sizeL<<endl;
+
+		for (i=0;i<   Poligono.size();i++)    {
+
+			filtracomentario(myfile);
+			Poligono[i].read(myfile);
+		}
+
+		myfile  >> sizeL; vecino.resize(sizeL);
+		for (i=0;i<     vecino.size();i++) { myfile>>     vecino[i]; }
+
+		myfile  >> sizeL; tipo_vecino.resize(sizeL);
+		for (i=0;i<tipo_vecino.size();i++) { myfile>>tipo_vecino[i]; }
+
+		myfile  >> sizeL; dibujado.resize(sizeL);
+		for (i=0;i<   dibujado.size();i++) { myfile>>   dibujado[i]; }
+
+	}
+
+
+	if (DBG) cout<<"VolumenFinito::read(ifstream &myfile,grid3D *papaL):END"<<endl;
+}
+
+
+
+void VolumenFinito::save(ofstream &myfile) {
+	int i;
+	if (DBG) cout<<"VolumenFinito::save(ofstream &myfile)"<<endl;
+
+	if (binario) {
+
+
+		myfile.write((char*)&no,sizeof(no));
+		myfile.write((char*)&volumen,sizeof(volumen));
+		centro.save(myfile);
+
+		if (DBG) cout<<"542"<<endl;
+
+		int psize=Poligono.size();
+		myfile.write((char*)&psize,sizeof(psize));
+		for (i=0;i<   Poligono.size();i++)  {
+			if (DBG) cout <<"#Poligono "<<i<<endl;
+			Poligono[i].save(myfile);
+		}
+
+		if (DBG) cout<<"554"<<endl;
+
+		psize=vecino.size();
+		myfile.write((char*)&psize,sizeof(psize));
+		if (DBG) cout<<"558: vecino.size()="<<vecino.size()<<endl;
+
+
+		for (i=0;i<     vecino.size();i++) 	{
+			if (DBG) cout <<"#Vecino "<<i<<endl;
+			myfile.write((char*)&(vecino[i]),sizeof(vecino[i]));
+		}
+
+		if (DBG) cout<<"552"<<endl;
+
+		psize=tipo_vecino.size();
+		myfile.write((char*)&psize,sizeof(psize));
+		for (i=0;i<     tipo_vecino.size();i++) 	myfile.write((char*)&(tipo_vecino[i]),sizeof(tipo_vecino[i]));
+
+
+		psize=vecino_centro.size();
+		myfile.write((char*)&psize,sizeof(psize));
+		for (i=0;i<   vecino_centro.size();i++)  vecino_centro[i].save(myfile);
+
+		psize=vecino_centro_caraoriginal.size();
+		myfile.write((char*)&psize,sizeof(psize));
+		for (i=0;i<   vecino_centro_caraoriginal.size();i++)  vecino_centro_caraoriginal[i].save(myfile);
+
+		if (DBG) cout<<"567"<<endl;
+
+		psize=vecino_normal.size();
+		myfile.write((char*)&psize,sizeof(psize));
+		for (i=0;i<   vecino_normal.size();i++)  vecino_normal[i].save(myfile);
+
+		psize=dibujado.size();
+		myfile.write((char*)&psize,sizeof(psize));
+		//		cout<<"6sizeof(icara)="<<sizeof(icara)<<endl;
+
+		if (DBG) cout<<"577"<<endl;
+
+
+		for (i=0;i<     dibujado.size();i++) 	myfile.write((char*)(&dibujado[i]),sizeof(dibujado[i]));
+
+	} else {
+
+		myfile  <<"#VolFinito = "<<no<<endl;
+		myfile  <<"volumen= "<<volumen<<endl;
+		myfile  <<"centro= ";
+		centro.save(myfile);
+
+
+		myfile  <<"#Poligonos: NPoligonos,cada Poligono  "<<endl;
+		myfile  <<Poligono.size()<<endl;
+		for (i=0;i<   Poligono.size();i++)    {
+			myfile  <<"#Poligono "<<i<<endl;
+			Poligono[i].save(myfile);
+		}
+
+		myfile  <<"#Vecinos: NVecinos,cada Vecino  "<<endl;
+
+		myfile << vecino.size()<<endl;
+
+		for (i=0;i<     vecino.size();i++) 	myfile<<vecino[i]<<" ";
+		myfile<<endl;
+
+		myfile  <<"#TipoVecinos: size,cada tipo  "<<endl;
+		myfile << tipo_vecino.size()<<endl;
+		for (i=0;i<     tipo_vecino.size();i++) 	myfile<<tipo_vecino[i]<<" ";
+		myfile<<endl;
+
+		myfile << "vecino_centro<R3>:"<<endl;
+		myfile << vecino_centro.size()<<endl;
+		for (i=0;i<     vecino_centro.size();i++) 	vecino_centro[i].save(myfile);
+		myfile << "vecino_centro_caraoriginal<R3>:"<<endl;
+		myfile << vecino_centro_caraoriginal.size()<<endl;
+		for (i=0;i<     vecino_centro_caraoriginal.size();i++) 	vecino_centro_caraoriginal[i].save(myfile);
+
+		myfile << "vecino_normal<R3>:"<<endl;
+		myfile << vecino_normal.size()<<endl;
+		for (i=0;i<     vecino_normal.size();i++) 	vecino_normal[i].save(myfile);
+
+		myfile  <<"#dibujado: size,cada uno  "<<endl;
+		myfile << dibujado.size()<<endl;
+		for (i=0;i<     dibujado.size();i++) 	myfile<<dibujado[i]<<" ";
+		myfile<<endl;
 
 	}
 
@@ -598,14 +809,25 @@ void PoligonoPlano::save(ofstream &myfile) {
 
 
 	int i;
+
+
+	if (DBG) cout<<"PoligonoPlano::save(ofstream &myfile)"<<endl;
+
+
 	if (punto.size()==0) {
 		AreaPoligono=0;Dab=0;normal.x=0;normal.y=0;normal.z=0;
 	}
 	if (binario) {
-		myfile.write((char*)&AreaPoligono,sizeof(AreaPoligono)*2);
+		if (DBG) cout<<"787"<<endl;
+
+		myfile.write((char*)&AreaPoligono,sizeof(AreaPoligono)*2); //Area+Dab
 		normal.save(myfile);
 		centro.save(myfile);
 		int psize=punto.size();
+
+
+		if (DBG) cout<<"795, punto.size()="<<punto.size()<<endl;
+
 		myfile.write((char*)&psize,sizeof(psize));
 		for (i=0;i<   punto.size();i++)  punto[i].save(myfile);
 
@@ -626,12 +848,16 @@ void PoligonoPlano::save(ofstream &myfile) {
 void PoligonoPlano::read(ifstream &myfile) {
 
 	int i,sizeL;
+
+	if (DBG) cout<<"PoligonoPlano::read(ifstream &myfile) "<<endl;
 	if (binario) {
 		myfile.read((char*)&AreaPoligono,sizeof(AreaPoligono)*2);
 		normal.read(myfile);
 		centro.read(myfile);
 
-		myfile.read((char*)sizeL,sizeof(sizeL));  punto.resize(sizeL);
+		if (DBG) cout<<"858"<<endl;
+
+		myfile.read((char*)&sizeL,sizeof(sizeL));  punto.resize(sizeL);
 		for (i=0;i<   punto.size();i++)  punto[i].read(myfile);
 
 	} else {
@@ -643,6 +869,8 @@ void PoligonoPlano::read(ifstream &myfile) {
 		myfile  >> sizeL; punto.resize(sizeL);
 		for (i=0;i<   punto.size();i++)    punto[i].read(myfile);
 	}
+
+	if (DBG) cout<<"PoligonoPlano::read(ifstream &myfile):END "<<endl;
 }
 
 
@@ -780,13 +1008,19 @@ void grid3D::CalculaNormalVertex() {
 
 void grid3D::write(ofstream &myfile) {
 
-	int Version=3;
+	int Version=4;
 	int i,sizeL;
+
+
+	if (DBG) cout<<"grid3D::write(ofstream ....)"<<endl;
 
 	if (binario) {
 		myfile.write((char*)&Version,sizeof(Version));
 		myfile.write((char*)&nH3D,sizeof(nH3D)*5);
 		myfile.write((char*)&xmin,sizeof(xmin)*6);
+
+		if (DBG) cout<<"958"<<endl;
+
 		sizeL=v3D.size();		myfile.write((char*)&sizeL,sizeof(sizeL));
 		for (i=0;i< v3D.size();i++)  v3D[i].save(myfile);
 		sizeL=h3D.size();		myfile.write((char*)&sizeL,sizeof(sizeL));
@@ -794,12 +1028,22 @@ void grid3D::write(ofstream &myfile) {
 		sizeL=Cara.size();		myfile.write((char*)&sizeL,sizeof(sizeL));
 		for (i=0;i< Cara.size();i++)  Cara[i].save(myfile);
 		//Version 3
-		myfile.write((char*)&nTriPrisma3D,sizeof(nTriPrisma3D)*2);
+
+		if (DBG) cout<<"968"<<endl;
+
+
+		myfile.write((char*)&nTriPrisma3D,sizeof(nTriPrisma3D)*2); //ntriprismas y ntriprismasanalizados
 		sizeL=TriPrisma3D.size();		myfile.write((char*)&sizeL,sizeof(sizeL));
 		for (i=0;i< TriPrisma3D.size();i++)  TriPrisma3D[i].save(myfile);
+
+		if (DBG) cout<<"975"<<endl;
+
+
+		sizeL=VolFinito.size();		myfile.write((char*)&sizeL,sizeof(sizeL));
+		for (i=0;i< VolFinito.size();i++)  VolFinito[i].save(myfile);
 	} else {
 
-		myfile  <<"#Version 3"<<endl;
+		myfile  <<"#Version "<<Version<<endl;
 		myfile  <<nH3D<<" "<<nV3D<<" "<<nCaras<<" "<<nPoligonos<<" "<<QuienGeneraPoligonos<<endl;
 		myfile  <<xmin<<" "<<xmax<<" "<<ymin<<" "<<ymax<<" "<<zmin<<" "<<zmax<<endl;
 
@@ -816,7 +1060,14 @@ void grid3D::write(ofstream &myfile) {
 		myfile  <<nTriPrisma3D<<" "<<TriPri3DAnalizados<<endl;
 		myfile  <<TriPrisma3D.size()<<endl;
 		for (i=0;i<TriPrisma3D.size();i++) TriPrisma3D[i].save(myfile);
+
+
+		myfile  <<nVolFinito<<endl;
+		myfile  <<VolFinito.size()<<endl;
+		for (i=0;i<VolFinito.size();i++) VolFinito[i].save(myfile);
 	}
+	if (DBG) cout<<"grid3D::write(ofstream ....):END"<<endl;
+
 }
 
 
@@ -919,7 +1170,7 @@ void grid3D::write(char * ifile_name) {
 }
 void grid3D::read(char * ifile_name) {
 
-	if (PrintLinea) cout<<"grid3D::read(char * "<<ifile_name<<")"<<endl;
+	if (DBG) cout<<"grid3D::read(char * "<<ifile_name<<")"<<endl;
 	ifstream myfile;
 
 	clock_t start_t, end_t;
@@ -947,38 +1198,57 @@ void grid3D::read(char * ifile_name) {
 	}
 	if (PrintTiempos) cout <<endl;
 
+	if (DBG) cout<<"grid3D::read(char * "<<ifile_name<<"):END"<<endl;
+
 }
 void grid3D::read(ifstream &myfile) {
 
+	if (DBG) cout<<"grid3D::read(ifstream ....)"<<endl;
 
 	int i,sizeL;
 	int Version;
 
 	if (binario) {
 		myfile.read((char*)&Version,sizeof(Version));
+
+		if (DBG) cout<<"Version="<<Version<<endl;
+
 		myfile.read((char*)&nH3D,sizeof(nH3D)*5);
 		myfile.read((char*)&xmin,sizeof(xmin)*6);
 
-		if (PrintLinea) cout<<"1"<<endl;
+		if (DBG) cout<<"1"<<endl;
 		myfile.read((char*)&sizeL,sizeof(sizeL));   	v3D.resize(sizeL);
 		for (i=0;i< v3D.size();i++)  v3D[i].read(myfile,this);
-		if (PrintLinea) cout<<"2"<<endl;
+		if (DBG) cout<<"2"<<endl;
 
 		myfile.read((char*)&sizeL,sizeof(sizeL));   	h3D.resize(sizeL);
 		for (i=0;i< h3D.size();i++)  h3D[i].read(myfile,this);
-		if (PrintLinea) cout<<"3"<<endl;
+		if (DBG) cout<<"3"<<endl;
 
 		myfile.read((char*)&sizeL,sizeof(sizeL));   	Cara.resize(sizeL);
 		for (i=0;i< Cara.size();i++)  Cara[i].read(myfile,this);
 		//Version 3
-		if (PrintLinea) cout<<"4"<<endl;
+		if (DBG) cout<<"4"<<endl;
 
 		if (Version>=3) {
 			myfile.read((char*)&nTriPrisma3D,sizeof(nTriPrisma3D)*2);
-			if (PrintLinea) cout<<"5"<<endl;
+			if (DBG) cout<<"5"<<endl;
 			myfile.read((char*)&sizeL,sizeof(sizeL));   	TriPrisma3D.resize(sizeL);
 			for (i=0;i< TriPrisma3D.size();i++)  TriPrisma3D[i].read(myfile,this);
-			if (PrintLinea) cout<<"6"<<endl;
+			if (DBG) cout<<"6"<<endl;
+
+
+		}
+
+		if (Version>=4) {
+			myfile.read((char*)&sizeL,sizeof(sizeL));   	VolFinito.resize(sizeL);
+			nVolFinito=sizeL;
+			if (DBG) cout<<"NVolFinitos: "<<VolFinito.size()<<endl;
+			for (i=0;i< VolFinito.size();i++)  {
+				if (DBG) cout<<"VolFinito: "<<i<<endl;
+				VolFinito[i].read(myfile,this);
+			}
+			if (DBG) cout<<"7"<<endl;
 		}
 	} else {
 
@@ -1065,6 +1335,8 @@ void grid3D::read(ifstream &myfile) {
 			myfileSalida<<".OK"<<endl;
 		}
 	}
+	if (DBG) cout<<"grid3D::read(ifstream ....):END"<<endl;
+
 }
 
 
@@ -1140,9 +1412,7 @@ void grid3D::draw_caraGL(int ii[4])
 	}
 }
 
-
-
-void grid3D::draw_caraGL(vector<double>F,double minF,double maxF,int ii[4])
+void Cara3D::draw_caraGL00(vector<double> &F,double minF,double maxF,int* ii)
 {
 
 	int li;
@@ -1150,31 +1420,154 @@ void grid3D::draw_caraGL(vector<double>F,double minF,double maxF,int ii[4])
 	GLdouble winX1,winY1,winX2,winY2,winX3,winY3,winZ,winZ2;
 	xg=0;yg=0;zg=0;
 
-	for (li=0;li<4;li++) {
+	if(DBG) cout<<"Cara3D::draw_caraGL(vector<double>F,double "<<minF<<",double "<<maxF<<",int ii[4])"<<endl;
+
+	if (ModoDibujaAlgunos && nRandom>(double)Algunos_Porcentaje/100) {
+//		cout<<"return"<<endl;
+		return;
+	}
+	//	cout <<"nvC="<<nvC<<endl;
+	xg=0;yg=0;zg=0;
+	for (li=0;li<nvCara;li++) {
+		x[li]=papa->v3D[iv[li]].x;
+		y[li]=papa->v3D[iv[li]].y;
+		z[li]=papa->v3D[iv[li]].z*FactorZ;
+		xg+=x[li]/nvCara;		yg+=y[li]/nvCara;		zg+=z[li]/nvCara;
+	}
+
+//	xg= centro.x;
+//	yg= centro.y;
+//	zg= centro.z*FactorZ;
+
+	for (li=0;li<nvCara;li++) {
+		x[li]+=(xg-x[li])*FactorAchica;
+		y[li]+=(yg-y[li])*FactorAchica;
+		z[li]+=(zg-z[li])*FactorAchica;
+	}
+
+	if(DBG) cout<<"1439"<<endl;
+
+	//Version que tambien funciona pero más rápido!!
+	nxx=normalCara.x;
+	nyy=normalCara.y;
+	nzz=normalCara.z/FactorZ;
+	nnn=sqrt(sqr(nxx)+sqr(nyy)+sqr(nzz));
+	nxx/=nnn;
+	nyy/=nnn;
+	nzz/=nnn;
+
+	if(DBG) cout<<"1446"<<endl;
+
+	ZGlobal(v);
+
+	if(DBG) cout<<"1450"<<endl;
+
+	FuncionesOpenGL::modelview_calculado=false;
+	FuncionesOpenGL::World2Win(x[0],y[0],z[0],&winX1,&winY1,&winZ1);
+	FuncionesOpenGL::World2Win(x[1],y[1],z[1],&winX2,&winY2,&winZ2);
+	FuncionesOpenGL::World2Win(x[2],y[2],z[2],&winX3,&winY3,&winZ3);
+	int signo=1;
+	signo2=1;
+	if ((winX2-winX1)*(winY3-winY1)-(winY2-winY1)*(winX3-winX1) <0 ){
+		signo2=-1;
+	}
+
+	if (this->iBC==IBC_SUP)	signo2=1;
+
+
+	glEnable(GL_NORMALIZE);
+	int s;
+	if (nvCara==4)	glBegin(GL_QUADS);
+	else glBegin(GL_TRIANGLES);
+
+	if(DBG) cout<<"1457"<<endl;
+
+	if ( nxx*v[0]+nyy*v[1]+nzz*v[2]<0) s=-1;//	glNormal3d(-nx,-ny,-nz);
+	else								s=1;//glNormal3d(nx,ny,nz);
+	for (li=0;li<nvCara;li++) {
+		if (TLimite_if) {
+			if (F[ii[li]]>TLimite) {
+
+				FuncionesOpenGL::ColorF(minF,maxF,maxF);
+
+			} else {
+
+				FuncionesOpenGL::ColorF(minF,maxF,minF);
+			}
+		} else {
+			FuncionesOpenGL::ColorF(minF,maxF,F[ii[li]]);
+		}
+
+
+		ny=-(y[li]-yg);
+		nx=-(x[li]-xg);
+		nz=-(z[li]-zg);
+		nnn=sqrt(sqr(nx)+sqr(ny)+sqr(nz));
+		nx/=nnn;
+		ny/=nnn;
+		nz/=nnn;
+
+		nx=s*nxx+nx/3;
+		ny=s*nyy+ny/3;
+		nz=s*nzz+nz/3;
+
+
+		//glNormal3d(s*nxx,s*nyy,s*nzz);
+		glNormal3d(nx,ny,nz);
+		glVertex3d(x[li], y[li],z[li]);
+	}
+	glEnd();
+
+
+}
+
+
+void grid3D::draw_caraGL00(vector<double> &F,double minF,double maxF,int* ii)
+{
+	int li;
+	double x[4],y[4],z[4],v[3],xg,yg,zg,lambda=0.0,nx,ny,nz,nxx,nyy,nzz,nnn;
+	GLdouble winX1,winY1,winX2,winY2,winX3,winY3,winZ,winZ2;
+	xg=0;yg=0;zg=0;
+
+	if(DBG) cout<<"grid3D::draw_caraGL(vector<double>F,double "<<minF<<",double "<<maxF<<",int ii[4])"<<endl;
+
+	for (li=0;li<3;li++) {
+		if(DBG) cout<<"1427: li="<<li<<endl;
 		x[li]=v3D[ii[li]].x;
 		y[li]=v3D[ii[li]].y;
 		z[li]=v3D[ii[li]].z*FactorZ;
 		xg+=x[li]/4;		yg+=y[li]/4;		zg+=z[li]/4;
 	}
-	for (li=0;li<4;li++) {
+	if(DBG) cout<<"1432"<<endl;
+
+	for (li=0;li<3;li++) {
 		x[li]+=(xg-x[li])*lambda;
 		y[li]+=(yg-y[li])*lambda;
 		z[li]+=(zg-z[li])*lambda;
 	}
+	if(DBG) cout<<"1439"<<endl;
 
 	nxx=nx=(y[2]-y[0])*(z[3]-z[1])-(z[2]-z[0])*(y[3]-y[1]);
 	nyy=ny=(z[2]-z[0])*(x[3]-x[1])-(x[2]-x[0])*(z[3]-z[1]);
 	nzz=nz=(x[2]-x[0])*(y[3]-y[1])-(y[2]-y[0])*(x[3]-x[1]);
 	nnn=sqrt(sqr(nxx)+sqr(nyy)+sqr(nzz));
 
+	if(DBG) cout<<"1446"<<endl;
+
 	ZGlobal(v);
+
+	if(DBG) cout<<"1450"<<endl;
+
 
 	glEnable(GL_NORMALIZE);
 	int s;
 	glBegin(GL_QUADS);
+
+	if(DBG) cout<<"1457"<<endl;
+
 	if ( nxx*v[0]+nyy*v[1]+nzz*v[2]<0) s=-1;//	glNormal3d(-nx,-ny,-nz);
 	else								s=1;//glNormal3d(nx,ny,nz);
-	for (li=0;li<4;li++) {
+	for (li=0;li<3;li++) {
 		if (TLimite_if) {
 			if (F[ii[li]]>TLimite) {
 
@@ -2760,8 +3153,8 @@ void grid3D::Particulas_Init(int i)
 		Particulas[0][0][i]= TriPrisma3D[j].centro.x;
 		Particulas[0][1][i]= TriPrisma3D[j].centro.y;
 		Particulas[0][2][i]= TriPrisma3D[j].centro.z;
-		ParticulasZ[i]= 0.5*deltade3;
-		ParticulasZlambda[i]= 0.5*deltade3;
+		ParticulasZ[i]= 0.3*(j%3);
+		ParticulasZlambda[i]= 0.3*(j%3);
 		ParticulasBloq[i]=j;
 	} else {
 
@@ -2800,6 +3193,7 @@ void grid3D::drawVelGL(vector<double> U,vector<double> V,vector<double> W)
 		}
 
 		for (i=oldsize;i<nParticulas;i++) {
+			ParticulaEsAleatoria[i]=1;
 			Particulas_Init(i);
 		}
 
@@ -3406,6 +3800,8 @@ void grid3D::drawVoronoi()
 	double lambdaP=FactorAchicaV;
 
 	glEnable(GL_NORMALIZE);
+	if (DBG) cout<<"grid3D::drawVoronoi(): QuienGeneraPoligonos="<<QuienGeneraPoligonos<<" ,nVolFinito="<<nVolFinito<<endl;
+
 	if (QuienGeneraPoligonos==2) {
 		for (i=0;i<nVolFinito;i++) {
 			VolFinito[i].dibujado.assign( VolFinito[i].Poligono.size(),0);
@@ -3785,23 +4181,7 @@ void grid3D::drawGL()
 	}
 	if (DBG) cout<<"3551"<<endl;
 	FuncionesOpenGL::ObtieneMatrices();
-#if Version==0
-	if (version==0) {
-		for (i=0;i<nH3D;i++) {
-			//	  2------3
-			//   /|     /|
-			//  6-|----7 |
-			//	| |    | |
-			//	| 0----|-1
-			//	|/     |/
-			//  4------5
-
-			h3D[i].draw_caraGL(0,1,3,2);
-			h3D[i].draw_caraGL(0,2,6,4);
-			h3D[i].draw_caraGL(0,4,5,1);
-		}
-	}
-#else if Version==1
+#if Version==1
 	if (Modo_DibujaCentroBloques) {
 		if (ModoDibujaAlgunos) {
 			for (ii=0;ii<CualesBloquesDibuja.size();ii++) {
@@ -3977,15 +4357,21 @@ void grid3D::drawGL(vector<double> F)
 	char s[100];
 	double minF,maxF;
 
+	if (DBG) cout <<"grid3D::drawGL(vector<double> F)"<<endl;
 	maxF=minF=F[0];
 	for (i=0;i<nV3D;i++) {
 		if (minF>F[i]) minF=F[i];
 		if (maxF<F[i]) maxF=F[i];
 	}
+
+	if (DBG) cout <<"4264"<<endl;
+
 	glPushAttrib( GL_LIGHTING_BIT );
 	//	glEnable(GL_COLOR_MATERIAL);
 	//	glDisable( GL_LIGHTING );
 
+
+	if (DBG) cout <<"4271: nCaras="<<nCaras<<" , Cara.size()"<<Cara.size()<<endl;
 
 	iimax=nCaras;
 	if (ModoDibujaAlgunos) iimax=CualesCarasDibuja.size();
@@ -4004,10 +4390,16 @@ void grid3D::drawGL(vector<double> F)
 		//
 
 		if (ModoDibujaFrontera && Cara[i].nVolumenes ==1) {
-			FuncionesOpenGL::material(Cara[i].iBC+10);draw_caraGL(F,minF,maxF,Cara[i].iv);
+			//FuncionesOpenGL::material(Cara[i].iBC+10);
+			if (Cara[i].iBC == IBC_SUP && FlagMuestraCaraSuperior!=1)  continue;
+			if (Cara[i].iBC == IBC_INF && FlagMuestraCaraInferior!=1)  continue;
+
+			if (DBG) cout <<"4293: minF="<<minF<<" , maxF="<<maxF<<" , F[0]="<<F[0]<<" , Cara[i].iv[0]="<<Cara[i].iv[0]<<endl;
+			Cara[i].draw_caraGL00(F,minF,maxF,Cara[i].iv);
+			if (DBG) cout <<"4295: minF="<<minF<<" , maxF="<<maxF<<endl;
 		}
 		if (ModoDibujaInterior && Cara[i].nVolumenes >1) {
-			FuncionesOpenGL::material(2);draw_caraGL(F,minF,maxF,Cara[i].iv);
+			Cara[i].draw_caraGL00(F,minF,maxF,Cara[i].iv);
 			if (0*Modo_DibujaCentroCaras) {
 				glTranslatef(Cara[i].centro.x,Cara[i].centro.y,Cara[i].centro.z);
 				FuncionesOpenGL::material(1);   FuncionesOpenGL::esfera(0.04,3);

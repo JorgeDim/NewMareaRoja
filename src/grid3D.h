@@ -89,6 +89,8 @@ public:
 	void EscalaZ(double lambda);
 
 	void drawGL();      //Impime numeror, centro, etc
+
+	void draw_caraGL00(vector<double> &F,double minF,double maxF,int* ii);
 	void draw_caraGL();  //Dibuja el poligono ==cara
 
 };
@@ -226,9 +228,9 @@ public:
 	//Version >= 3
 	int nTriPrisma3D,TriPri3DAnalizados=0;
 	vector<TriPrisma>   TriPrisma3D;
+
 	int nVolFinito;
 	vector<VolumenFinito>   VolFinito;
-
 	vector<int>   VolFinitoSelected;
 	vector<int>   Selected_Triprisma;
 	int imprimir=0;
@@ -272,7 +274,7 @@ public:
 	int AddCara4(int ib,int i0,int i1,int i2,int i3);
 	void draw_caraGL(int ii[4]);
 
-	void draw_caraGL(vector<double>F,double minF,double maxF,int ii[4]);
+	void draw_caraGL00(vector<double>&F,double minF,double maxF,int ii[4]);
 	void Poligonos_Generar_Version3();
 	void generaPoligonos2Algunos(vector<int> &CualesRehacer);
 	void Poligono_Inicial(R3 a, R3 b, PoligonoPlano &P);
