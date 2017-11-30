@@ -7,3 +7,5 @@ git rm --cached  foo.tar.gz
  git pull
  git status
 git checkout -- *
+git commit -a -m "last"
+git push origin master
