@@ -1099,7 +1099,7 @@ void Calculo_EtapaS(int inicializa)
 			}
 
 		}
-		PAUSA;
+//		PAUSA;
 		{
 			int bin2=1;
 			if (bin2==0) {
@@ -1143,8 +1143,7 @@ void Calculo_EtapaS(int inicializa)
 				if (PanelParticulas != NULL)PanelParticulas->enable();
 			}
 		}
-
-		PAUSA;
+//		PAUSA;
 		{
 			char fnmsh[100];
 #if 0
@@ -1180,7 +1179,7 @@ void Calculo_EtapaS(int inicializa)
 				gtotal->write(fnmsh);
 			}
 		}
-		PAUSA;
+///		PAUSA;
 		{
 			F2Nodos.resize(gtotal->nV3D,0.0);
 			F2Volumenes.resize(gtotal->nVolFinito,0.0);

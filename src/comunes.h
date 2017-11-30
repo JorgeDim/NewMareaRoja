@@ -419,26 +419,42 @@ void DrawGraphics()
 	}
 
 
-	if (ColorON==2  && FlagCalculaEvolucion) {
-		Datos_dt=(Tsimulacion-TsimulacionP);
-		if (Datos_dt>0) {
-			for (i=0;i<gtotal->nVolFinito;i++) {
-				F2VolumenesP[i]=F2Volumenes[i];
+	if (ColorON==2) {
+
+		double minF,maxF;
+		if (FlagEvoluciona) {
+			Datos_dt=(Tsimulacion-TsimulacionP);
+			if (Datos_dt>0) {
+				for (i=0;i<gtotal->nVolFinito;i++) {
+					F2VolumenesP[i]=F2Volumenes[i];
+				}
+
+				TipoCalculo=CalculoEvolucion;
+				CalculaConveccionDifusionDt(F2Volumenes, U[step],V[step],W[step],gtotal,30,1e-4,F2VolumenesP);
+
+
 			}
-
-			TipoCalculo=CalculoEvolucion;
-			CalculaConveccionDifusionDt(F2Volumenes, U[step],V[step],W[step],gtotal,10,1e-2,F2VolumenesP);
-
-			double minF,maxF;
-			int FlagTrataBC=0;
-			ProyectaVolumenesAVertices(F2Volumenes,F2Nodos,&minF,&maxF,FlagTrataBC) ;
-
-
-
-			sprintf(text,"Min,Max=[%f,%f]\n",minF,maxF);if (glui != NULL) glui_edittext->set_text(text);
-
-			gtotal->drawGL(F2Nodos,0,1);
 		}
+		else
+			Tsimulacion=TsimulacionP;
+
+		int FlagTrataBC=0;
+		ProyectaVolumenesAVertices(F2Volumenes,F2Nodos,&minF,&maxF,FlagTrataBC) ;
+		if (FlagDifusion && FlagConveccion)
+			sprintf(text,"Calculo con Convección y Difusión\n");
+		if (FlagDifusion==0 && FlagConveccion)
+			sprintf(text,"Calculo de Convección pura\n");
+		if (FlagDifusion && FlagConveccion==0)
+			sprintf(text,"Calculo de Difusión pura\n");
+		if (FlagDifusion==0 && FlagConveccion==0)
+			sprintf(text,"Calculo de Estacionario\n");
+		sprintf(text,"%sMin,Max=[%f,%f]\n",text,minF,maxF);
+		sprintf(text,"%sConv/Diff=%f\n",text,Peclet);
+
+
+		if (glui != NULL) glui_edittext->set_text(text);
+
+
 
 		if (DBG) cout<<"378"<<endl;
 		//FlagCalculaEvolucion=0;
@@ -513,14 +529,13 @@ void DrawGraphics()
 		break;
 	case 2:  //Dibuja Campo 2
 
-//		gtotal->drawGL(F2Nodos); //Ya dibujado
+		gtotal->drawGL(F2Nodos,0,1); //Ya dibujado
 		break;
 	case 3:
 		FuncionesOpenGL::material(1);gtotal->drawGL();
 		FuncionesOpenGL::material(2);gtotal->drawVoronoi();
 		break;
 	};
-	if (DBG) cout<<"DrawGraphics()244"<<endl;
 
 	if (DBG) cout<<"DrawGraphics()249"<<endl;
 	if (MODO_CampoVelocidades2) {
@@ -2508,21 +2523,27 @@ double CalculaConveccionDifusionDt(vector<double> &Concentracion, vector<double>
 	if (Concentracion.size() ==0) Concentracion.resize(g->nVolFinito);
 	//Resuelvo la ecuación varias veces
 
-	cout <<"niteraciones="<<niteraciones<<endl;
-	double SumCoeffEstacionarios=0,SumCoeffTemporales=0;
+	if(DBG) cout <<"niteraciones="<<niteraciones<<endl;
+	double SumCoeffEstacionarios=0,SumCoeffTemporales=0,SumaDifusion=0,SumaConveccion=0;
 	int    NCoeffEstacionarios=0;
+
+	Datos_km=0.001;
+
 	for (iiter=0 ; iiter<niteraciones ; iiter++) {
 
 		if(DBG) cout<<"iiter="<<iiter<<endl;
 		errG=0;
+
+#pragma omp parallel for num_threads(GL_threads)
 		for (i=0 ; i<g->nVolFinito ; i++) {
 			//Escribo la ecuación para el VolFinito [i]
-			Suma_Numerador=0;Suma_Denominador=0;SumaVolumen=0;
+
+			double Suma_Numerador=0,Suma_Denominador=0,SumaVolumen=0;
 			if(DBG>1) cout<<"2456: i="<<i<<"    g->nVolFinito"<<g->nVolFinito<<"=="<<g->VolFinito.size()<<endl;
 
-			for (j=0 ; j< g->VolFinito[i].vecino.size() ;j++) {
+			for (int j=0 ; j< g->VolFinito[i].vecino.size() ;j++) {
 				//recorro cada cara que conecta al VolFinito [i] con su vecino [j]
-
+				double Coeff_Cj=0;
 
 				if (DBG & 0) {
 					cout <<"2405"<<endl;
@@ -2530,24 +2551,29 @@ double CalculaConveccionDifusionDt(vector<double> &Concentracion, vector<double>
 				}
 				if (g->VolFinito[i].tipo_vecino[j] == ES_BLOQUE) {
 
-					//Parte difusion
-					Datos_km=1;
-					Coeff_Cj = Datos_km * g->VolFinito[i].Poligono[j].AreaPoligono / g->VolFinito[i].Poligono[j].Dab;
+					if(FlagDifusion) {
+						//Parte difusion
+						Coeff_Cj += Datos_km * g->VolFinito[i].Poligono[j].AreaPoligono / g->VolFinito[i].Poligono[j].Dab;
+						SumaDifusion +=Datos_km * g->VolFinito[i].Poligono[j].AreaPoligono / g->VolFinito[i].Poligono[j].Dab;
+					}
+					if(FlagConveccion) {
+						//Parte conveccion
 
-					//Parte conveccion
-
-					R3 VelocidadFrontera;
-					VelocidadFrontera.x=(U1[i]+U1[g->VolFinito[i].vecino[j]])/2;
-					VelocidadFrontera.y=(U2[i]+U2[g->VolFinito[i].vecino[j]])/2;
-					VelocidadFrontera.z=(U3[i]+U3[g->VolFinito[i].vecino[j]])/2;
+						R3 VelocidadFrontera;
+						VelocidadFrontera.x=(U1[i]+U1[g->VolFinito[i].vecino[j]])/2;
+						VelocidadFrontera.y=(U2[i]+U2[g->VolFinito[i].vecino[j]])/2;
+						VelocidadFrontera.z=(U3[i]+U3[g->VolFinito[i].vecino[j]])/2;
 
 
-					double VelocidadNormal=ppunto(VelocidadFrontera,g->VolFinito[i].vecino_normal[j]);
+						double VelocidadNormal=ppunto(VelocidadFrontera,g->VolFinito[i].vecino_normal[j]);
 
-					if(VelocidadNormal<0) {
-						Coeff_Cj -= VelocidadNormal*g->VolFinito[i].Poligono[j].AreaPoligono ;
-					} else {
-						Coeff_Cj=0;
+						if(VelocidadNormal<0) {
+							//cout<<"VelocidadNormal="<<VelocidadNormal<<endl;
+							Coeff_Cj -= VelocidadNormal*g->VolFinito[i].Poligono[j].AreaPoligono ;
+							SumaConveccion -= VelocidadNormal*g->VolFinito[i].Poligono[j].AreaPoligono ;
+						} else {
+							//Coeff_Cj=0;
+						}
 					}
 
 					Suma_Numerador += Coeff_Cj * Concentracion[ g->VolFinito[i].vecino[j] ] ;
@@ -2558,26 +2584,25 @@ double CalculaConveccionDifusionDt(vector<double> &Concentracion, vector<double>
 					double htilde_local;
 					//if (g->Cara[iC].iBC==1) Se trata de Derivada normal igual a cero (nada que hacer)
 					switch (g->Cara[iC].iBC) {
-					case 2:
-					case 3:   //Condicion Dirichlet (como un bloque con Concentracion conocida == BC2)
+					case 112:
+					case 113:   //Condicion Dirichlet (como un bloque con Concentracion conocida == BC2)
 
+						if (FlagConveccion) {
+							R3 VelocidadFrontera;
+							VelocidadFrontera.x=U1[i];
+							VelocidadFrontera.y=U2[i];
+							VelocidadFrontera.z=U3[i];
 
-						R3 VelocidadFrontera;
-						VelocidadFrontera.x=U1[i];
-						VelocidadFrontera.y=U2[i];
-						VelocidadFrontera.z=U3[i];
+							double VelocidadNormal=ppunto(VelocidadFrontera,g->VolFinito[i].vecino_normal[j]);
 
-						double VelocidadNormal=ppunto(VelocidadFrontera,g->VolFinito[i].vecino_normal[j]);
+							if(VelocidadNormal<0) {
+								Coeff_Cj -= VelocidadNormal*g->VolFinito[i].Poligono[j].AreaPoligono ;
+							}
 
-						if(VelocidadNormal<0) {
-							Coeff_Cj -= VelocidadNormal*g->VolFinito[i].Poligono[j].AreaPoligono ;
-						} else {
-							Coeff_Cj=0;
 						}
-
-
-						Coeff_Cj += Datos_km* g->VolFinito[i].Poligono[j].AreaPoligono / g->VolFinito[i].Poligono[j].Dab;
-
+						if (FlagDifusion) {
+							Coeff_Cj += Datos_km* g->VolFinito[i].Poligono[j].AreaPoligono / g->VolFinito[i].Poligono[j].Dab;
+						}
 
 						Suma_Numerador += Coeff_Cj * g->Cara[iC].BC2;
 						Suma_Denominador    += Coeff_Cj;
@@ -2616,7 +2641,7 @@ double CalculaConveccionDifusionDt(vector<double> &Concentracion, vector<double>
 //			err=fabs(ConcentracionNueva-Concentracion[i])/(fabs(ConcentracionNueva)+1e-20);
 			err=fabs(ConcentracionNueva-Concentracion[i]);
 			if (err > errG) {
-				cout<<"err="<<err<<">errG="<<errG<<"   ConcentracionNueva="<<ConcentracionNueva<<"   Concentracion["<<i<<"]="<<Concentracion[i]<<endl;
+				if(DBG) cout<<"err="<<err<<">errG="<<errG<<"   ConcentracionNueva="<<ConcentracionNueva<<"   Concentracion["<<i<<"]="<<Concentracion[i]<<endl;
 				if(DBG) cout<<"2545: Suma_Numerador,Suma_Denominador: "<<Suma_Numerador<<" , "<<Suma_Denominador
 						<< "   CP="<<ConcentracionPrevia[i]
 				<< "   Ci="<<Concentracion[i]<<endl;
@@ -2624,18 +2649,35 @@ double CalculaConveccionDifusionDt(vector<double> &Concentracion, vector<double>
 			}
 			Concentracion[i]=ConcentracionNueva;
 		}
-		if (errG<err0) {
-			cout<<"break: errG<"<<err0<<endl;
+		if (errG<err0 && iiter>3) {
+			if (DBG) cout<<"break: errG<"<<err0<<endl;
 			break;
 		}
-		cout<<"errG[i]="<<errG<<endl;
+		if (DBG) cout<<"errG[i]="<<errG<<endl;
 	}
-	cout<<"iiter_final="<<iiter<<endl;
-	cout<<"errG="<<errG<<endl;
+	if(DBG)cout<<"iiter_final="<<iiter;
+	if(DBG)cout<<"   errG="<<errG<<endl;
 	if (TipoCalculo==CalculoEvolucion) {
 		//Estadistica (cual es mas importante)
-		cout << "<CoeffEstacionarios>="<<SumCoeffEstacionarios /NCoeffEstacionarios;
-		cout << "\t<SumCoeffTemporales>="<<SumCoeffTemporales / NCoeffEstacionarios <<endl;
+		if(DBG) {
+			cout << "<CoeffDifusion>="<<SumaDifusion /NCoeffEstacionarios;
+			cout << "<SumaConveccion>="<<SumaConveccion /NCoeffEstacionarios;
+			cout << "<CoeffEstacionarios>="<<SumCoeffEstacionarios /NCoeffEstacionarios;
+			cout << "\t<SumCoeffTemporales>="<<SumCoeffTemporales / NCoeffEstacionarios <<endl;
+		}
+
+		Peclet=SumaConveccion/SumaDifusion;
+
+		if (SumCoeffTemporales<2*SumCoeffEstacionarios) {
+			FactorClockTime *= 0.5;
+
+			if (glui != NULL) glui->sync_live();
+		}
+		if (SumCoeffTemporales>10*SumCoeffEstacionarios) {
+			FactorClockTime *= 2;
+
+			if (glui != NULL) glui->sync_live();
+		}
 	}
 #if 0
 	//Calculo del Gradiente
@@ -2682,7 +2724,7 @@ double CalculaConveccionDifusionDt(vector<double> &Concentracion, vector<double>
 		if (maxF<Concentracion[i]) maxF=Concentracion[i];
 
 	}
-	cout<<"2677: minF,maxF="<<minF<<" , "<<maxF<<endl;
+	if(DBG) cout<<"2703: minF,maxF="<<minF<<" , "<<maxF<<endl;
 
 	if(DBG) cout<<"CalculaConveccionDifusionDt(...):END"<<endl;
 	return(errG);
@@ -2841,8 +2883,7 @@ double ResuelveConveccionDifusion (vector<double> &Concentracion,vector<double> 
 			//			if (F[i]==0) F[i]=0.5;
 		}
 		if (errG<err0) {
-			cout<<"break: errG<"<<err0<<endl;
-			myfileSalida<<"break: errG<"<<err0<<endl;
+			if (DBG) cout<<"break: errG<"<<err0<<endl;
 			break;
 		}
 	}
@@ -3095,6 +3136,32 @@ void CB_keyboard(unsigned char key, int x, int y)
 			FlagPrintMatrizRotacionGlobal=1-FlagPrintMatrizRotacionGlobal;
 			break;
 
+		case 'l':
+		case 'L':
+		{
+			R3 CentroMancha;
+			CentroMancha.x=(gtotal->xmax+gtotal->xmin)/2;
+			CentroMancha.y=(gtotal->ymax+gtotal->ymin)/2;
+			CentroMancha.z=(gtotal->zmax+gtotal->zmin)/2;
+			double RadioMancha=(gtotal->xmax-gtotal->xmin)/5;
+			for (i=0;i<gtotal->nV3D;i++) {
+				if( sqr(gtotal->v3D[i].x-CentroMancha.x)+sqr(gtotal->v3D[i].y-CentroMancha.y)<sqr(RadioMancha)) {
+					F2Nodos[i]=1;
+				} else {
+					F2Nodos[i]=0;
+				}
+			}
+			for (i=0;i<gtotal->nVolFinito;i++) {
+				if( sqr(gtotal->VolFinito[i].centro.x-CentroMancha.x)+sqr(gtotal->VolFinito[i].centro.y-CentroMancha.y)<sqr(RadioMancha)) {
+					F2Volumenes[i]=1;
+				}else {
+					F2Volumenes[i]=0;
+				}
+			}
+			FlagEvoluciona=0;
+		}
+			break;
+
 		case 'M':
 		case 'm':
 			//TODO
@@ -3161,6 +3228,12 @@ void CB_keyboard(unsigned char key, int x, int y)
 		case 't':
 			glui_GrupoModoDelMouse->set_int_val(0);MODO_de_mover=glui_GrupoModoDelMouse->get_int_val();
 			break;
+
+		case 'u':
+		case 'U':
+
+			FlagEvoluciona=1;
+			break;
 		case 'v':
 		case 'V':
 			gluiHelp->set_int_val(!MODO_MenuMENSAJES);
@@ -3172,6 +3245,18 @@ void CB_keyboard(unsigned char key, int x, int y)
 		case 'w':
 			DrawMensajesDatosGui3();
 			glui3->show();
+			break;
+			///////////////////////////////////////////////////
+
+		case 'X':
+		case 'x':
+			FlagDifusion=1-FlagDifusion;
+			break;
+			///////////////////////////////////////////////////
+
+		case 'Y':
+		case 'y':
+			FlagConveccion=1-FlagConveccion;
 			break;
 			///////////////////////////////////////////////////
 

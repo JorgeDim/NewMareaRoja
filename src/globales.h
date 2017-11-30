@@ -162,8 +162,9 @@ float stepf;
 int FlagMuestraCaraSuperior=0,FlagMuestraCaraInferior=1,FlagDibujaLineas=0;
 int FlagCaraSuperiorTransparente,FlagCaraSuperiorTextura,FlagCaraInferiorTextura=0;
 int FlagPrintEscala=0,FlagPrintMatrizRotacionGlobal=0,Flag_MuestraCara=0;
-int FlagCalculaEvolucion=0;
+int FlagCalculaEvolucion=0,FlagEvoluciona=0,FlagDifusion=0,FlagConveccion=1;
 int ListaCaso=0;
+double Peclet;
 
 int binario=0;
 

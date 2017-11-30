@@ -634,7 +634,7 @@ GLfloat light2_position[] = {  -5, -5, 10 ,0.0 };
 	glEnable(GL_LIGHT0);
 	glEnable(GL_LIGHT1);
 
-
+#if 0
 	glTranslatef(light_position[0], light_position[1],light_position[2]);
 	FuncionesOpenGL::material(22);
 	//	FuncionesOpenGL::esfera(0.2*500,20);
@@ -644,6 +644,7 @@ GLfloat light2_position[] = {  -5, -5, 10 ,0.0 };
 	FuncionesOpenGL::material(22);
 	FuncionesOpenGL::esfera(0.002*10,20);
 	glTranslatef(-light2_position[0], -light2_position[1],-light2_position[2]);
+#endif
 
 
 }
