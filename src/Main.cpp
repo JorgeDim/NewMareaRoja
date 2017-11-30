@@ -1182,17 +1182,25 @@ void Calculo_EtapaS(int inicializa)
 		}
 		PAUSA;
 		{
-			F2Nodos.resize(gtotal->nV3D,0);
+			F2Nodos.resize(gtotal->nV3D,0.0);
+			F2Volumenes.resize(gtotal->nVolFinito,0.0);
+			F2VolumenesP.resize(gtotal->nVolFinito,0.0);
 			R3 CentroMancha;
 			CentroMancha.x=(gtotal->xmax+gtotal->xmin)/2;
 			CentroMancha.y=(gtotal->ymax+gtotal->ymin)/2;
 			CentroMancha.z=(gtotal->zmax+gtotal->zmin)/2;
-			double RadioMancha=(gtotal->xmax-gtotal->xmin)/4;
+			double RadioMancha=(gtotal->xmax-gtotal->xmin)/5;
 			for (i=0;i<gtotal->nV3D;i++) {
 				if( sqr(gtotal->v3D[i].x-CentroMancha.x)+sqr(gtotal->v3D[i].y-CentroMancha.y)<sqr(RadioMancha)) {
 					F2Nodos[i]=1;
 				}
 			}
+			for (i=0;i<gtotal->nVolFinito;i++) {
+				if( sqr(gtotal->VolFinito[i].centro.x-CentroMancha.x)+sqr(gtotal->VolFinito[i].centro.y-CentroMancha.y)<sqr(RadioMancha)) {
+					F2Volumenes[i]=1;
+				}
+			}
+			FlagCalculaEvolucion=1;
 		}
 		PAUSA;
 		{

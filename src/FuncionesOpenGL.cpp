@@ -9,6 +9,7 @@
 #include <fstream>
 #include <string.h>
 #include <iomanip>
+#include "Macros.h"
 
  int FuncionesOpenGL::viewport_calculado=false;
  int FuncionesOpenGL::modelview_calculado=false;
@@ -21,6 +22,7 @@
  extern  float FactorAmbientL1,FactorDifusseL1,FactorSpecularL1,FactorEmissionL1;
  extern  float FactorAmbientL2,FactorDifusseL2,FactorSpecularL2,FactorEmissionL2;
  extern  float FactorZ;
+
 
  class R3{ //Puntos,vectores y Doblepuntos de \R^3
  public:
@@ -275,6 +277,12 @@ void FuncionesOpenGL::ColorF(double minF,double maxF,double lF)
 	double t;
 	GLfloat r,g,b;
 	t=(lF-minF)/(maxF-minF);
+
+	if (t>1)t=1;
+	if(t<0) t=0;
+	if (t>0.2) {
+	if (DBG) std::cout<<"FuncionesOpenGL::ColorF("<<minF<<","<<maxF<<","<<lF<<"):  t="<<t<<std::endl;
+	}
 	if (t<.3) {
 		r=0;
 		g=t/.3;
@@ -292,7 +300,8 @@ void FuncionesOpenGL::ColorF(double minF,double maxF,double lF)
 		g=(1-t)/.3;
 		b=0;
 	}
-	r=sqrt(r);g=sqrt(g);b=sqrt(b);
+//	r=sqrt(r);g=sqrt(g);b=sqrt(b);
+//	r=0;
 	if (0) {	
 		glColor3d(r,g,b);
 	} else {

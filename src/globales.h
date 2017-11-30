@@ -162,6 +162,7 @@ float stepf;
 int FlagMuestraCaraSuperior=0,FlagMuestraCaraInferior=1,FlagDibujaLineas=0;
 int FlagCaraSuperiorTransparente,FlagCaraSuperiorTextura,FlagCaraInferiorTextura=0;
 int FlagPrintEscala=0,FlagPrintMatrizRotacionGlobal=0,Flag_MuestraCara=0;
+int FlagCalculaEvolucion=0;
 int ListaCaso=0;
 
 int binario=0;
@@ -229,6 +230,7 @@ vector<double> F;
 vector<double> PotencialPsi,UU,VV,WW;
 vector<double> Temperatura,UU2,VV2,WW2;
 vector<double> F2Nodos;
+vector<double> F2Volumenes,F2VolumenesP;
 
 vector<double> PotencialVInfiltracion;
 vector<double> TempPilaBloques,TempPilaVertices;

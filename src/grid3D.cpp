@@ -849,13 +849,13 @@ void PoligonoPlano::read(ifstream &myfile) {
 
 	int i,sizeL;
 
-	if (DBG) cout<<"PoligonoPlano::read(ifstream &myfile) "<<endl;
+	if (DBG>1) cout<<"PoligonoPlano::read(ifstream &myfile) "<<endl;
 	if (binario) {
 		myfile.read((char*)&AreaPoligono,sizeof(AreaPoligono)*2);
 		normal.read(myfile);
 		centro.read(myfile);
 
-		if (DBG) cout<<"858"<<endl;
+		if (DBG>1) cout<<"858"<<endl;
 
 		myfile.read((char*)&sizeL,sizeof(sizeL));  punto.resize(sizeL);
 		for (i=0;i<   punto.size();i++)  punto[i].read(myfile);
@@ -870,7 +870,7 @@ void PoligonoPlano::read(ifstream &myfile) {
 		for (i=0;i<   punto.size();i++)    punto[i].read(myfile);
 	}
 
-	if (DBG) cout<<"PoligonoPlano::read(ifstream &myfile):END "<<endl;
+	if (DBG>1) cout<<"PoligonoPlano::read(ifstream &myfile):END "<<endl;
 }
 
 
@@ -1420,7 +1420,7 @@ void Cara3D::draw_caraGL00(vector<double> &F,double minF,double maxF,int* ii)
 	GLdouble winX1,winY1,winX2,winY2,winX3,winY3,winZ,winZ2;
 	xg=0;yg=0;zg=0;
 
-	if(DBG) cout<<"Cara3D::draw_caraGL(vector<double>F,double "<<minF<<",double "<<maxF<<",int ii[4])"<<endl;
+	if(DBG>1) cout<<"Cara3D::draw_caraGL(vector<double>F,double "<<minF<<",double "<<maxF<<",int ii[4])"<<endl;
 
 	if (ModoDibujaAlgunos && nRandom>(double)Algunos_Porcentaje/100) {
 //		cout<<"return"<<endl;
@@ -1445,7 +1445,7 @@ void Cara3D::draw_caraGL00(vector<double> &F,double minF,double maxF,int* ii)
 		z[li]+=(zg-z[li])*FactorAchica;
 	}
 
-	if(DBG) cout<<"1439"<<endl;
+	if(DBG>1) cout<<"1439"<<endl;
 
 	//Version que tambien funciona pero más rápido!!
 	nxx=normalCara.x;
@@ -1456,11 +1456,11 @@ void Cara3D::draw_caraGL00(vector<double> &F,double minF,double maxF,int* ii)
 	nyy/=nnn;
 	nzz/=nnn;
 
-	if(DBG) cout<<"1446"<<endl;
+	if(DBG>1) cout<<"1446"<<endl;
 
 	ZGlobal(v);
 
-	if(DBG) cout<<"1450"<<endl;
+	if(DBG>1) cout<<"1450"<<endl;
 
 	FuncionesOpenGL::modelview_calculado=false;
 	FuncionesOpenGL::World2Win(x[0],y[0],z[0],&winX1,&winY1,&winZ1);
@@ -1480,12 +1480,12 @@ void Cara3D::draw_caraGL00(vector<double> &F,double minF,double maxF,int* ii)
 	if (nvCara==4)	glBegin(GL_QUADS);
 	else glBegin(GL_TRIANGLES);
 
-	if(DBG) cout<<"1457"<<endl;
+	if(DBG>1) cout<<"1457"<<endl;
 
 	if ( nxx*v[0]+nyy*v[1]+nzz*v[2]<0) s=-1;//	glNormal3d(-nx,-ny,-nz);
 	else								s=1;//glNormal3d(nx,ny,nz);
 	for (li=0;li<nvCara;li++) {
-		if (TLimite_if) {
+		if (0*TLimite_if) {
 			if (F[ii[li]]>TLimite) {
 
 				FuncionesOpenGL::ColorF(minF,maxF,maxF);
@@ -3467,7 +3467,7 @@ void grid3D::drawParticulas_TriPrisma()
 
 					pjmin=EnCualTriprisma(px,py,pz,ParticulasBloq[i]);
 
-					if(DBG) cout<<"grid3D::drawParticulas_TriPrisma(): 3068"<<endl;
+					if(DBG>1) cout<<"grid3D::drawParticulas_TriPrisma(): 3470"<<endl;
 					if ( pjmin<0 ) {
 						Particulas_Init(i);
 						px=Particulas[0][0][i];
@@ -3475,8 +3475,8 @@ void grid3D::drawParticulas_TriPrisma()
 						pz=Particulas[0][2][i];
 						pjmin=EnCualTriprisma(px,py,pz,0);
 						if (pjmin<0) {
-							if(DBG) cout<<"pjmin<0: "<<"particula "<<i<<endl;
-							if (DBG)	cout<<"xyz=["<<px<<","<<py<<","<<pz<<endl;
+							if(DBG>1) cout<<"pjmin<0: "<<"particula "<<i<<endl;
+							if (DBG>1)	cout<<"xyz=["<<px<<","<<py<<","<<pz<<endl;
 							pjmin=EnCualTriprismaXY(px, py, 0);
 							if (pjmin<0) {
 								cout<<"error grave 3085"<<endl;
@@ -3484,7 +3484,7 @@ void grid3D::drawParticulas_TriPrisma()
 								cout<<"xyz=["<<px<<","<<py<<","<<pz<<endl;
 								exit(0);
 							}
-							if (DBG) cout <<"pjmin (ok)="<<pjmin<<endl;
+							if (DBG>1) cout <<"pjmin (ok)="<<pjmin<<endl;
 
 							R3 ABxAC,AB,AC,AP;
 
@@ -3517,7 +3517,7 @@ void grid3D::drawParticulas_TriPrisma()
 
 						}
 					}
-					if(DBG) cout<<"grid3D::drawParticulas_TriPrisma(): 3076"<<endl;
+					if(DBG>1) cout<<"grid3D::drawParticulas_TriPrisma(): 3076"<<endl;
 					 {
 						//cout<<"factorV="<<factorV<<endl;
 						double UU,VV,WW,UC;
@@ -4350,28 +4350,18 @@ void grid3D::drawGL()
 	if (DBG) cout<<"grid3D::drawGL():END"<<endl;
 }
 
-
-void grid3D::drawGL(vector<double> F)
+void grid3D::drawGL(vector<double> & F,double minF,double maxF )
 {
+
 	int i,ii,iimax;
 	char s[100];
-	double minF,maxF;
 
-	if (DBG) cout <<"grid3D::drawGL(vector<double> F)"<<endl;
-	maxF=minF=F[0];
-	for (i=0;i<nV3D;i++) {
-		if (minF>F[i]) minF=F[i];
-		if (maxF<F[i]) maxF=F[i];
-	}
-
-	if (DBG) cout <<"4264"<<endl;
+	if (DBG) cout <<"grid3D::drawGL(vector<double> F & F,double minF="<<minF<<" ,double maxF="<<maxF<<" )"<<endl;
 
 	glPushAttrib( GL_LIGHTING_BIT );
-	//	glEnable(GL_COLOR_MATERIAL);
-	//	glDisable( GL_LIGHTING );
 
 
-	if (DBG) cout <<"4271: nCaras="<<nCaras<<" , Cara.size()"<<Cara.size()<<endl;
+	if (DBG) cout <<"4274: nCaras="<<nCaras<<" , Cara.size()"<<Cara.size()<<endl;
 
 	iimax=nCaras;
 	if (ModoDibujaAlgunos) iimax=CualesCarasDibuja.size();
@@ -4394,9 +4384,9 @@ void grid3D::drawGL(vector<double> F)
 			if (Cara[i].iBC == IBC_SUP && FlagMuestraCaraSuperior!=1)  continue;
 			if (Cara[i].iBC == IBC_INF && FlagMuestraCaraInferior!=1)  continue;
 
-			if (DBG) cout <<"4293: minF="<<minF<<" , maxF="<<maxF<<" , F[0]="<<F[0]<<" , Cara[i].iv[0]="<<Cara[i].iv[0]<<endl;
+			if (DBG>1) cout <<"4293: i="<<i<<" de "<<iimax<<"   minF="<<minF<<" , maxF="<<maxF<<" , F[0]="<<F[0]<<" , Cara[i].iv[0]="<<Cara[i].iv[0]<<endl;
 			Cara[i].draw_caraGL00(F,minF,maxF,Cara[i].iv);
-			if (DBG) cout <<"4295: minF="<<minF<<" , maxF="<<maxF<<endl;
+			if (DBG>1) cout <<"4295: minF="<<minF<<" , maxF="<<maxF<<endl;
 		}
 		if (ModoDibujaInterior && Cara[i].nVolumenes >1) {
 			Cara[i].draw_caraGL00(F,minF,maxF,Cara[i].iv);
@@ -4444,6 +4434,29 @@ void grid3D::drawGL(vector<double> F)
 			glPopMatrix();
 		}
 	}
+	if (DBG) cout <<"grid3D::drawGL(vector<double> F):END"<<endl;
+
+
+}
+
+void grid3D::drawGL(vector<double> & F)
+{
+	int i,ii,iimax;
+	char s[100];
+	double minF,maxF;
+
+	if (DBG) cout <<"grid3D::drawGL(vector<double> F)"<<endl;
+	maxF=minF=F[0];
+	for (i=0;i<nV3D;i++) {
+		if (minF>F[i]) minF=F[i];
+		if (maxF<F[i]) maxF=F[i];
+	}
+
+	if (DBG) cout <<"4267: Fmin,Fmax="<<minF<<" , "<<maxF<<endl;
+
+	drawGL(F,minF,maxF);
+	if (DBG) cout <<"grid3D::drawGL(vector<double> F):END"<<endl;
+
 }
 
 

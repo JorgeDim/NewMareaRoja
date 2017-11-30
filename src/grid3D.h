@@ -248,7 +248,9 @@ public:
 	void minmax();
 
 	void drawGL();
-	void drawGL(vector<double> F);
+	void drawGL(vector<double> & F);
+
+	void drawGL(vector<double> & F,double minF,double maxF );
 	void drawVoronoi();
 	void Voronoi_Draw_i(int iv);
 	void TriPrisma_Draw_i(int iv);

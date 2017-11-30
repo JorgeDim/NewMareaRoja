@@ -23,6 +23,10 @@ void DrawMensajesCenter();
 void SaveOrRead(char *ifile_name,int iSaveReadMode);
 
 void control_cb( int control );
+double CalculaConveccionDifusionDt(vector<double> &Concentracion, vector<double> &U1,
+		vector<double> &U2,vector<double> &U3,grid3D *g,int niteraciones,double err0,vector<double> &ConcentracionPrevia);
+
+
 
 void AddMensaje(char* newMensaje)
 {
@@ -203,6 +207,61 @@ void CopiaBloquesAVertices(vector<double> FFB,vector<double> &FV,double *minF,do
 
 }
 
+void ProyectaVolumenesAVertices(vector<double> & FVol,vector<double> &FVert,double *minF,double *maxF,int FlagTrataBC)
+{
+	int i,j;
+	if(DBG) cout<<"ProyectaVolumenesAVertices(..): FVert.size()==gtotal->nV3D: "<<FVert.size()<<"<-->"<<gtotal->nV3D<<endl;
+	vector<int> cuantos(FVert.size());
+	for (i=0;i<gtotal->nV3D;i++) {
+		cuantos[i]=0;
+		FVert[i]=0;
+	}
+
+	if(DBG) cout<<"220"<<endl;
+	for (i=0; i<gtotal->nVolFinito ; i++) { //Triprismas
+		for( j=0 ; j<6 ; j++) {
+			int iv=gtotal->TriPrisma3D[i].iv[j];
+			FVert[iv] += FVol[i];
+			cuantos[iv] ++;
+		}
+	}
+
+	if(DBG) cout<<"229: FlagTrataBC="<<FlagTrataBC<<endl;
+
+	if (FlagTrataBC>0) {
+
+		for (i=0; i<gtotal->nCaras ; i++) {
+			if (gtotal->Cara[i].iBC ==2 || gtotal->Cara[i].iBC ==3) {
+				for (j=0; j<gtotal->Cara[i].nvCara ; j++) {
+					switch (FlagTrataBC)
+					{
+					case 1:
+						FVert[gtotal->Cara[i].iv[j]] += gtotal->Cara[i].BC;
+						cuantos[gtotal->Cara[i].iv[j]]++;
+						break;
+					case 2:
+						FVert[gtotal->Cara[i].iv[j]] += gtotal->Cara[i].BC2;
+						cuantos[gtotal->Cara[i].iv[j]]++;
+						break;
+					};
+				}
+			}
+		}
+	}
+
+	*maxF=*minF=FVert[0]/cuantos[0];
+	for (i=0;i<gtotal->nV3D;i++) {
+		FVert[i] /= cuantos[i];
+		if (*minF>FVert[i]) {
+			*minF=FVert[i];
+		}
+		if (*maxF<FVert[i]) *maxF=FVert[i];
+	}
+	if(DBG) cout<<"ProyectaVolumenesAVertices(..):END"<<endl;
+
+}
+
+
 void tic() {
 
 
@@ -360,6 +419,31 @@ void DrawGraphics()
 	}
 
 
+	if (ColorON==2  && FlagCalculaEvolucion) {
+		Datos_dt=(Tsimulacion-TsimulacionP);
+		if (Datos_dt>0) {
+			for (i=0;i<gtotal->nVolFinito;i++) {
+				F2VolumenesP[i]=F2Volumenes[i];
+			}
+
+			TipoCalculo=CalculoEvolucion;
+			CalculaConveccionDifusionDt(F2Volumenes, U[step],V[step],W[step],gtotal,10,1e-2,F2VolumenesP);
+
+			double minF,maxF;
+			int FlagTrataBC=0;
+			ProyectaVolumenesAVertices(F2Volumenes,F2Nodos,&minF,&maxF,FlagTrataBC) ;
+
+
+
+			sprintf(text,"Min,Max=[%f,%f]\n",minF,maxF);if (glui != NULL) glui_edittext->set_text(text);
+
+			gtotal->drawGL(F2Nodos,0,1);
+		}
+
+		if (DBG) cout<<"378"<<endl;
+		//FlagCalculaEvolucion=0;
+	}
+
 	//	FuncionesOpenGL::ActivaLuz0();
 
 	if (ClippingON) {
@@ -368,7 +452,7 @@ void DrawGraphics()
 		glClipPlane(GL_CLIP_PLANE0, eq);
 		glEnable(GL_CLIP_PLANE0);
 	} 
-	if (DBG) cout<<"DrawGraphics()221"
+	if (DBG) cout<<"DrawGraphics()380"
 			<<"\nColorON="<<ColorON
 			<<"\n gtotal="<<gtotal
 			<<endl;
@@ -417,7 +501,7 @@ void DrawGraphics()
 		FuncionesOpenGL::material(0);	gtotal->drawParticulas_TriPrisma();
 	}
 
-	if(DBG) cout<<"419"<<endl;
+	if(DBG) cout<<"419 ColorON="<<ColorON<<endl;
 
 	switch (ColorON)
 	{
@@ -429,7 +513,7 @@ void DrawGraphics()
 		break;
 	case 2:  //Dibuja Campo 2
 
-		gtotal->drawGL(F2Nodos);
+//		gtotal->drawGL(F2Nodos); //Ya dibujado
 		break;
 	case 3:
 		FuncionesOpenGL::material(1);gtotal->drawGL();
@@ -2411,6 +2495,196 @@ double CalculaTemperaturaPilaEnTmasDt(vector<double> &Temp,vector<double> &Poten
 		V[i]=-( RA*(BA*CC-BC*CA)+RB*(CA*AC-AA*CC)+RC*(AA*BC-BA*AC) )/DET;
 		W[i]= ( RA*(BA*CB-BB*CA)+RB*(CA*AB-AA*CB)+RC*(AA*BB-BA*AB) )/DET;
 	}
+	return(errG);
+}
+
+double CalculaConveccionDifusionDt(vector<double> &Concentracion, vector<double> &U1,
+		vector<double> &U2,vector<double> &U3,grid3D* g,int niteraciones,double err0,vector<double> &ConcentracionPrevia)
+{
+	int iiter,i,j,iC;
+	double Suma_Numerador,Suma_Denominador,Coeff_Cj,err,errG,ConcentracionNueva,SumaVolumen;
+
+	if(DBG) cout<<"CalculaConveccionDifusionDt(...)"<<endl;
+	if (Concentracion.size() ==0) Concentracion.resize(g->nVolFinito);
+	//Resuelvo la ecuación varias veces
+
+	cout <<"niteraciones="<<niteraciones<<endl;
+	double SumCoeffEstacionarios=0,SumCoeffTemporales=0;
+	int    NCoeffEstacionarios=0;
+	for (iiter=0 ; iiter<niteraciones ; iiter++) {
+
+		if(DBG) cout<<"iiter="<<iiter<<endl;
+		errG=0;
+		for (i=0 ; i<g->nVolFinito ; i++) {
+			//Escribo la ecuación para el VolFinito [i]
+			Suma_Numerador=0;Suma_Denominador=0;SumaVolumen=0;
+			if(DBG>1) cout<<"2456: i="<<i<<"    g->nVolFinito"<<g->nVolFinito<<"=="<<g->VolFinito.size()<<endl;
+
+			for (j=0 ; j< g->VolFinito[i].vecino.size() ;j++) {
+				//recorro cada cara que conecta al VolFinito [i] con su vecino [j]
+
+
+				if (DBG & 0) {
+					cout <<"2405"<<endl;
+					cout <<"g->VolFinito[i].tipo_vecino[j]="<<g->VolFinito[i].tipo_vecino[j]<<endl;
+				}
+				if (g->VolFinito[i].tipo_vecino[j] == ES_BLOQUE) {
+
+					//Parte difusion
+					Datos_km=1;
+					Coeff_Cj = Datos_km * g->VolFinito[i].Poligono[j].AreaPoligono / g->VolFinito[i].Poligono[j].Dab;
+
+					//Parte conveccion
+
+					R3 VelocidadFrontera;
+					VelocidadFrontera.x=(U1[i]+U1[g->VolFinito[i].vecino[j]])/2;
+					VelocidadFrontera.y=(U2[i]+U2[g->VolFinito[i].vecino[j]])/2;
+					VelocidadFrontera.z=(U3[i]+U3[g->VolFinito[i].vecino[j]])/2;
+
+
+					double VelocidadNormal=ppunto(VelocidadFrontera,g->VolFinito[i].vecino_normal[j]);
+
+					if(VelocidadNormal<0) {
+						Coeff_Cj -= VelocidadNormal*g->VolFinito[i].Poligono[j].AreaPoligono ;
+					} else {
+						Coeff_Cj=0;
+					}
+
+					Suma_Numerador += Coeff_Cj * Concentracion[ g->VolFinito[i].vecino[j] ] ;
+					Suma_Denominador    += Coeff_Cj;
+				} else {
+					//Esta superficie Sj es parte de la frontera.
+					iC=g->VolFinito[i].vecino[j];
+					double htilde_local;
+					//if (g->Cara[iC].iBC==1) Se trata de Derivada normal igual a cero (nada que hacer)
+					switch (g->Cara[iC].iBC) {
+					case 2:
+					case 3:   //Condicion Dirichlet (como un bloque con Concentracion conocida == BC2)
+
+
+						R3 VelocidadFrontera;
+						VelocidadFrontera.x=U1[i];
+						VelocidadFrontera.y=U2[i];
+						VelocidadFrontera.z=U3[i];
+
+						double VelocidadNormal=ppunto(VelocidadFrontera,g->VolFinito[i].vecino_normal[j]);
+
+						if(VelocidadNormal<0) {
+							Coeff_Cj -= VelocidadNormal*g->VolFinito[i].Poligono[j].AreaPoligono ;
+						} else {
+							Coeff_Cj=0;
+						}
+
+
+						Coeff_Cj += Datos_km* g->VolFinito[i].Poligono[j].AreaPoligono / g->VolFinito[i].Poligono[j].Dab;
+
+
+						Suma_Numerador += Coeff_Cj * g->Cara[iC].BC2;
+						Suma_Denominador    += Coeff_Cj;
+						break;
+					}
+
+				}
+				if(DBG>1) cout<<"2510"<<endl;
+
+			}
+
+			if (TipoCalculo==CalculoEvolucion) {
+				///////////////////Aporte del termino temporal.....
+				double CoeffT= g->VolFinito[i].volumen/Datos_dt;
+
+				//Estadistica (cual es mas importante)
+				SumCoeffEstacionarios += Suma_Denominador;
+				SumCoeffTemporales    += CoeffT;
+				NCoeffEstacionarios   ++;
+
+
+				Suma_Numerador   += CoeffT*ConcentracionPrevia[i];
+				Suma_Denominador += CoeffT;
+			}
+
+			if (ConcentracionPrevia[i]>0) {
+				if(DBG>1) cout<<"2545: Suma_Numerador,Suma_Denominador: "<<Suma_Numerador<<" , "<<Suma_Denominador
+						<< "   CP="<<ConcentracionPrevia[i]
+				<< "   Ci="<<Concentracion[i]<<endl;
+			}
+
+			if (Suma_Denominador<1e-5) {
+				cout<<"2546: Suma_Denominador="<<Suma_Denominador<<endl;
+			}
+			ConcentracionNueva = Suma_Numerador/Suma_Denominador;
+//			err=fabs(ConcentracionNueva-Concentracion[i])/(fabs(ConcentracionNueva)+1e-20);
+			err=fabs(ConcentracionNueva-Concentracion[i]);
+			if (err > errG) {
+				cout<<"err="<<err<<">errG="<<errG<<"   ConcentracionNueva="<<ConcentracionNueva<<"   Concentracion["<<i<<"]="<<Concentracion[i]<<endl;
+				if(DBG) cout<<"2545: Suma_Numerador,Suma_Denominador: "<<Suma_Numerador<<" , "<<Suma_Denominador
+						<< "   CP="<<ConcentracionPrevia[i]
+				<< "   Ci="<<Concentracion[i]<<endl;
+				errG=err;
+			}
+			Concentracion[i]=ConcentracionNueva;
+		}
+		if (errG<err0) {
+			cout<<"break: errG<"<<err0<<endl;
+			break;
+		}
+		cout<<"errG[i]="<<errG<<endl;
+	}
+	cout<<"iiter_final="<<iiter<<endl;
+	cout<<"errG="<<errG<<endl;
+	if (TipoCalculo==CalculoEvolucion) {
+		//Estadistica (cual es mas importante)
+		cout << "<CoeffEstacionarios>="<<SumCoeffEstacionarios /NCoeffEstacionarios;
+		cout << "\t<SumCoeffTemporales>="<<SumCoeffTemporales / NCoeffEstacionarios <<endl;
+	}
+#if 0
+	//Calculo del Gradiente
+	for (i=0 ; i<g->nVolFinito ; i++) {
+		double A,AA,AB,AC,RA;
+		double BA,BB,BC,RB;
+		double CA,CB,CC,RC;
+		double nx,ny,nz,DET;
+		AA=0;AB=0;AC=0;RA=0;
+		BA=0;BB=0;BC=0;RB=0;
+		CA=0;CB=0;CC=0;RC=0;
+		for (j=0 ; j< g->VolFinito[i].vecino.size() ;j++) {
+			if (g->VolFinito[i].tipo_vecino[j] == ES_BLOQUE) {
+				Coeff_Cj = ( Concentracion[ g->VolFinito[i].vecino[j] ] - Concentracion[i] ) / g->VolFinito[i].Poligono[j].Dab;
+			} else {
+				iC=g->VolFinito[i].vecino[j];
+				Coeff_Cj=0;
+				if (g->Cara[iC].iBC ==2 ||g->Cara[iC].iBC ==3) {
+					Coeff_Cj = ( g->Cara[iC].BC2 - Concentracion[i] ) / g->VolFinito[i].Poligono[j].Dab;
+
+				}
+			}
+			A=g->VolFinito[i].Poligono[j].AreaPoligono;
+			nx=g->VolFinito[i].Poligono[j].normal.x ;
+			ny=g->VolFinito[i].Poligono[j].normal.y ;
+			nz=g->VolFinito[i].Poligono[j].normal.z ;
+			AA += nx*nx*A; AB+= nx*ny*A; AC+= nx*nz*A; RA += -nx*Coeff_Cj*A;
+			BA += ny*nx*A; BB+= ny*ny*A; BC+= ny*nz*A; RB += -ny*Coeff_Cj*A;
+			CA += nz*nx*A; CB+= nz*ny*A; CC+= nz*nz*A; RC += -nz*Coeff_Cj*A;
+		}
+		// AA AB AC --> RA
+		// BA BB BC --> RB
+		// CA CB CC --> RC
+		DET= AA*(BB*CC-BC*CB)+BA*(CB*AC-AB*CC)+CA*(AB*BC-BB*AC) ;
+		U1[i]= ( RA*(BB*CC-BC*CB)+RB*(CB*AC-AB*CC)+RC*(AB*BC-BB*AC) )/DET;
+		V[i]=-( RA*(BA*CC-BC*CA)+RB*(CA*AC-AA*CC)+RC*(AA*BC-BA*AC) )/DET;
+		U3[i]= ( RA*(BA*CB-BB*CA)+RB*(CA*AB-AA*CB)+RC*(AA*BB-BA*AB) )/DET;
+	}
+#endif
+
+	double minF=1e20,maxF=-1e20;
+	for (i=0;i<g->nVolFinito;i++) {
+		if (minF>Concentracion[i]) minF=Concentracion[i];
+		if (maxF<Concentracion[i]) maxF=Concentracion[i];
+
+	}
+	cout<<"2677: minF,maxF="<<minF<<" , "<<maxF<<endl;
+
+	if(DBG) cout<<"CalculaConveccionDifusionDt(...):END"<<endl;
 	return(errG);
 }
 
