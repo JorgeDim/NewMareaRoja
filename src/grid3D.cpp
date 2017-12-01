@@ -1418,6 +1418,7 @@ void Cara3D::draw_caraGL00(vector<double> &F,double minF,double maxF,int* ii)
 	int li;
 	double x[4],y[4],z[4],v[3],xg,yg,zg,lambda=0.0,nx,ny,nz,nxx,nyy,nzz,nnn;
 	GLdouble winX1,winY1,winX2,winY2,winX3,winY3,winZ,winZ2;
+	GLdouble posX0,posY0,posZ0,posX1,posY1,posZ1;
 	xg=0;yg=0;zg=0;
 
 	if(DBG>1) cout<<"Cara3D::draw_caraGL(vector<double>F,double "<<minF<<",double "<<maxF<<",int ii[4])"<<endl;
@@ -1462,15 +1463,26 @@ void Cara3D::draw_caraGL00(vector<double> &F,double minF,double maxF,int* ii)
 
 	if(DBG>1) cout<<"1450"<<endl;
 
-	FuncionesOpenGL::modelview_calculado=false;
-	FuncionesOpenGL::World2Win(x[0],y[0],z[0],&winX1,&winY1,&winZ1);
-	FuncionesOpenGL::World2Win(x[1],y[1],z[1],&winX2,&winY2,&winZ2);
-	FuncionesOpenGL::World2Win(x[2],y[2],z[2],&winX3,&winY3,&winZ3);
-	int signo=1;
-	signo2=1;
-	if ((winX2-winX1)*(winY3-winY1)-(winY2-winY1)*(winX3-winX1) <0 ){
+	if (0) {
+		FuncionesOpenGL::modelview_calculado=false;
+		FuncionesOpenGL::World2Win(x[0],y[0],z[0],&winX1,&winY1,&winZ1);
+		FuncionesOpenGL::World2Win(x[1],y[1],z[1],&winX2,&winY2,&winZ2);
+		FuncionesOpenGL::World2Win(x[2],y[2],z[2],&winX3,&winY3,&winZ3);
+		int signo=1;
+		signo2=1;
+		if ((winX2-winX1)*(winY3-winY1)-(winY2-winY1)*(winX3-winX1) <0 ){
 		signo2=-1;
 	}
+	} else {
+
+		FuncionesOpenGL::World2Win(x[0],y[0],z[0],&winX1,&winY1,&winZ1);
+		FuncionesOpenGL::Win2World(winX1,winY1,winZ1, &posX0, &posY0, &posZ0);
+		FuncionesOpenGL::Win2World(winX1,winY1,winZ1-1, &posX1, &posY1, &posZ1);
+		v[0]=posX1-posX0;
+		v[1]=posY1-posY0;
+		v[2]=posZ1-posZ0;
+	}
+
 
 	if (this->iBC==IBC_SUP)	signo2=1;
 
@@ -1507,13 +1519,27 @@ void Cara3D::draw_caraGL00(vector<double> &F,double minF,double maxF,int* ii)
 		ny/=nnn;
 		nz/=nnn;
 
-		nx=s*nxx+nx/3;
-		ny=s*nyy+ny/3;
-		nz=s*nzz+nz/3;
 
+
+		if (FactorSuavidad>0 & papa->v3D[iv[li]].normalVetex.L>0.1) {
+			nx=nxx*(1-FactorSuavidad)+FactorSuavidad*papa->v3D[iv[li]].normalVetex.x;
+			ny=nyy*(1-FactorSuavidad)+FactorSuavidad*papa->v3D[iv[li]].normalVetex.y;
+			nz=nzz*(1-FactorSuavidad)+FactorSuavidad*papa->v3D[iv[li]].normalVetex.z/FactorZ;
+
+
+		} else {
+
+			nx=s*nxx+nx/20;
+			ny=s*nyy+ny/20;
+			nz=s*nzz+nz/20;
+		}
 
 		//glNormal3d(s*nxx,s*nyy,s*nzz);
-		glNormal3d(nx,ny,nz);
+
+		if ( nx*v[0]+ny*v[1]+nz*v[2]<0) {
+			glNormal3d(-nx,-ny,-nz);
+		} else
+			glNormal3d(nx,ny,nz);
 		glVertex3d(x[li], y[li],z[li]);
 	}
 	glEnd();

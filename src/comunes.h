@@ -396,7 +396,7 @@ void DrawGraphics()
 	}
 	glMultMatrixf((GLfloat *)MatrizRotacionGlobal);
 
-	if (FlagPrintMatrizRotacionGlobal) {
+	if (0*FlagPrintMatrizRotacionGlobal) {
 		cout <<"float 	  M3_Escala="<<Escala<<";"<<endl;
 		cout <<"GLfloat   M3_MatrizRotacionGlobal[16]= {";
 		for (i=0;i<16;i++){

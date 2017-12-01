@@ -2132,7 +2132,7 @@ void   formulario_glui()
 
 
 	glui_edittext= new GLUI_TextBox(glui,text);
-	glui_edittext->set_w(220);
+	glui_edittext->set_w(180);
 	glui_edittext->set_h(120);
 
 

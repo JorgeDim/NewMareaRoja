@@ -480,10 +480,10 @@ void FuncionesOpenGL::material(int cual)
 	GLfloat mat_verde2_specular[] = {0.15, 0.6 , 0.15 , 1.0f};
 	GLfloat mat_verde2_emission[] = {0.025, 0.1, 0.025, 1.0f};
 	
-	GLfloat mat_3_ambient[] =  {0.05, 0.15 , 1.05 , 0.5f};
-	GLfloat mat_3_diffuse[] =  {0.1, 0.2  , 1.1  , 0.5f};
-	GLfloat mat_3_specular[] = {0.15, 0.3 , 1.15 , 0.5f};
-	GLfloat mat_3_emission[] = {0.025, 0.03, 1.025, 0.5f};
+	GLfloat mat_3_ambient[] =  {0.05, 0.15 , 1.05 , 0.4f};
+	GLfloat mat_3_diffuse[] =  {0.1, 0.2  , 1.1  , 0.4f};
+	GLfloat mat_3_specular[] = {0.15, 0.3 , 1.15 , 0.4f};
+	GLfloat mat_3_emission[] = {0.025, 0.03, 1.025, 0.4f};
 
 	GLfloat matBC_2_ambient[] =  {0.1, 0.0 , 0.05 , 1.0f}; 
 	GLfloat matBC_2_diffuse[] =  {0.3, 0.0  , 0.1  , 1.0f};
