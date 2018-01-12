@@ -22,7 +22,7 @@ int NDivZ=2,nRLC=-1,nThLC=-1;
 int refinoR=0;
 char FDatos[100],mensajes0[10000];
 double FactorCercania=0.90;
-float FactorAchica=0.0,FactorAchicaV=0.15,FactorZ=25;
+float FactorAchica=0.0,FactorAchicaV=0.0,FactorZ=25;
 
 float FactorAmbient=1,FactorDifusse=1,FactorSpecular=1,FactorEmission=1,FactorClaridad=1.7;
 float FactorAmbientL1=0.35,FactorDifusseL1=0.99,FactorSpecularL1=0.99;
